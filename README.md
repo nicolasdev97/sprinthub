@@ -97,6 +97,7 @@ Controller → Service → Repository → Database
 
 ### Frontend
 
+```
 src/
 ├── app/
 ├── features/
@@ -106,6 +107,7 @@ src/
 ├── providers/
 ├── types/
 └── utils/
+```
 
 ---
 
