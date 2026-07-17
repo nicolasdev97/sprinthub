@@ -1,4 +1,4 @@
-# 🚀 SprintHub
+# SprintHub
 
 A modern full-stack project management platform inspired by Jira, Trello, and ClickUp.
 
@@ -8,7 +8,7 @@ The goal of this project is not only to build a functional application, but also
 
 ---
 
-## ✨ Features
+## Features
 
 ### Authentication & Authorization
 
@@ -23,6 +23,7 @@ The goal of this project is not only to build a functional application, but also
 - Create workspaces
 - Manage members
 - Assign roles
+- Delete projects
 
 ### Project Management
 
@@ -37,12 +38,14 @@ The goal of this project is not only to build a functional application, but also
 - Set priorities
 - Manage task status
 - Due dates
+- Delete tasks
 
 ### Dashboard
 
 - Task statistics
 - Project metrics
 - Productivity overview
+- Workspace overview
 
 ### Notifications
 
@@ -51,7 +54,7 @@ The goal of this project is not only to build a functional application, but also
 
 ---
 
-## 🏗️ Tech Stack
+## Tech Stack
 
 ### Frontend
 
@@ -69,6 +72,8 @@ The goal of this project is not only to build a functional application, but also
 - Express.js
 - TypeScript
 - Prisma ORM
+- JWT
+- bcrypt
 
 ### Database
 
@@ -80,6 +85,7 @@ The goal of this project is not only to build a functional application, but also
 - Docker Compose
 - GitHub Actions
 - CI/CD Pipelines
+- Redis (planned)
 
 ### Testing
 
@@ -89,7 +95,7 @@ The goal of this project is not only to build a functional application, but also
 
 ---
 
-## 📂 Planned Architecture
+## Planned Architecture
 
 ### Backend
 
@@ -111,22 +117,23 @@ src/
 
 ---
 
-## 🔐 Security
+## Security
 
 Planned security features:
 
 - JWT Authentication
-- Refresh Tokens
+- Refresh Token Rotation
 - HttpOnly Cookies
 - Password Hashing (bcrypt)
 - Request Validation (Zod)
 - Rate Limiting
 - Helmet
 - CORS Protection
+- Secure Cookies
 
 ---
 
-## 🧪 Testing Strategy
+## Testing Strategy
 
 ### Unit Testing
 
@@ -149,13 +156,13 @@ Target Coverage: 70%+
 
 ---
 
-## ⚙️ CI/CD Pipeline
+## CI/CD Pipeline
 
 Install → Lint → Test → Build → Docker Build
 
 ---
 
-## 📈 Project Goals
+## Project Goals
 
 - Build a production-ready application
 - Apply scalable software architecture
@@ -166,27 +173,21 @@ Install → Lint → Test → Build → Docker Build
 
 ---
 
-## 📋 Project Status
+## Documentation
 
-Current Phase:
+Project documentation can be found in the `/docs` directory.
 
-Planning & Architecture
-
-Upcoming Milestones:
-
-- [ ] Project setup
-- [ ] Authentication module
-- [ ] Workspace module
-- [ ] Project module
-- [ ] Task module
-- [ ] Dashboard
-- [ ] Notifications
-- [ ] Testing
-- [ ] CI/CD
-- [ ] Deployment
+- Blueprint
+- PRD
+- SRS
+- ADD
+- DDS
+- ADS
+- ADRs
+- Developer Guide
 
 ---
 
-## 📄 License
+## License
 
 MIT License
