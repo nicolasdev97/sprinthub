@@ -1,5 +1,7 @@
 import express from "express";
 
+import { errorHandler } from "./shared/errors";
+
 const app = express();
 
 // --------------- Global middlewares ---------------
@@ -7,6 +9,8 @@ const app = express();
 app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
+
+app.use(errorHandler);
 
 // --------------- Global middlewares ---------------
 
