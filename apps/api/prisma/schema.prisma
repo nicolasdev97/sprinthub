@@ -37,7 +37,7 @@ enum TaskPriority {
 }
 
 model User {
-  id           String   @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
 
   firstName    String
   lastName     String
@@ -45,14 +45,14 @@ model User {
   passwordHash String
   isActive     Boolean
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   ownedWorkspaces Workspace[] @relation("WorkspaceOwner")
 
   workspaceMemberships WorkspaceMember[]
 
-  createdTasks Task[] @relation("TaskCreator")
+  createdTasks  Task[] @relation("TaskCreator")
   assignedTasks Task[] @relation("TaskAssignee")
 
   notifications Notification[]
@@ -61,43 +61,43 @@ model User {
 }
 
 model Workspace {
-  id          String @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
 
-  ownerId     String @db.Uuid
-  owner       User @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  ownerId String @db.Uuid
+  owner   User   @relation("WorkspaceOwner", fields: [ownerId], references: [id])
 
   name        String
   description String
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  members     WorkspaceMember[]
+  members WorkspaceMember[]
 
-  projects    Project[]
+  projects Project[]
 }
 
 model WorkspaceMember {
-  id          String @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
 
-  workspaceId String @db.Uuid
-  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  workspaceId String    @db.Uuid
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
 
-  userId      String @db.Uuid
-  user        User @relation(fields: [userId], references: [id])
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id])
 
   role WorkspaceRole
 
-  joinedAt    DateTime
+  joinedAt DateTime
 }
 
 model Project {
-  id          String @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
 
-  workspaceId String @db.Uuid
-  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  workspaceId String    @db.Uuid
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
 
-  name         String
+  name String
 
   status ProjectStatus
 
@@ -105,51 +105,51 @@ model Project {
 }
 
 model Task {
-  id          String @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
 
-  projectId   String @db.Uuid
-  project     Project @relation(fields: [projectId], references: [id])
+  projectId String  @db.Uuid
+  project   Project @relation(fields: [projectId], references: [id])
 
   createdById String @db.Uuid
-  createdBy   User @relation("TaskCreator", fields: [createdById], references: [id])
+  createdBy   User   @relation("TaskCreator", fields: [createdById], references: [id])
 
-  assigneeId  String @db.Uuid
-  assignee    User @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  assigneeId String @db.Uuid
+  assignee   User   @relation("TaskAssignee", fields: [assigneeId], references: [id])
 
   title       String
   description String?
 
-  status TaskStatus
+  status   TaskStatus
   priority TaskPriority
 
-  dueDate     DateTime?
+  dueDate DateTime?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Notification {
-  id        String @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
 
-  userId    String @db.Uuid
-  user      User @relation(fields: [userId], references: [id])
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id])
 
-  title     String
-  message   String
+  title   String
+  message String
 
-  isRead    Boolean
+  isRead Boolean
 
   createdAt DateTime @default(now())
 }
 
 model RefreshToken {
-  id         String   @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
 
-  userId     String   @db.Uuid
-  user       User @relation(fields: [userId], references: [id])
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id])
 
-  tokenHash  String
+  tokenHash String
 
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
