@@ -1,6 +1,6 @@
 import { AppError } from "../../../shared/errors";
 
-import { RegisterDto } from "../dto";
+import { RegisterDto, LoginDto } from "../dto";
 import { AuthRepository } from "../repository";
 
 export class AuthService {
@@ -14,5 +14,19 @@ export class AuthService {
     }
 
     return this.authRepository.createUser(data);
+  }
+
+  async login(data: LoginDto) {
+    const user = await this.authRepository.findUserByEmail(data.email);
+
+    if (!user) {
+      throw new AppError("Invalid email or password", 401);
+    }
+
+    if (user.passwordHash !== data.password) {
+      throw new AppError("Invalid email or password", 401);
+    }
+
+    return user;
   }
 }

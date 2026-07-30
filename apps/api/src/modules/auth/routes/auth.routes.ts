@@ -3,7 +3,7 @@ import { Router } from "express";
 import { validate } from "../../../shared/validation";
 import { AuthController } from "../controller";
 import { AuthRepository } from "../repository";
-import { registerSchema } from "../schema";
+import { registerSchema, loginSchema } from "../schema";
 import { AuthService } from "../service";
 
 export const authRouter = Router();
@@ -18,4 +18,10 @@ authRouter.post(
   "/register",
   validate(registerSchema),
   authController.register.bind(authController),
+);
+
+authRouter.post(
+  "/login",
+  validate(loginSchema),
+  authController.login.bind(authController),
 );

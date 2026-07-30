@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import { RegisterDto } from "../dto";
+import { RegisterDto, LoginDto } from "../dto";
 import { AuthService } from "../service";
 
 export class AuthController {
@@ -12,5 +12,13 @@ export class AuthController {
     const user = await this.authService.register(data);
 
     return res.status(201).json(user);
+  }
+
+  async login(req: Request, res: Response) {
+    const data = req.body as LoginDto;
+
+    const user = await this.authService.login(data);
+
+    return res.status(200).json(user);
   }
 }
