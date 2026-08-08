@@ -4,16 +4,12 @@ import { AppError } from "../../shared/errors";
 import { verifyToken } from "../../shared/utils";
 
 export function authenticate(req: Request, _res: Response, next: NextFunction) {
-  const authorization = req.headers.authorization;
+  const token =
+    req.cookies.accessToken ??
+    req.headers.authorization?.replace("Bearer ", "");
 
-  if (!authorization) {
+  if (!token) {
     throw new AppError("Authentication token not provided", 401);
-  }
-
-  const [scheme, token] = authorization.split(" ");
-
-  if (scheme !== "Bearer" || !token) {
-    throw new AppError("Invalid authentication token", 401);
   }
 
   const payload = verifyToken(token);

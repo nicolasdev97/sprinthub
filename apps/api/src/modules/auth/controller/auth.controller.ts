@@ -19,6 +19,11 @@ export class AuthController {
 
     const response = await this.authService.login(data);
 
+    res.cookie("accessToken", response.accessToken, {
+      httpOnly: true,
+      sameSite: "lax",
+    });
+
     return res.status(200).json(response);
   }
 }

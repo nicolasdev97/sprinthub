@@ -1,7 +1,10 @@
 import express from "express";
 
+import cookieParser from "cookie-parser";
+
 import { errorHandler } from "./shared/errors";
 import { requestLogger } from "./shared/logger";
+
 import router from "./routes";
 
 const app = express();
@@ -11,6 +14,8 @@ const app = express();
 app.use(requestLogger);
 
 app.use(express.json());
+
+app.use(cookieParser());
 
 app.use(express.urlencoded({ extended: true }));
 
