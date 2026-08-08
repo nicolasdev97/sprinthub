@@ -1,7 +1,6 @@
 import { Router } from "express";
 
-import { validate } from "../../../shared/validation";
-// import { authenticate } from "../../../middleware";
+import { validate } from "../../../middleware";
 
 import { AuthController } from "../controller";
 import { AuthRepository } from "../repository";
