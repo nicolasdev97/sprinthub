@@ -1,6 +1,8 @@
 import { Router } from "express";
 
 import { validate } from "../../../shared/validation";
+import { authenticate } from "../../../middleware";
+
 import { AuthController } from "../controller";
 import { AuthRepository } from "../repository";
 import { registerSchema, loginSchema } from "../schema";
@@ -25,3 +27,7 @@ authRouter.post(
   validate(loginSchema),
   authController.login.bind(authController),
 );
+
+authRouter.get("/me", authenticate, (req, res) => {
+  return res.status(200).json(req.user);
+});
