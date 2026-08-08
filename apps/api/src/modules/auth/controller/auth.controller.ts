@@ -26,4 +26,15 @@ export class AuthController {
 
     return res.status(200).json(response);
   }
+
+  async logout(_req: Request, res: Response) {
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      sameSite: "lax",
+    });
+
+    return res.status(200).json({
+      message: "Logout successful",
+    });
+  }
 }

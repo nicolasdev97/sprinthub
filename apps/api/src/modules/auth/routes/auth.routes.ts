@@ -28,6 +28,8 @@ authRouter.post(
   authController.login.bind(authController),
 );
 
+authRouter.post("/logout", authController.logout);
+
 authRouter.get("/me", authenticate, (req, res) => {
   return res.status(200).json(req.user);
 });
