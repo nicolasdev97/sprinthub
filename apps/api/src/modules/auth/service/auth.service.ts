@@ -1,4 +1,5 @@
 import { AppError } from "../../../shared/errors";
+import { generateToken } from "../../../shared/utils";
 
 import { RegisterDto, LoginDto } from "../dto";
 import { AuthRepository } from "../repository";
@@ -27,6 +28,13 @@ export class AuthService {
       throw new AppError("Invalid email or password", 401);
     }
 
-    return user;
+    const token = generateToken({
+      userId: user.id,
+    });
+
+    return {
+      accessToken: token,
+      user,
+    };
   }
 }
