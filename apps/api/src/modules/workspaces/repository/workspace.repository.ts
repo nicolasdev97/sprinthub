@@ -3,6 +3,7 @@ import { WorkspaceRole } from "@prisma/client";
 import { prisma } from "../../../database/prisma";
 
 import { CreateWorkspaceDto } from "../dto";
+import { UpdateWorkspaceDto } from "../dto";
 
 export class WorkspaceRepository {
   async createWorkspace(data: CreateWorkspaceDto, ownerId: string) {
@@ -50,6 +51,24 @@ export class WorkspaceRepository {
       },
       include: {
         workspace: true,
+      },
+    });
+  }
+
+  async updateWorkspace(workspaceId: string, data: UpdateWorkspaceDto) {
+    return prisma.workspace.update({
+      where: {
+        id: workspaceId,
+      },
+      data,
+    });
+  }
+
+  async findWorkspaceMember(workspaceId: string, userId: string) {
+    return prisma.workspaceMember.findFirst({
+      where: {
+        workspaceId,
+        userId,
       },
     });
   }

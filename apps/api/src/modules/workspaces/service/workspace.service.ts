@@ -1,6 +1,8 @@
 import { AppError } from "../../../shared/errors";
 
-import { CreateWorkspaceDto } from "../dto";
+import { WorkspaceRole } from "@prisma/client";
+
+import { CreateWorkspaceDto, UpdateWorkspaceDto } from "../dto";
 import { WorkspaceRepository } from "../repository";
 
 export class WorkspaceService {
@@ -28,5 +30,29 @@ export class WorkspaceService {
     }
 
     return workspaceMember.workspace;
+  }
+
+  async updateWorkspace(
+    workspaceId: string,
+    userId: string,
+    data: UpdateWorkspaceDto,
+  ) {
+    const workspaceMember = await this.workspaceRepository.findWorkspaceMember(
+      workspaceId,
+      userId,
+    );
+
+    if (!workspaceMember) {
+      throw new AppError("Workspace not found", 404);
+    }
+
+    if (
+      workspaceMember.role !== WorkspaceRole.OWNER &&
+      workspaceMember.role !== WorkspaceRole.ADMIN
+    ) {
+      throw new AppError("Forbidden", 403);
+    }
+
+    return this.workspaceRepository.updateWorkspace(workspaceId, data);
   }
 }

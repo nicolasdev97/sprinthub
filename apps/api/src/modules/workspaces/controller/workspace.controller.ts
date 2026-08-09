@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 
 import { WorkspaceParams } from "../types";
 
-import { CreateWorkspaceDto } from "../dto";
+import { CreateWorkspaceDto, UpdateWorkspaceDto } from "../dto";
 import { WorkspaceService } from "../service";
 
 export class WorkspaceController {
@@ -35,6 +35,22 @@ export class WorkspaceController {
     const workspace = await this.workspaceService.getWorkspaceById(
       workspaceId,
       userId,
+    );
+
+    res.status(200).json(workspace);
+  }
+
+  async updateWorkspace(
+    req: Request<WorkspaceParams, unknown, UpdateWorkspaceDto>,
+    res: Response,
+  ) {
+    const { workspaceId } = req.params;
+    const userId = req.user.userId;
+
+    const workspace = await this.workspaceService.updateWorkspace(
+      workspaceId,
+      userId,
+      req.body,
     );
 
     res.status(200).json(workspace);

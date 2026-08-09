@@ -4,7 +4,7 @@ import { authenticate } from "../../../middleware/auth";
 import { validate } from "../../../middleware/validation";
 
 import { WorkspaceController } from "../controller";
-import { createWorkspaceSchema } from "../schema";
+import { createWorkspaceSchema, updateWorkspaceSchema } from "../schema";
 import { WorkspaceRepository } from "../repository";
 import { WorkspaceService } from "../service";
 
@@ -31,6 +31,13 @@ workspaceRouter.get(
   "/:workspaceId",
   authenticate,
   workspaceController.getWorkspaceById.bind(workspaceController),
+);
+
+workspaceRouter.patch(
+  "/:workspaceId",
+  authenticate,
+  validate(updateWorkspaceSchema),
+  workspaceController.updateWorkspace.bind(workspaceController),
 );
 
 export default workspaceRouter;
