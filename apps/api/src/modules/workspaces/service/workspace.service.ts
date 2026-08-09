@@ -7,4 +7,11 @@ export class WorkspaceService {
   async createWorkspace(data: CreateWorkspaceDto, ownerId: string) {
     return this.workspaceRepository.createWorkspace(data, ownerId);
   }
+
+  async findUserWorkspaces(userId: string) {
+    const workspaceMembers =
+      await this.workspaceRepository.findUserWorkspaces(userId);
+
+    return workspaceMembers.map((workspaceMember) => workspaceMember.workspace);
+  }
 }

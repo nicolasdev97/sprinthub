@@ -21,4 +21,10 @@ workspaceRouter.post(
   workspaceController.createWorkspace.bind(workspaceController),
 );
 
+workspaceRouter.get(
+  "/",
+  authenticate,
+  workspaceController.getUserWorkspaces.bind(workspaceController),
+);
+
 export default workspaceRouter;
