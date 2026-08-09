@@ -55,4 +55,21 @@ export class WorkspaceService {
 
     return this.workspaceRepository.updateWorkspace(workspaceId, data);
   }
+
+  async deleteWorkspace(workspaceId: string, userId: string) {
+    const workspaceMember = await this.workspaceRepository.findWorkspaceMember(
+      workspaceId,
+      userId,
+    );
+
+    if (!workspaceMember) {
+      throw new AppError("Workspace not found", 404);
+    }
+
+    if (workspaceMember.role !== WorkspaceRole.OWNER) {
+      throw new AppError("Forbidden", 403);
+    }
+
+    await this.workspaceRepository.deleteWorkspace(workspaceId);
+  }
 }

@@ -64,6 +64,14 @@ export class WorkspaceRepository {
     });
   }
 
+  async deleteWorkspace(workspaceId: string) {
+    return prisma.workspace.delete({
+      where: {
+        id: workspaceId,
+      },
+    });
+  }
+
   async findWorkspaceMember(workspaceId: string, userId: string) {
     return prisma.workspaceMember.findFirst({
       where: {

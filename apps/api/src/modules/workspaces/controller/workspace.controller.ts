@@ -55,4 +55,13 @@ export class WorkspaceController {
 
     res.status(200).json(workspace);
   }
+
+  async deleteWorkspace(req: Request<WorkspaceParams>, res: Response) {
+    const { workspaceId } = req.params;
+    const userId = req.user.userId;
+
+    await this.workspaceService.deleteWorkspace(workspaceId, userId);
+
+    res.status(204).send();
+  }
 }

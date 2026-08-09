@@ -40,4 +40,10 @@ workspaceRouter.patch(
   workspaceController.updateWorkspace.bind(workspaceController),
 );
 
+workspaceRouter.delete(
+  "/:workspaceId",
+  authenticate,
+  workspaceController.deleteWorkspace.bind(workspaceController),
+);
+
 export default workspaceRouter;
