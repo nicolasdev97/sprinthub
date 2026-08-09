@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 
+import { WorkspaceParams } from "../types";
+
 import { CreateWorkspaceDto } from "../dto";
 import { WorkspaceService } from "../service";
 
@@ -21,8 +23,20 @@ export class WorkspaceController {
   async getUserWorkspaces(req: Request, res: Response) {
     const userId = req.user!.userId;
 
-    const workspaces = await this.workspaceService.findUserWorkspaces(userId);
+    const workspaces = await this.workspaceService.getUserWorkspaces(userId);
 
     res.status(200).json(workspaces);
+  }
+
+  async getWorkspaceById(req: Request<WorkspaceParams>, res: Response) {
+    const { workspaceId } = req.params;
+    const userId = req.user.userId;
+
+    const workspace = await this.workspaceService.getWorkspaceById(
+      workspaceId,
+      userId,
+    );
+
+    res.status(200).json(workspace);
   }
 }

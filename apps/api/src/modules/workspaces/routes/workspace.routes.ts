@@ -27,4 +27,10 @@ workspaceRouter.get(
   workspaceController.getUserWorkspaces.bind(workspaceController),
 );
 
+workspaceRouter.get(
+  "/:workspaceId",
+  authenticate,
+  workspaceController.getWorkspaceById.bind(workspaceController),
+);
+
 export default workspaceRouter;

@@ -41,4 +41,16 @@ export class WorkspaceRepository {
       },
     });
   }
+
+  async findWorkspaceById(workspaceId: string, userId: string) {
+    return prisma.workspaceMember.findFirst({
+      where: {
+        workspaceId,
+        userId,
+      },
+      include: {
+        workspace: true,
+      },
+    });
+  }
 }
