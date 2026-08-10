@@ -80,4 +80,36 @@ export class WorkspaceRepository {
       },
     });
   }
+
+  async findUserByEmail(email: string) {
+    return prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+  }
+
+  async findWorkspaceMemberByUser(workspaceId: string, userId: string) {
+    return prisma.workspaceMember.findFirst({
+      where: {
+        workspaceId,
+        userId,
+      },
+    });
+  }
+
+  async createWorkspaceMember(
+    workspaceId: string,
+    userId: string,
+    role: WorkspaceRole,
+  ) {
+    return prisma.workspaceMember.create({
+      data: {
+        workspaceId,
+        userId,
+        role,
+        joinedAt: new Date(),
+      },
+    });
+  }
 }

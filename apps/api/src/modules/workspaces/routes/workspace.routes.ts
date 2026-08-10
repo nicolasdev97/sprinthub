@@ -4,7 +4,11 @@ import { authenticate } from "../../../middleware/auth";
 import { validate } from "../../../middleware/validation";
 
 import { WorkspaceController } from "../controller";
-import { createWorkspaceSchema, updateWorkspaceSchema } from "../schema";
+import {
+  createWorkspaceSchema,
+  updateWorkspaceSchema,
+  addWorkspaceMemberSchema,
+} from "../schema";
 import { WorkspaceRepository } from "../repository";
 import { WorkspaceService } from "../service";
 
@@ -44,6 +48,13 @@ workspaceRouter.delete(
   "/:workspaceId",
   authenticate,
   workspaceController.deleteWorkspace.bind(workspaceController),
+);
+
+workspaceRouter.post(
+  "/:workspaceId/members",
+  authenticate,
+  validate(addWorkspaceMemberSchema),
+  workspaceController.addWorkspaceMember.bind(workspaceController),
 );
 
 export default workspaceRouter;

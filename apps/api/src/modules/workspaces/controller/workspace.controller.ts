@@ -2,7 +2,11 @@ import { Request, Response } from "express";
 
 import { WorkspaceParams } from "../types";
 
-import { CreateWorkspaceDto, UpdateWorkspaceDto } from "../dto";
+import {
+  CreateWorkspaceDto,
+  UpdateWorkspaceDto,
+  AddWorkspaceMemberDto,
+} from "../dto";
 import { WorkspaceService } from "../service";
 
 export class WorkspaceController {
@@ -63,5 +67,20 @@ export class WorkspaceController {
     await this.workspaceService.deleteWorkspace(workspaceId, userId);
 
     res.status(204).send();
+  }
+
+  async addWorkspaceMember(
+    req: Request<WorkspaceParams, unknown, AddWorkspaceMemberDto>,
+    res: Response,
+  ) {
+    const { workspaceId } = req.params;
+
+    const member = await this.workspaceService.addWorkspaceMember(
+      workspaceId,
+      req.user.userId,
+      req.body,
+    );
+
+    res.status(201).json(member);
   }
 }

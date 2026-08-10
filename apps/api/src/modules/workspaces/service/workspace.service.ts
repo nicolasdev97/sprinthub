@@ -2,7 +2,11 @@ import { AppError } from "../../../shared/errors";
 
 import { WorkspaceRole } from "@prisma/client";
 
-import { CreateWorkspaceDto, UpdateWorkspaceDto } from "../dto";
+import {
+  CreateWorkspaceDto,
+  UpdateWorkspaceDto,
+  AddWorkspaceMemberDto,
+} from "../dto";
 import { WorkspaceRepository } from "../repository";
 
 export class WorkspaceService {
@@ -71,5 +75,56 @@ export class WorkspaceService {
     }
 
     await this.workspaceRepository.deleteWorkspace(workspaceId);
+  }
+
+  async addWorkspaceMember(
+    workspaceId: string,
+    userId: string,
+    data: AddWorkspaceMemberDto,
+  ) {
+    const workspaceMember = await this.workspaceRepository.findWorkspaceMember(
+      workspaceId,
+      userId,
+    );
+
+    if (!workspaceMember) {
+      throw new AppError("Workspace not found", 404);
+    }
+
+    if (
+      workspaceMember.role !== WorkspaceRole.OWNER &&
+      workspaceMember.role !== WorkspaceRole.ADMIN
+    ) {
+      throw new AppError("Forbidden", 403);
+    }
+
+    // Regla de negocio
+    if (data.role === WorkspaceRole.OWNER) {
+      throw new AppError("Owner role cannot be assigned", 400);
+    }
+
+    const memberUser = await this.workspaceRepository.findUserByEmail(
+      data.email,
+    );
+
+    if (!memberUser) {
+      throw new AppError("User not found", 404);
+    }
+
+    const existingMember =
+      await this.workspaceRepository.findWorkspaceMemberByUser(
+        workspaceId,
+        memberUser.id,
+      );
+
+    if (existingMember) {
+      throw new AppError("User is already a workspace member", 409);
+    }
+
+    return this.workspaceRepository.createWorkspaceMember(
+      workspaceId,
+      memberUser.id,
+      data.role,
+    );
   }
 }
