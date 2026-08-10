@@ -112,4 +112,25 @@ export class WorkspaceRepository {
       },
     });
   }
+
+  async findWorkspaceMembers(workspaceId: string) {
+    return prisma.workspaceMember.findMany({
+      where: {
+        workspaceId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        joinedAt: "asc",
+      },
+    });
+  }
 }

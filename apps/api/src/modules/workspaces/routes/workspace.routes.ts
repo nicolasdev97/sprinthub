@@ -57,4 +57,10 @@ workspaceRouter.post(
   workspaceController.addWorkspaceMember.bind(workspaceController),
 );
 
+workspaceRouter.get(
+  "/:workspaceId/members",
+  authenticate,
+  workspaceController.getWorkspaceMembers.bind(workspaceController),
+);
+
 export default workspaceRouter;

@@ -83,4 +83,16 @@ export class WorkspaceController {
 
     res.status(201).json(member);
   }
+
+  async getWorkspaceMembers(req: Request<WorkspaceParams>, res: Response) {
+    const { workspaceId } = req.params;
+    const userId = req.user.userId;
+
+    const workspaceMembers = await this.workspaceService.getWorkspaceMembers(
+      workspaceId,
+      userId,
+    );
+
+    res.status(200).json(workspaceMembers);
+  }
 }
