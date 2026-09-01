@@ -153,4 +153,12 @@ export class WorkspaceRepository {
       },
     });
   }
+
+  async deleteWorkspaceMember(memberId: string) {
+    return prisma.workspaceMember.delete({
+      where: {
+        id: memberId,
+      },
+    });
+  }
 }

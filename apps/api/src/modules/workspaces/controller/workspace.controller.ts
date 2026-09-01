@@ -114,4 +114,20 @@ export class WorkspaceController {
 
     res.status(200).json(workspaceMember);
   }
+
+  async removeWorkspaceMember(
+    req: Request<WorkspaceMemberParams>,
+    res: Response,
+  ) {
+    const { workspaceId, memberId } = req.params;
+    const userId = req.user.userId;
+
+    await this.workspaceService.removeWorkspaceMember(
+      workspaceId,
+      memberId,
+      userId,
+    );
+
+    res.status(204).send();
+  }
 }

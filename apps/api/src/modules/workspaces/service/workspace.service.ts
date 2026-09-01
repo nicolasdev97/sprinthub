@@ -175,4 +175,41 @@ export class WorkspaceService {
 
     return this.workspaceRepository.updateWorkspaceMemberRole(memberId, role);
   }
+
+  async removeWorkspaceMember(
+    workspaceId: string,
+    memberId: string,
+    userId: string,
+  ) {
+    const workspaceMember = await this.workspaceRepository.findWorkspaceMember(
+      workspaceId,
+      userId,
+    );
+
+    if (!workspaceMember) {
+      throw new AppError("Workspace not found", 404);
+    }
+
+    if (
+      workspaceMember.role !== WorkspaceRole.OWNER &&
+      workspaceMember.role !== WorkspaceRole.ADMIN
+    ) {
+      throw new AppError("Forbidden", 403);
+    }
+
+    const member = await this.workspaceRepository.findWorkspaceMemberById(
+      workspaceId,
+      memberId,
+    );
+
+    if (!member) {
+      throw new AppError("Workspace member not found", 404);
+    }
+
+    if (member.role === WorkspaceRole.OWNER) {
+      throw new AppError("Cannot remove workspace owner", 403);
+    }
+
+    return this.workspaceRepository.deleteWorkspaceMember(memberId);
+  }
 }

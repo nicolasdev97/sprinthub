@@ -71,4 +71,10 @@ workspaceRouter.patch(
   workspaceController.updateWorkspaceMemberRole.bind(workspaceController),
 );
 
+workspaceRouter.delete(
+  "/:workspaceId/members/:memberId",
+  authenticate,
+  workspaceController.removeWorkspaceMember.bind(workspaceController),
+);
+
 export default workspaceRouter;
