@@ -133,4 +133,24 @@ export class WorkspaceRepository {
       },
     });
   }
+
+  async findWorkspaceMemberById(workspaceId: string, memberId: string) {
+    return prisma.workspaceMember.findFirst({
+      where: {
+        id: memberId,
+        workspaceId,
+      },
+    });
+  }
+
+  async updateWorkspaceMemberRole(memberId: string, role: WorkspaceRole) {
+    return prisma.workspaceMember.update({
+      where: {
+        id: memberId,
+      },
+      data: {
+        role,
+      },
+    });
+  }
 }

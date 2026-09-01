@@ -1,11 +1,12 @@
 import { Request, Response } from "express";
 
-import { WorkspaceParams } from "../types";
+import { WorkspaceParams, WorkspaceMemberParams } from "../types";
 
 import {
   CreateWorkspaceDto,
   UpdateWorkspaceDto,
   AddWorkspaceMemberDto,
+  UpdateWorkspaceMemberRoleDto,
 } from "../dto";
 import { WorkspaceService } from "../service";
 
@@ -94,5 +95,23 @@ export class WorkspaceController {
     );
 
     res.status(200).json(workspaceMembers);
+  }
+
+  async updateWorkspaceMemberRole(
+    req: Request<WorkspaceMemberParams, {}, UpdateWorkspaceMemberRoleDto>,
+    res: Response,
+  ) {
+    const { workspaceId, memberId } = req.params;
+    const userId = req.user.userId;
+
+    const workspaceMember =
+      await this.workspaceService.updateWorkspaceMemberRole(
+        workspaceId,
+        memberId,
+        userId,
+        req.body.role,
+      );
+
+    res.status(200).json(workspaceMember);
   }
 }

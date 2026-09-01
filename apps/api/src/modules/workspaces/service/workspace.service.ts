@@ -140,4 +140,39 @@ export class WorkspaceService {
 
     return this.workspaceRepository.findWorkspaceMembers(workspaceId);
   }
+
+  async updateWorkspaceMemberRole(
+    workspaceId: string,
+    memberId: string,
+    userId: string,
+    role: WorkspaceRole,
+  ) {
+    const workspaceMember = await this.workspaceRepository.findWorkspaceMember(
+      workspaceId,
+      userId,
+    );
+
+    if (!workspaceMember) {
+      throw new AppError("Workspace not found", 404);
+    }
+
+    if (workspaceMember.role !== WorkspaceRole.OWNER) {
+      throw new AppError("Forbidden", 403);
+    }
+
+    const member = await this.workspaceRepository.findWorkspaceMemberById(
+      workspaceId,
+      memberId,
+    );
+
+    if (!member) {
+      throw new AppError("Workspace member not found", 404);
+    }
+
+    if (member.role === WorkspaceRole.OWNER) {
+      throw new AppError("Cannot update workspace owner", 403);
+    }
+
+    return this.workspaceRepository.updateWorkspaceMemberRole(memberId, role);
+  }
 }

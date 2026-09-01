@@ -8,6 +8,7 @@ import {
   createWorkspaceSchema,
   updateWorkspaceSchema,
   addWorkspaceMemberSchema,
+  updateWorkspaceMemberRoleSchema,
 } from "../schema";
 import { WorkspaceRepository } from "../repository";
 import { WorkspaceService } from "../service";
@@ -61,6 +62,13 @@ workspaceRouter.get(
   "/:workspaceId/members",
   authenticate,
   workspaceController.getWorkspaceMembers.bind(workspaceController),
+);
+
+workspaceRouter.patch(
+  "/:workspaceId/members/:memberId",
+  authenticate,
+  validate(updateWorkspaceMemberRoleSchema),
+  workspaceController.updateWorkspaceMemberRole.bind(workspaceController),
 );
 
 export default workspaceRouter;
