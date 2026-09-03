@@ -92,4 +92,26 @@ export class ProjectService {
 
     await this.projectRepository.delete(projectId);
   }
+
+  async archiveProject(projectId: string, userId: string) {
+    const project = await this.projectRepository.findById(projectId);
+
+    if (!project) {
+      throw new AppError("Project not found", 404);
+    }
+
+    const workspaceMember = await this.workspaceService.getWorkspaceMember(
+      project.workspaceId,
+      userId,
+    );
+
+    if (
+      workspaceMember.role !== WorkspaceRole.OWNER &&
+      workspaceMember.role !== WorkspaceRole.ADMIN
+    ) {
+      throw new AppError("Forbidden", 403);
+    }
+
+    return this.projectRepository.archiveProject(projectId);
+  }
 }

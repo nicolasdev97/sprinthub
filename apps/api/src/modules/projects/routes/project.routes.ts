@@ -54,4 +54,10 @@ projectRouter.delete<ProjectParams>(
   projectController.deleteProject.bind(projectController),
 );
 
+projectRouter.patch(
+  "/projects/:projectId/archive",
+  authenticate,
+  projectController.archiveProject.bind(projectController),
+);
+
 export default projectRouter;

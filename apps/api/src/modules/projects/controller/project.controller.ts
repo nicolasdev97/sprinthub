@@ -71,4 +71,13 @@ export class ProjectController {
 
     res.status(204).send();
   }
+
+  async archiveProject(req: Request<ProjectParams>, res: Response) {
+    const { projectId } = req.params;
+    const userId = req.user.userId;
+
+    const project = await this.projectService.archiveProject(projectId, userId);
+
+    res.status(200).json(project);
+  }
 }
