@@ -101,6 +101,8 @@ model Project {
 
   status ProjectStatus
 
+  archived Boolean @default(false)
+
   tasks Task[]
 }
 
