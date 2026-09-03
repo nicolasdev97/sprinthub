@@ -18,6 +18,15 @@ export class ProjectRepository {
     });
   }
 
+  async findByName(workspaceId: string, name: string) {
+    return prisma.project.findFirst({
+      where: {
+        workspaceId,
+        name,
+      },
+    });
+  }
+
   async create(data: CreateProjectDto) {
     return prisma.project.create({
       data,
