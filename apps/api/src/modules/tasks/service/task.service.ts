@@ -1,7 +1,12 @@
 import { TaskStatus, WorkspaceRole } from "@prisma/client";
 
 import { AppError } from "../../../shared/errors";
-import { CreateTaskDto, UpdateTaskDto, AssignTaskDto } from "../dto";
+import {
+  CreateTaskDto,
+  UpdateTaskDto,
+  AssignTaskDto,
+  UpdateTaskStatusDto,
+} from "../dto";
 import { TaskRepository } from "../repository";
 import { WorkspaceService } from "../../workspaces/service";
 import { ProjectRepository } from "../../projects/repository";
@@ -137,5 +142,17 @@ export class TaskService {
     );
 
     return this.taskRepository.assignTask(taskId, data.assigneeId);
+  }
+
+  async updateTaskStatus(taskId: string, data: UpdateTaskStatusDto) {
+    const task = await this.taskRepository.findById(taskId);
+
+    if (!task) {
+      throw new AppError("Task not found", 404);
+    }
+
+    const completedAt = data.status === TaskStatus.DONE ? new Date() : null;
+
+    return this.taskRepository.updateStatus(taskId, data.status, completedAt);
   }
 }

@@ -8,6 +8,7 @@ import {
   createTaskSchema,
   updateTaskSchema,
   assignTaskSchema,
+  updateTaskStatusSchema,
 } from "../schema";
 import { TaskRepository } from "../repository";
 import { TaskService } from "../service";
@@ -75,6 +76,13 @@ taskRouter.patch<TaskParams>(
   authenticate,
   validate(assignTaskSchema),
   taskController.assignTask.bind(taskController),
+);
+
+taskRouter.patch<TaskParams>(
+  "/tasks/:taskId/status",
+  authenticate,
+  validate(updateTaskStatusSchema),
+  taskController.updateTaskStatus.bind(taskController),
 );
 
 export default taskRouter;
