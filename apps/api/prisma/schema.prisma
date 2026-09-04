@@ -115,8 +115,8 @@ model Task {
   createdById String @db.Uuid
   createdBy   User   @relation("TaskCreator", fields: [createdById], references: [id])
 
-  assigneeId String @db.Uuid
-  assignee   User   @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  assigneeId String? @db.Uuid
+  assignee   User?   @relation("TaskAssignee", fields: [assigneeId], references: [id])
 
   title       String
   description String?
