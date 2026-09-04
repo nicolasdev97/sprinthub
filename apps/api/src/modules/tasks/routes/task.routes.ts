@@ -4,7 +4,11 @@ import { authenticate } from "../../../middleware/auth";
 import { validate } from "../../../middleware/validation";
 
 import { TaskController } from "../controller";
-import { createTaskSchema, updateTaskSchema } from "../schema";
+import {
+  createTaskSchema,
+  updateTaskSchema,
+  assignTaskSchema,
+} from "../schema";
 import { TaskRepository } from "../repository";
 import { TaskService } from "../service";
 import { WorkspaceService } from "../../workspaces/service";
@@ -64,6 +68,13 @@ taskRouter.delete<TaskParams>(
   "/tasks/:taskId",
   authenticate,
   taskController.deleteTask.bind(taskController),
+);
+
+taskRouter.patch<TaskParams>(
+  "/tasks/:taskId/assign",
+  authenticate,
+  validate(assignTaskSchema),
+  taskController.assignTask.bind(taskController),
 );
 
 export default taskRouter;

@@ -44,4 +44,15 @@ export class TaskRepository {
       },
     });
   }
+
+  async assignTask(taskId: string, assigneeId: string) {
+    return prisma.task.update({
+      where: {
+        id: taskId,
+      },
+      data: {
+        assigneeId,
+      },
+    });
+  }
 }

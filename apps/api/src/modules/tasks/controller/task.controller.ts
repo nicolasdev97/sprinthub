@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import { CreateTaskDto, UpdateTaskDto } from "../dto";
+import { CreateTaskDto, UpdateTaskDto, AssignTaskDto } from "../dto";
 import { TaskService } from "../service";
 import { ProjectTaskParams, TaskParams } from "../types";
 
@@ -60,5 +60,16 @@ export class TaskController {
     await this.taskService.deleteTask(taskId, userId);
 
     res.status(204).send();
+  }
+
+  async assignTask(
+    req: Request<TaskParams, unknown, AssignTaskDto>,
+    res: Response,
+  ) {
+    const { taskId } = req.params;
+
+    const task = await this.taskService.assignTask(taskId, req.body);
+
+    res.status(200).json(task);
   }
 }
