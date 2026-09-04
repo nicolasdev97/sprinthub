@@ -6,6 +6,7 @@ import {
   UpdateTaskDto,
   AssignTaskDto,
   UpdateTaskStatusDto,
+  UpdateTaskPriorityDto,
 } from "../dto";
 import { TaskRepository } from "../repository";
 import { WorkspaceService } from "../../workspaces/service";
@@ -154,5 +155,15 @@ export class TaskService {
     const completedAt = data.status === TaskStatus.DONE ? new Date() : null;
 
     return this.taskRepository.updateStatus(taskId, data.status, completedAt);
+  }
+
+  async updateTaskPriority(taskId: string, data: UpdateTaskPriorityDto) {
+    const task = await this.taskRepository.findById(taskId);
+
+    if (!task) {
+      throw new AppError("Task not found", 404);
+    }
+
+    return this.taskRepository.updatePriority(taskId, data.priority);
   }
 }

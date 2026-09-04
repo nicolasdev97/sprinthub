@@ -1,7 +1,7 @@
 import { prisma } from "../../../database/prisma";
 
 import { CreateTaskDto, UpdateTaskDto } from "../dto";
-import { TaskStatus } from "@prisma/client";
+import { TaskStatus, TaskPriority } from "@prisma/client";
 
 export class TaskRepository {
   async findMany(projectId: string) {
@@ -69,6 +69,17 @@ export class TaskRepository {
       data: {
         status,
         completedAt,
+      },
+    });
+  }
+
+  async updatePriority(taskId: string, priority: TaskPriority) {
+    return prisma.task.update({
+      where: {
+        id: taskId,
+      },
+      data: {
+        priority,
       },
     });
   }

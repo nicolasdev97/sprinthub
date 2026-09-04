@@ -5,6 +5,7 @@ import {
   UpdateTaskDto,
   AssignTaskDto,
   UpdateTaskStatusDto,
+  UpdateTaskPriorityDto,
 } from "../dto";
 import { TaskService } from "../service";
 import { ProjectTaskParams, TaskParams } from "../types";
@@ -85,6 +86,17 @@ export class TaskController {
     const { taskId } = req.params;
 
     const task = await this.taskService.updateTaskStatus(taskId, req.body);
+
+    res.status(200).json(task);
+  }
+
+  async updateTaskPriority(
+    req: Request<TaskParams, unknown, UpdateTaskPriorityDto>,
+    res: Response,
+  ) {
+    const { taskId } = req.params;
+
+    const task = await this.taskService.updateTaskPriority(taskId, req.body);
 
     res.status(200).json(task);
   }

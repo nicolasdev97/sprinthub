@@ -9,6 +9,7 @@ import {
   updateTaskSchema,
   assignTaskSchema,
   updateTaskStatusSchema,
+  updateTaskPrioritySchema,
 } from "../schema";
 import { TaskRepository } from "../repository";
 import { TaskService } from "../service";
@@ -83,6 +84,13 @@ taskRouter.patch<TaskParams>(
   authenticate,
   validate(updateTaskStatusSchema),
   taskController.updateTaskStatus.bind(taskController),
+);
+
+taskRouter.patch<TaskParams>(
+  "/tasks/:taskId/priority",
+  authenticate,
+  validate(updateTaskPrioritySchema),
+  taskController.updateTaskPriority.bind(taskController),
 );
 
 export default taskRouter;
