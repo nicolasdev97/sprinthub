@@ -17,6 +17,12 @@ export class TaskRepository {
             equals: new Date(filters.dueDate),
           },
         }),
+        ...(filters?.search && {
+          title: {
+            contains: filters.search,
+            mode: "insensitive",
+          },
+        }),
       },
       orderBy: filters?.sortBy
         ? {

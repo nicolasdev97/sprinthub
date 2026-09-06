@@ -14,4 +14,6 @@ export const taskFilterSchema = z.object({
   sortBy: z.enum(["createdAt", "dueDate", "priority"]).optional(),
 
   sortOrder: z.enum(["asc", "desc"]).optional(),
+
+  search: z.string().optional(),
 });

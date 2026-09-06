@@ -7,4 +7,5 @@ export interface TaskFilterParams {
   dueDate?: string;
   sortBy?: "createdAt" | "dueDate" | "priority";
   sortOrder?: "asc" | "desc";
+  search?: string;
 }
