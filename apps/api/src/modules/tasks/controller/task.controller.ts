@@ -8,16 +8,20 @@ import {
   UpdateTaskPriorityDto,
 } from "../dto";
 import { TaskService } from "../service";
-import { ProjectTaskParams, TaskParams } from "../types";
+import { ProjectTaskParams, TaskParams, TaskFilterParams } from "../types";
 
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
-  async getTasks(req: Request<ProjectTaskParams>, res: Response) {
+  async getTasks(
+    req: Request<ProjectTaskParams, unknown, unknown, TaskFilterParams>,
+    res: Response,
+  ) {
     const { projectId } = req.params;
     const userId = req.user.userId;
+    const filters = req.query;
 
-    const tasks = await this.taskService.getTasks(projectId, userId);
+    const tasks = await this.taskService.getTasks(projectId, userId, filters);
 
     res.status(200).json(tasks);
   }

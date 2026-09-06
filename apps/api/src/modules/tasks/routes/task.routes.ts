@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import { authenticate } from "../../../middleware/auth";
-import { validate } from "../../../middleware/validation";
+import { validate, validateQuery } from "../../../middleware/validation";
 
 import { TaskController } from "../controller";
 import {
@@ -10,6 +10,7 @@ import {
   assignTaskSchema,
   updateTaskStatusSchema,
   updateTaskPrioritySchema,
+  taskFilterSchema,
 } from "../schema";
 import { TaskRepository } from "../repository";
 import { TaskService } from "../service";
@@ -50,6 +51,7 @@ taskRouter.post<
 taskRouter.get<ProjectTaskParams>(
   "/projects/:projectId/tasks",
   authenticate,
+  validateQuery(taskFilterSchema),
   taskController.getTasks.bind(taskController),
 );
 

@@ -12,6 +12,8 @@ import { TaskRepository } from "../repository";
 import { WorkspaceService } from "../../workspaces/service";
 import { ProjectRepository } from "../../projects/repository";
 
+import { TaskFilterParams } from "../types";
+
 export class TaskService {
   constructor(
     private readonly taskRepository: TaskRepository,
@@ -19,7 +21,11 @@ export class TaskService {
     private readonly workspaceService: WorkspaceService,
   ) {}
 
-  async getTasks(projectId: string, userId: string) {
+  async getTasks(
+    projectId: string,
+    userId: string,
+    filters?: TaskFilterParams,
+  ) {
     const project = await this.projectRepository.findById(projectId);
 
     if (!project) {
@@ -28,7 +34,7 @@ export class TaskService {
 
     await this.workspaceService.getWorkspaceMember(project.workspaceId, userId);
 
-    return this.taskRepository.findMany(projectId);
+    return this.taskRepository.findMany(projectId, filters);
   }
 
   async getTaskById(taskId: string, userId: string) {

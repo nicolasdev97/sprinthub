@@ -2,12 +2,21 @@ import { prisma } from "../../../database/prisma";
 
 import { CreateTaskDto, UpdateTaskDto } from "../dto";
 import { TaskStatus, TaskPriority } from "@prisma/client";
+import { TaskFilterParams } from "../types";
 
 export class TaskRepository {
-  async findMany(projectId: string) {
+  async findMany(projectId: string, filters?: TaskFilterParams) {
     return prisma.task.findMany({
       where: {
         projectId,
+        status: filters?.status,
+        priority: filters?.priority,
+        assigneeId: filters?.assigneeId,
+        ...(filters?.dueDate && {
+          dueDate: {
+            equals: new Date(filters.dueDate),
+          },
+        }),
       },
     });
   }
