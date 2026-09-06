@@ -9,5 +9,9 @@ export const taskFilterSchema = z.object({
 
   assigneeId: z.uuid().optional(),
 
-  dueDate: z.string().datetime().optional(),
+  dueDate: z.string().optional(),
+
+  sortBy: z.enum(["createdAt", "dueDate", "priority"]).optional(),
+
+  sortOrder: z.enum(["asc", "desc"]).optional(),
 });

@@ -5,4 +5,6 @@ export interface TaskFilterParams {
   priority?: TaskPriority;
   assigneeId?: string;
   dueDate?: string;
+  sortBy?: "createdAt" | "dueDate" | "priority";
+  sortOrder?: "asc" | "desc";
 }

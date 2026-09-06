@@ -18,6 +18,11 @@ export class TaskRepository {
           },
         }),
       },
+      orderBy: filters?.sortBy
+        ? {
+            [filters.sortBy]: filters.sortOrder ?? "asc",
+          }
+        : undefined,
     });
   }
 
