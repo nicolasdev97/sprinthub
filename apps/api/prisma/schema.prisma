@@ -25,8 +25,10 @@ enum ProjectStatus {
 }
 
 enum TaskStatus {
+  BACKLOG
   TODO
   IN_PROGRESS
+  REVIEW
   DONE
 }
 
@@ -34,6 +36,7 @@ enum TaskPriority {
   LOW
   MEDIUM
   HIGH
+  CRITICAL
 }
 
 model User {
@@ -115,8 +118,8 @@ model Task {
   createdById String @db.Uuid
   createdBy   User   @relation("TaskCreator", fields: [createdById], references: [id])
 
-  assigneeId String @db.Uuid
-  assignee   User   @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  assigneeId String? @db.Uuid
+  assignee   User?   @relation("TaskAssignee", fields: [assigneeId], references: [id])
 
   title       String
   description String?
@@ -125,6 +128,7 @@ model Task {
   priority TaskPriority
 
   dueDate DateTime?
+  completedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
