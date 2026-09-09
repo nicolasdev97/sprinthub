@@ -1,3 +1,3 @@
-export * from "./project-task-params";
-export * from "./task-params";
-export * from "./task-filter.types";
+export * from "./project-task-params.type";
+export * from "./task-params.type";
+export * from "./task-filter.type";

@@ -5,7 +5,13 @@ import { TaskStatus, TaskPriority } from "@prisma/client";
 import { TaskFilterParams } from "../types";
 
 export class TaskRepository {
-  async findMany(projectId: string, filters?: TaskFilterParams) {
+  async createTask(data: CreateTaskDto) {
+    return prisma.task.create({
+      data,
+    });
+  }
+
+  async getTasks(projectId: string, filters?: TaskFilterParams) {
     return prisma.task.findMany({
       where: {
         projectId,
@@ -32,7 +38,7 @@ export class TaskRepository {
     });
   }
 
-  async findById(id: string) {
+  async getTaskById(id: string) {
     return prisma.task.findUnique({
       where: {
         id,
@@ -43,13 +49,7 @@ export class TaskRepository {
     });
   }
 
-  async create(data: CreateTaskDto) {
-    return prisma.task.create({
-      data,
-    });
-  }
-
-  async update(id: string, data: UpdateTaskDto) {
+  async updateTask(id: string, data: UpdateTaskDto) {
     return prisma.task.update({
       where: {
         id,
@@ -58,7 +58,7 @@ export class TaskRepository {
     });
   }
 
-  async delete(id: string) {
+  async deleteTask(id: string) {
     return prisma.task.delete({
       where: {
         id,
@@ -77,7 +77,7 @@ export class TaskRepository {
     });
   }
 
-  async updateStatus(
+  async updateTaskStatus(
     taskId: string,
     status: TaskStatus,
     completedAt: Date | null,
@@ -93,7 +93,7 @@ export class TaskRepository {
     });
   }
 
-  async updatePriority(taskId: string, priority: TaskPriority) {
+  async updateTaskPriority(taskId: string, priority: TaskPriority) {
     return prisma.task.update({
       where: {
         id: taskId,

@@ -29,7 +29,7 @@ export class WorkspaceRepository {
     });
   }
 
-  async findUserWorkspaces(userId: string) {
+  async getWorkspaces(userId: string) {
     return prisma.workspaceMember.findMany({
       where: {
         userId,
@@ -43,7 +43,7 @@ export class WorkspaceRepository {
     });
   }
 
-  async findWorkspaceById(workspaceId: string, userId: string) {
+  async getWorkspaceById(workspaceId: string, userId: string) {
     return prisma.workspaceMember.findFirst({
       where: {
         workspaceId,
@@ -72,33 +72,7 @@ export class WorkspaceRepository {
     });
   }
 
-  async findWorkspaceMember(workspaceId: string, userId: string) {
-    return prisma.workspaceMember.findFirst({
-      where: {
-        workspaceId,
-        userId,
-      },
-    });
-  }
-
-  async findUserByEmail(email: string) {
-    return prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
-  }
-
-  async findWorkspaceMemberByUser(workspaceId: string, userId: string) {
-    return prisma.workspaceMember.findFirst({
-      where: {
-        workspaceId,
-        userId,
-      },
-    });
-  }
-
-  async createWorkspaceMember(
+  async addWorkspaceMember(
     workspaceId: string,
     userId: string,
     role: WorkspaceRole,
@@ -113,7 +87,7 @@ export class WorkspaceRepository {
     });
   }
 
-  async findWorkspaceMembers(workspaceId: string) {
+  async getWorkspaceMembers(workspaceId: string) {
     return prisma.workspaceMember.findMany({
       where: {
         workspaceId,
@@ -134,11 +108,20 @@ export class WorkspaceRepository {
     });
   }
 
-  async findWorkspaceMemberById(workspaceId: string, memberId: string) {
+  async getWorkspaceMemberById(workspaceId: string, memberId: string) {
     return prisma.workspaceMember.findFirst({
       where: {
         id: memberId,
         workspaceId,
+      },
+    });
+  }
+
+  async getWorkspaceMemberByUser(workspaceId: string, userId: string) {
+    return prisma.workspaceMember.findFirst({
+      where: {
+        workspaceId,
+        userId,
       },
     });
   }
@@ -158,6 +141,14 @@ export class WorkspaceRepository {
     return prisma.workspaceMember.delete({
       where: {
         id: memberId,
+      },
+    });
+  }
+
+  async getUserByEmail(email: string) {
+    return prisma.user.findUnique({
+      where: {
+        email,
       },
     });
   }

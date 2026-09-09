@@ -25,10 +25,10 @@ export class WorkspaceController {
     res.status(201).json(workspace);
   }
 
-  async getUserWorkspaces(req: Request, res: Response) {
+  async getWorkspaces(req: Request, res: Response) {
     const userId = req.user!.userId;
 
-    const workspaces = await this.workspaceService.getUserWorkspaces(userId);
+    const workspaces = await this.workspaceService.getWorkspaces(userId);
 
     res.status(200).json(workspaces);
   }
@@ -98,7 +98,11 @@ export class WorkspaceController {
   }
 
   async updateWorkspaceMemberRole(
-    req: Request<WorkspaceMemberParams, {}, UpdateWorkspaceMemberRoleDto>,
+    req: Request<
+      WorkspaceMemberParams,
+      Record<string, never>,
+      UpdateWorkspaceMemberRoleDto
+    >,
     res: Response,
   ) {
     const { workspaceId, memberId } = req.params;

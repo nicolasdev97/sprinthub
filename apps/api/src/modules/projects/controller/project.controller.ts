@@ -8,15 +8,6 @@ import { ProjectService } from "../service";
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
-  async getProjects(req: Request<WorkspaceProjectParams>, res: Response) {
-    const { workspaceId } = req.params;
-    const userId = req.user.userId;
-
-    const projects = await this.projectService.getProjects(workspaceId, userId);
-
-    res.status(200).json(projects);
-  }
-
   async createProject(
     req: Request<
       WorkspaceProjectParams,
@@ -36,6 +27,15 @@ export class ProjectController {
     const project = await this.projectService.createProject(data, userId);
 
     res.status(201).json(project);
+  }
+
+  async getProjects(req: Request<WorkspaceProjectParams>, res: Response) {
+    const { workspaceId } = req.params;
+    const userId = req.user.userId;
+
+    const projects = await this.projectService.getProjects(workspaceId, userId);
+
+    res.status(200).json(projects);
   }
 
   async getProjectById(req: Request<ProjectParams>, res: Response) {

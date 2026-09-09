@@ -21,46 +21,12 @@ export class TaskService {
     private readonly workspaceService: WorkspaceService,
   ) {}
 
-  async getTasks(
-    projectId: string,
-    userId: string,
-    filters?: TaskFilterParams,
-  ) {
-    const project = await this.projectRepository.findById(projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
-
-    await this.workspaceService.getWorkspaceMember(project.workspaceId, userId);
-
-    return this.taskRepository.findMany(projectId, filters);
-  }
-
-  async getTaskById(taskId: string, userId: string) {
-    const task = await this.taskRepository.findById(taskId);
-
-    if (!task) {
-      throw new AppError("Task not found", 404);
-    }
-
-    const project = await this.projectRepository.findById(task.projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
-
-    await this.workspaceService.getWorkspaceMember(project.workspaceId, userId);
-
-    return task;
-  }
-
   async createTask(
     data: Omit<CreateTaskDto, "projectId" | "createdById" | "status">,
     projectId: string,
     userId: string,
   ) {
-    const project = await this.projectRepository.findById(projectId);
+    const project = await this.projectRepository.getProjectById(projectId);
 
     if (!project) {
       throw new AppError("Project not found", 404);
@@ -70,7 +36,10 @@ export class TaskService {
       throw new AppError("Archived projects cannot receive new tasks", 400);
     }
 
-    await this.workspaceService.getWorkspaceMember(project.workspaceId, userId);
+    await this.workspaceService.getWorkspaceMemberByUser(
+      project.workspaceId,
+      userId,
+    );
 
     const taskData: CreateTaskDto = {
       ...data,
@@ -79,44 +48,88 @@ export class TaskService {
       status: TaskStatus.TODO,
     };
 
-    return this.taskRepository.create(taskData);
+    return this.taskRepository.createTask(taskData);
   }
 
-  async updateTask(taskId: string, userId: string, data: UpdateTaskDto) {
-    const task = await this.taskRepository.findById(taskId);
-
-    if (!task) {
-      throw new AppError("Task not found", 404);
-    }
-
-    const project = await this.projectRepository.findById(task.projectId);
+  async getTasks(
+    projectId: string,
+    userId: string,
+    filters?: TaskFilterParams,
+  ) {
+    const project = await this.projectRepository.getProjectById(projectId);
 
     if (!project) {
       throw new AppError("Project not found", 404);
     }
 
-    await this.workspaceService.getWorkspaceMember(project.workspaceId, userId);
-
-    return this.taskRepository.update(taskId, data);
-  }
-
-  async deleteTask(taskId: string, userId: string) {
-    const task = await this.taskRepository.findById(taskId);
-
-    if (!task) {
-      throw new AppError("Task not found", 404);
-    }
-
-    const project = await this.projectRepository.findById(task.projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
-
-    const workspaceMember = await this.workspaceService.getWorkspaceMember(
+    await this.workspaceService.getWorkspaceMemberByUser(
       project.workspaceId,
       userId,
     );
+
+    return this.taskRepository.getTasks(projectId, filters);
+  }
+
+  async getTaskById(taskId: string, userId: string) {
+    const task = await this.taskRepository.getTaskById(taskId);
+
+    if (!task) {
+      throw new AppError("Task not found", 404);
+    }
+
+    const project = await this.projectRepository.getProjectById(task.projectId);
+
+    if (!project) {
+      throw new AppError("Project not found", 404);
+    }
+
+    await this.workspaceService.getWorkspaceMemberByUser(
+      project.workspaceId,
+      userId,
+    );
+
+    return task;
+  }
+
+  async updateTask(taskId: string, userId: string, data: UpdateTaskDto) {
+    const task = await this.taskRepository.getTaskById(taskId);
+
+    if (!task) {
+      throw new AppError("Task not found", 404);
+    }
+
+    const project = await this.projectRepository.getProjectById(task.projectId);
+
+    if (!project) {
+      throw new AppError("Project not found", 404);
+    }
+
+    await this.workspaceService.getWorkspaceMemberByUser(
+      project.workspaceId,
+      userId,
+    );
+
+    return this.taskRepository.updateTask(taskId, data);
+  }
+
+  async deleteTask(taskId: string, userId: string) {
+    const task = await this.taskRepository.getTaskById(taskId);
+
+    if (!task) {
+      throw new AppError("Task not found", 404);
+    }
+
+    const project = await this.projectRepository.getProjectById(task.projectId);
+
+    if (!project) {
+      throw new AppError("Project not found", 404);
+    }
+
+    const workspaceMember =
+      await this.workspaceService.getWorkspaceMemberByUser(
+        project.workspaceId,
+        userId,
+      );
 
     const canDelete =
       task.createdById === userId ||
@@ -127,23 +140,23 @@ export class TaskService {
       throw new AppError("Forbidden", 403);
     }
 
-    await this.taskRepository.delete(taskId);
+    await this.taskRepository.deleteTask(taskId);
   }
 
   async assignTask(taskId: string, data: AssignTaskDto) {
-    const task = await this.taskRepository.findById(taskId);
+    const task = await this.taskRepository.getTaskById(taskId);
 
     if (!task) {
       throw new AppError("Task not found", 404);
     }
 
-    const project = await this.projectRepository.findById(task.projectId);
+    const project = await this.projectRepository.getProjectById(task.projectId);
 
     if (!project) {
       throw new AppError("Project not found", 404);
     }
 
-    await this.workspaceService.getWorkspaceMember(
+    await this.workspaceService.getWorkspaceMemberByUser(
       project.workspaceId,
       data.assigneeId,
     );
@@ -152,7 +165,7 @@ export class TaskService {
   }
 
   async updateTaskStatus(taskId: string, data: UpdateTaskStatusDto) {
-    const task = await this.taskRepository.findById(taskId);
+    const task = await this.taskRepository.getTaskById(taskId);
 
     if (!task) {
       throw new AppError("Task not found", 404);
@@ -160,16 +173,20 @@ export class TaskService {
 
     const completedAt = data.status === TaskStatus.DONE ? new Date() : null;
 
-    return this.taskRepository.updateStatus(taskId, data.status, completedAt);
+    return this.taskRepository.updateTaskStatus(
+      taskId,
+      data.status,
+      completedAt,
+    );
   }
 
   async updateTaskPriority(taskId: string, data: UpdateTaskPriorityDto) {
-    const task = await this.taskRepository.findById(taskId);
+    const task = await this.taskRepository.getTaskById(taskId);
 
     if (!task) {
       throw new AppError("Task not found", 404);
     }
 
-    return this.taskRepository.updatePriority(taskId, data.priority);
+    return this.taskRepository.updateTaskPriority(taskId, data.priority);
   }
 }

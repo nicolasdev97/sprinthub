@@ -29,7 +29,7 @@ workspaceRouter.post(
 workspaceRouter.get(
   "/",
   authenticate,
-  workspaceController.getUserWorkspaces.bind(workspaceController),
+  workspaceController.getWorkspaces.bind(workspaceController),
 );
 
 workspaceRouter.get(
