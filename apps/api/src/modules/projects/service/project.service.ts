@@ -11,29 +11,12 @@ export class ProjectService {
     private readonly workspaceService: WorkspaceService,
   ) {}
 
-  async getProjects(workspaceId: string, userId: string) {
-    await this.workspaceService.getWorkspaceMember(workspaceId, userId);
-
-    return this.projectRepository.findMany(workspaceId);
-  }
-
-  async getProjectById(projectId: string, userId: string) {
-    const project = await this.projectRepository.findById(projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
-
-    await this.workspaceService.getWorkspaceMember(project.workspaceId, userId);
-
-    return project;
-  }
-
   async createProject(data: CreateProjectDto, userId: string) {
-    const workspaceMember = await this.workspaceService.getWorkspaceMember(
-      data.workspaceId,
-      userId,
-    );
+    const workspaceMember =
+      await this.workspaceService.getWorkspaceMemberByUser(
+        data.workspaceId,
+        userId,
+      );
 
     if (
       workspaceMember.role !== WorkspaceRole.OWNER &&
@@ -42,7 +25,7 @@ export class ProjectService {
       throw new AppError("Forbidden", 403);
     }
 
-    const existingProject = await this.projectRepository.findByName(
+    const existingProject = await this.projectRepository.getProjectByName(
       data.workspaceId,
       data.name,
     );
@@ -51,7 +34,28 @@ export class ProjectService {
       throw new AppError("Project name already exists in this workspace", 409);
     }
 
-    return this.projectRepository.create(data);
+    return this.projectRepository.createProject(data);
+  }
+
+  async getProjects(workspaceId: string, userId: string) {
+    await this.workspaceService.getWorkspaceMemberByUser(workspaceId, userId);
+
+    return this.projectRepository.getProjects(workspaceId);
+  }
+
+  async getProjectById(projectId: string, userId: string) {
+    const project = await this.projectRepository.getProjectById(projectId);
+
+    if (!project) {
+      throw new AppError("Project not found", 404);
+    }
+
+    await this.workspaceService.getWorkspaceMemberByUser(
+      project.workspaceId,
+      userId,
+    );
+
+    return project;
   }
 
   async updateProject(
@@ -59,16 +63,17 @@ export class ProjectService {
     userId: string,
     data: UpdateProjectDto,
   ) {
-    const project = await this.projectRepository.findById(projectId);
+    const project = await this.projectRepository.getProjectById(projectId);
 
     if (!project) {
       throw new AppError("Project not found", 404);
     }
 
-    const workspaceMember = await this.workspaceService.getWorkspaceMember(
-      project.workspaceId,
-      userId,
-    );
+    const workspaceMember =
+      await this.workspaceService.getWorkspaceMemberByUser(
+        project.workspaceId,
+        userId,
+      );
 
     if (
       workspaceMember.role !== WorkspaceRole.OWNER &&
@@ -77,20 +82,21 @@ export class ProjectService {
       throw new AppError("Forbidden", 403);
     }
 
-    return this.projectRepository.update(projectId, data);
+    return this.projectRepository.updateProject(projectId, data);
   }
 
   async deleteProject(projectId: string, userId: string) {
-    const project = await this.projectRepository.findById(projectId);
+    const project = await this.projectRepository.getProjectById(projectId);
 
     if (!project) {
       throw new AppError("Project not found", 404);
     }
 
-    const workspaceMember = await this.workspaceService.getWorkspaceMember(
-      project.workspaceId,
-      userId,
-    );
+    const workspaceMember =
+      await this.workspaceService.getWorkspaceMemberByUser(
+        project.workspaceId,
+        userId,
+      );
 
     if (
       workspaceMember.role !== WorkspaceRole.OWNER &&
@@ -99,20 +105,21 @@ export class ProjectService {
       throw new AppError("Forbidden", 403);
     }
 
-    await this.projectRepository.delete(projectId);
+    await this.projectRepository.deleteProject(projectId);
   }
 
   async archiveProject(projectId: string, userId: string) {
-    const project = await this.projectRepository.findById(projectId);
+    const project = await this.projectRepository.getProjectById(projectId);
 
     if (!project) {
       throw new AppError("Project not found", 404);
     }
 
-    const workspaceMember = await this.workspaceService.getWorkspaceMember(
-      project.workspaceId,
-      userId,
-    );
+    const workspaceMember =
+      await this.workspaceService.getWorkspaceMemberByUser(
+        project.workspaceId,
+        userId,
+      );
 
     if (
       workspaceMember.role !== WorkspaceRole.OWNER &&

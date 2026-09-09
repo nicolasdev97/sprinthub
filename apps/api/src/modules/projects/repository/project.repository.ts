@@ -2,7 +2,13 @@ import { prisma } from "../../../database/prisma";
 import { CreateProjectDto, UpdateProjectDto } from "../dto";
 
 export class ProjectRepository {
-  async findMany(workspaceId: string) {
+  async createProject(data: CreateProjectDto) {
+    return prisma.project.create({
+      data,
+    });
+  }
+
+  async getProjects(workspaceId: string) {
     return prisma.project.findMany({
       where: {
         workspaceId,
@@ -10,7 +16,7 @@ export class ProjectRepository {
     });
   }
 
-  async findById(id: string) {
+  async getProjectById(id: string) {
     return prisma.project.findUnique({
       where: {
         id,
@@ -18,7 +24,7 @@ export class ProjectRepository {
     });
   }
 
-  async findByName(workspaceId: string, name: string) {
+  async getProjectByName(workspaceId: string, name: string) {
     return prisma.project.findFirst({
       where: {
         workspaceId,
@@ -27,13 +33,7 @@ export class ProjectRepository {
     });
   }
 
-  async create(data: CreateProjectDto) {
-    return prisma.project.create({
-      data,
-    });
-  }
-
-  async update(id: string, data: UpdateProjectDto) {
+  async updateProject(id: string, data: UpdateProjectDto) {
     return prisma.project.update({
       where: {
         id,
@@ -42,7 +42,7 @@ export class ProjectRepository {
     });
   }
 
-  async delete(id: string) {
+  async deleteProject(id: string) {
     return prisma.project.delete({
       where: {
         id,

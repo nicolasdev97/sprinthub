@@ -13,19 +13,6 @@ import { ProjectTaskParams, TaskParams, TaskFilterParams } from "../types";
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
-  async getTasks(
-    req: Request<ProjectTaskParams, unknown, unknown, TaskFilterParams>,
-    res: Response,
-  ) {
-    const { projectId } = req.params;
-    const userId = req.user.userId;
-    const filters = req.query;
-
-    const tasks = await this.taskService.getTasks(projectId, userId, filters);
-
-    res.status(200).json(tasks);
-  }
-
   async createTask(
     req: Request<
       ProjectTaskParams,
@@ -40,6 +27,19 @@ export class TaskController {
     const task = await this.taskService.createTask(req.body, projectId, userId);
 
     res.status(201).json(task);
+  }
+
+  async getTasks(
+    req: Request<ProjectTaskParams, unknown, unknown, TaskFilterParams>,
+    res: Response,
+  ) {
+    const { projectId } = req.params;
+    const userId = req.user.userId;
+    const filters = req.query;
+
+    const tasks = await this.taskService.getTasks(projectId, userId, filters);
+
+    res.status(200).json(tasks);
   }
 
   async getTaskById(req: Request<TaskParams>, res: Response) {

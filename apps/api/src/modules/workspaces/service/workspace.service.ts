@@ -16,15 +16,15 @@ export class WorkspaceService {
     return this.workspaceRepository.createWorkspace(data, ownerId);
   }
 
-  async getUserWorkspaces(userId: string) {
+  async getWorkspaces(userId: string) {
     const workspaceMembers =
-      await this.workspaceRepository.findUserWorkspaces(userId);
+      await this.workspaceRepository.getWorkspaces(userId);
 
     return workspaceMembers.map((workspaceMember) => workspaceMember.workspace);
   }
 
   async getWorkspaceById(workspaceId: string, userId: string) {
-    const workspaceMember = await this.workspaceRepository.findWorkspaceById(
+    const workspaceMember = await this.workspaceRepository.getWorkspaceById(
       workspaceId,
       userId,
     );
@@ -41,10 +41,11 @@ export class WorkspaceService {
     userId: string,
     data: UpdateWorkspaceDto,
   ) {
-    const workspaceMember = await this.workspaceRepository.findWorkspaceMember(
-      workspaceId,
-      userId,
-    );
+    const workspaceMember =
+      await this.workspaceRepository.getWorkspaceMemberByUser(
+        workspaceId,
+        userId,
+      );
 
     if (!workspaceMember) {
       throw new AppError("Workspace not found", 404);
@@ -61,10 +62,11 @@ export class WorkspaceService {
   }
 
   async deleteWorkspace(workspaceId: string, userId: string) {
-    const workspaceMember = await this.workspaceRepository.findWorkspaceMember(
-      workspaceId,
-      userId,
-    );
+    const workspaceMember =
+      await this.workspaceRepository.getWorkspaceMemberByUser(
+        workspaceId,
+        userId,
+      );
 
     if (!workspaceMember) {
       throw new AppError("Workspace not found", 404);
@@ -82,10 +84,11 @@ export class WorkspaceService {
     userId: string,
     data: AddWorkspaceMemberDto,
   ) {
-    const workspaceMember = await this.workspaceRepository.findWorkspaceMember(
-      workspaceId,
-      userId,
-    );
+    const workspaceMember =
+      await this.workspaceRepository.getWorkspaceMemberByUser(
+        workspaceId,
+        userId,
+      );
 
     if (!workspaceMember) {
       throw new AppError("Workspace not found", 404);
@@ -98,12 +101,11 @@ export class WorkspaceService {
       throw new AppError("Forbidden", 403);
     }
 
-    // Regla de negocio
     if (data.role === WorkspaceRole.OWNER) {
       throw new AppError("Owner role cannot be assigned", 400);
     }
 
-    const memberUser = await this.workspaceRepository.findUserByEmail(
+    const memberUser = await this.workspaceRepository.getUserByEmail(
       data.email,
     );
 
@@ -112,7 +114,7 @@ export class WorkspaceService {
     }
 
     const existingMember =
-      await this.workspaceRepository.findWorkspaceMemberByUser(
+      await this.workspaceRepository.getWorkspaceMemberByUser(
         workspaceId,
         memberUser.id,
       );
@@ -121,7 +123,7 @@ export class WorkspaceService {
       throw new AppError("User is already a workspace member", 409);
     }
 
-    return this.workspaceRepository.createWorkspaceMember(
+    return this.workspaceRepository.addWorkspaceMember(
       workspaceId,
       memberUser.id,
       data.role,
@@ -129,16 +131,31 @@ export class WorkspaceService {
   }
 
   async getWorkspaceMembers(workspaceId: string, userId: string) {
-    const workspaceMember = await this.workspaceRepository.findWorkspaceMember(
-      workspaceId,
-      userId,
-    );
+    const workspaceMember =
+      await this.workspaceRepository.getWorkspaceMemberByUser(
+        workspaceId,
+        userId,
+      );
 
     if (!workspaceMember) {
       throw new AppError("Workspace not found", 404);
     }
 
-    return this.workspaceRepository.findWorkspaceMembers(workspaceId);
+    return this.workspaceRepository.getWorkspaceMembers(workspaceId);
+  }
+
+  async getWorkspaceMemberByUser(workspaceId: string, userId: string) {
+    const workspaceMember =
+      await this.workspaceRepository.getWorkspaceMemberByUser(
+        workspaceId,
+        userId,
+      );
+
+    if (!workspaceMember) {
+      throw new AppError("Workspace not found", 404);
+    }
+
+    return workspaceMember;
   }
 
   async updateWorkspaceMemberRole(
@@ -147,10 +164,11 @@ export class WorkspaceService {
     userId: string,
     role: WorkspaceRole,
   ) {
-    const workspaceMember = await this.workspaceRepository.findWorkspaceMember(
-      workspaceId,
-      userId,
-    );
+    const workspaceMember =
+      await this.workspaceRepository.getWorkspaceMemberByUser(
+        workspaceId,
+        userId,
+      );
 
     if (!workspaceMember) {
       throw new AppError("Workspace not found", 404);
@@ -160,7 +178,11 @@ export class WorkspaceService {
       throw new AppError("Forbidden", 403);
     }
 
-    const member = await this.workspaceRepository.findWorkspaceMemberById(
+    if (role === WorkspaceRole.OWNER) {
+      throw new AppError("Owner role cannot be assigned", 400);
+    }
+
+    const member = await this.workspaceRepository.getWorkspaceMemberById(
       workspaceId,
       memberId,
     );
@@ -181,10 +203,11 @@ export class WorkspaceService {
     memberId: string,
     userId: string,
   ) {
-    const workspaceMember = await this.workspaceRepository.findWorkspaceMember(
-      workspaceId,
-      userId,
-    );
+    const workspaceMember =
+      await this.workspaceRepository.getWorkspaceMemberByUser(
+        workspaceId,
+        userId,
+      );
 
     if (!workspaceMember) {
       throw new AppError("Workspace not found", 404);
@@ -197,7 +220,7 @@ export class WorkspaceService {
       throw new AppError("Forbidden", 403);
     }
 
-    const member = await this.workspaceRepository.findWorkspaceMemberById(
+    const member = await this.workspaceRepository.getWorkspaceMemberById(
       workspaceId,
       memberId,
     );
@@ -211,18 +234,5 @@ export class WorkspaceService {
     }
 
     return this.workspaceRepository.deleteWorkspaceMember(memberId);
-  }
-
-  async getWorkspaceMember(workspaceId: string, userId: string) {
-    const workspaceMember = await this.workspaceRepository.findWorkspaceMember(
-      workspaceId,
-      userId,
-    );
-
-    if (!workspaceMember) {
-      throw new AppError("Workspace not found", 404);
-    }
-
-    return workspaceMember;
   }
 }
