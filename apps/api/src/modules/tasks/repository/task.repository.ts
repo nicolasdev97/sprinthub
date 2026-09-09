@@ -66,7 +66,7 @@ export class TaskRepository {
     });
   }
 
-  async assignTask(taskId: string, assigneeId: string) {
+  async assignTask(taskId: string, assigneeId: string | null) {
     return prisma.task.update({
       where: {
         id: taskId,

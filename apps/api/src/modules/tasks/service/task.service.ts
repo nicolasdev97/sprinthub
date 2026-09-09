@@ -156,10 +156,12 @@ export class TaskService {
       throw new AppError("Project not found", 404);
     }
 
-    await this.workspaceService.getWorkspaceMemberByUser(
-      project.workspaceId,
-      data.assigneeId,
-    );
+    if (data.assigneeId !== null) {
+      await this.workspaceService.getWorkspaceMemberByUser(
+        project.workspaceId,
+        data.assigneeId,
+      );
+    }
 
     return this.taskRepository.assignTask(taskId, data.assigneeId);
   }
