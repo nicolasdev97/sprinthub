@@ -55,6 +55,14 @@ export class WorkspaceRepository {
     });
   }
 
+  async getWorkspaceByName(name: string) {
+    return prisma.workspace.findFirst({
+      where: {
+        name,
+      },
+    });
+  }
+
   async updateWorkspace(workspaceId: string, data: UpdateWorkspaceDto) {
     return prisma.workspace.update({
       where: {

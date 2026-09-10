@@ -13,6 +13,14 @@ export class WorkspaceService {
   constructor(private readonly workspaceRepository: WorkspaceRepository) {}
 
   async createWorkspace(data: CreateWorkspaceDto, ownerId: string) {
+    const existingWorkspace = await this.workspaceRepository.getWorkspaceByName(
+      data.name,
+    );
+
+    if (existingWorkspace) {
+      throw new AppError("Workspace name already exists", 409);
+    }
+
     return this.workspaceRepository.createWorkspace(data, ownerId);
   }
 
