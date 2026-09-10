@@ -49,6 +49,15 @@ export class TaskRepository {
     });
   }
 
+  async getTaskByTitle(projectId: string, title: string) {
+    return prisma.task.findFirst({
+      where: {
+        projectId,
+        title,
+      },
+    });
+  }
+
   async updateTask(id: string, data: UpdateTaskDto) {
     return prisma.task.update({
       where: {

@@ -41,6 +41,15 @@ export class TaskService {
       userId,
     );
 
+    const existingTask = await this.taskRepository.getTaskByTitle(
+      projectId,
+      data.title,
+    );
+
+    if (existingTask) {
+      throw new AppError("Task title already exists in this project", 409);
+    }
+
     const taskData: CreateTaskDto = {
       ...data,
       projectId,
