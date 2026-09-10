@@ -41,6 +41,15 @@ export class TaskService {
       userId,
     );
 
+    const existingTask = await this.taskRepository.getTaskByTitle(
+      projectId,
+      data.title,
+    );
+
+    if (existingTask) {
+      throw new AppError("Task title already exists in this project", 409);
+    }
+
     const taskData: CreateTaskDto = {
       ...data,
       projectId,
@@ -109,6 +118,17 @@ export class TaskService {
       userId,
     );
 
+    if (data.title) {
+      const existingTask = await this.taskRepository.getTaskByTitle(
+        task.projectId,
+        data.title,
+      );
+
+      if (existingTask && existingTask.id !== taskId) {
+        throw new AppError("Task title already exists in this project", 409);
+      }
+    }
+
     return this.taskRepository.updateTask(taskId, data);
   }
 
@@ -156,10 +176,12 @@ export class TaskService {
       throw new AppError("Project not found", 404);
     }
 
-    await this.workspaceService.getWorkspaceMemberByUser(
-      project.workspaceId,
-      data.assigneeId,
-    );
+    if (data.assigneeId !== null) {
+      await this.workspaceService.getWorkspaceMemberByUser(
+        project.workspaceId,
+        data.assigneeId,
+      );
+    }
 
     return this.taskRepository.assignTask(taskId, data.assigneeId);
   }

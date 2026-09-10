@@ -80,4 +80,16 @@ export class ProjectController {
 
     res.status(200).json(project);
   }
+
+  async unarchiveProject(req: Request<ProjectParams>, res: Response) {
+    const { projectId } = req.params;
+    const userId = req.user.userId;
+
+    const project = await this.projectService.unarchiveProject(
+      projectId,
+      userId,
+    );
+
+    res.status(200).json(project);
+  }
 }

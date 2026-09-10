@@ -1,3 +1,3 @@
 export interface AssignTaskDto {
-  assigneeId: string;
+  assigneeId: string | null;
 }

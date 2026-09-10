@@ -82,6 +82,20 @@ export class ProjectService {
       throw new AppError("Forbidden", 403);
     }
 
+    if (data.name) {
+      const existingProject = await this.projectRepository.getProjectByName(
+        project.workspaceId,
+        data.name,
+      );
+
+      if (existingProject && existingProject.id !== projectId) {
+        throw new AppError(
+          "Project name already exists in this workspace",
+          409,
+        );
+      }
+    }
+
     return this.projectRepository.updateProject(projectId, data);
   }
 
@@ -129,5 +143,28 @@ export class ProjectService {
     }
 
     return this.projectRepository.archiveProject(projectId);
+  }
+
+  async unarchiveProject(projectId: string, userId: string) {
+    const project = await this.projectRepository.getProjectById(projectId);
+
+    if (!project) {
+      throw new AppError("Project not found", 404);
+    }
+
+    const workspaceMember =
+      await this.workspaceService.getWorkspaceMemberByUser(
+        project.workspaceId,
+        userId,
+      );
+
+    if (
+      workspaceMember.role !== WorkspaceRole.OWNER &&
+      workspaceMember.role !== WorkspaceRole.ADMIN
+    ) {
+      throw new AppError("Forbidden", 403);
+    }
+
+    return this.projectRepository.unarchiveProject(projectId);
   }
 }

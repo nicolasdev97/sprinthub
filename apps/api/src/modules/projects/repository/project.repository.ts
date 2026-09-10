@@ -60,4 +60,15 @@ export class ProjectRepository {
       },
     });
   }
+
+  async unarchiveProject(projectId: string) {
+    return prisma.project.update({
+      where: {
+        id: projectId,
+      },
+      data: {
+        archived: false,
+      },
+    });
+  }
 }

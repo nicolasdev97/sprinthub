@@ -60,4 +60,10 @@ projectRouter.patch(
   projectController.archiveProject.bind(projectController),
 );
 
+projectRouter.patch(
+  "/projects/:projectId/unarchive",
+  authenticate,
+  projectController.unarchiveProject.bind(projectController),
+);
+
 export default projectRouter;
