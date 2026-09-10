@@ -118,6 +118,17 @@ export class TaskService {
       userId,
     );
 
+    if (data.title) {
+      const existingTask = await this.taskRepository.getTaskByTitle(
+        task.projectId,
+        data.title,
+      );
+
+      if (existingTask && existingTask.id !== taskId) {
+        throw new AppError("Task title already exists in this project", 409);
+      }
+    }
+
     return this.taskRepository.updateTask(taskId, data);
   }
 

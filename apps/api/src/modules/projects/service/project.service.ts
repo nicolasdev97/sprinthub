@@ -82,6 +82,20 @@ export class ProjectService {
       throw new AppError("Forbidden", 403);
     }
 
+    if (data.name) {
+      const existingProject = await this.projectRepository.getProjectByName(
+        project.workspaceId,
+        data.name,
+      );
+
+      if (existingProject && existingProject.id !== projectId) {
+        throw new AppError(
+          "Project name already exists in this workspace",
+          409,
+        );
+      }
+    }
+
     return this.projectRepository.updateProject(projectId, data);
   }
 
