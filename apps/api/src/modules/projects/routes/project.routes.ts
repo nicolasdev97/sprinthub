@@ -1,10 +1,14 @@
 import { Router } from "express";
 
 import { authenticate } from "../../../middleware/auth";
-import { validate } from "../../../middleware/validation";
+import { validate, validateQuery } from "../../../middleware/validation";
 
 import { ProjectController } from "../controller";
-import { createProjectSchema, updateProjectSchema } from "../schema";
+import {
+  createProjectSchema,
+  updateProjectSchema,
+  projectFilterSchema,
+} from "../schema";
 import { ProjectRepository } from "../repository";
 import { ProjectService } from "../service";
 import { WorkspaceService } from "../../workspaces/service";
@@ -32,6 +36,7 @@ projectRouter.post<WorkspaceProjectParams>(
 projectRouter.get<WorkspaceProjectParams>(
   "/workspaces/:workspaceId/projects",
   authenticate,
+  validateQuery(projectFilterSchema),
   projectController.getProjects.bind(projectController),
 );
 

@@ -4,6 +4,7 @@ import { AppError } from "../../../shared/errors";
 import { CreateProjectDto, UpdateProjectDto } from "../dto";
 import { ProjectRepository } from "../repository";
 import { WorkspaceService } from "../../workspaces/service";
+import { ProjectFilterParams } from "../types";
 
 export class ProjectService {
   constructor(
@@ -37,10 +38,16 @@ export class ProjectService {
     return this.projectRepository.createProject(data);
   }
 
-  async getProjects(workspaceId: string, userId: string) {
+  async getProjects(
+    workspaceId: string,
+    userId: string,
+    filters?: ProjectFilterParams,
+  ) {
+    console.log("FILTERS IN SERVICE:", filters);
+
     await this.workspaceService.getWorkspaceMemberByUser(workspaceId, userId);
 
-    return this.projectRepository.getProjects(workspaceId);
+    return this.projectRepository.getProjects(workspaceId, filters);
   }
 
   async getProjectById(projectId: string, userId: string) {

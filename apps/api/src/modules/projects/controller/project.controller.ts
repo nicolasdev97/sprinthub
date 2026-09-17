@@ -1,6 +1,10 @@
 import { Request, Response } from "express";
 
-import { ProjectParams, WorkspaceProjectParams } from "../types";
+import {
+  ProjectParams,
+  WorkspaceProjectParams,
+  ProjectFilterParams,
+} from "../types";
 
 import { CreateProjectDto, UpdateProjectDto } from "../dto";
 import { ProjectService } from "../service";
@@ -29,11 +33,22 @@ export class ProjectController {
     res.status(201).json(project);
   }
 
-  async getProjects(req: Request<WorkspaceProjectParams>, res: Response) {
+  async getProjects(
+    req: Request<WorkspaceProjectParams, unknown, unknown, ProjectFilterParams>,
+    res: Response,
+  ) {
     const { workspaceId } = req.params;
     const userId = req.user.userId;
 
-    const projects = await this.projectService.getProjects(workspaceId, userId);
+    const filters = req.validatedQuery as ProjectFilterParams;
+
+    console.log("FILTERS BEFORE SERVICE:", filters);
+
+    const projects = await this.projectService.getProjects(
+      workspaceId,
+      userId,
+      filters,
+    );
 
     res.status(200).json(projects);
   }

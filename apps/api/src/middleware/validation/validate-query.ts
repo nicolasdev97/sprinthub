@@ -15,6 +15,8 @@ export function validateQuery(schema: ZodSchema) {
       throw new AppError(message, 400);
     }
 
+    request.validatedQuery = result.data;
+
     next();
   };
 }
