@@ -5,7 +5,8 @@ export interface CreateTaskDto {
   createdById: string;
   title: string;
   description?: string;
+  assigneeId?: string;
+  dueDate?: Date;
   status: TaskStatus;
   priority: TaskPriority;
-  dueDate?: Date;
 }

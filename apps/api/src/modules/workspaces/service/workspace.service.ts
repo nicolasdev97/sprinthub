@@ -169,7 +169,7 @@ export class WorkspaceService {
       );
 
     if (!workspaceMember) {
-      throw new AppError("Workspace not found", 404);
+      throw new AppError("User is not a member of this workspace", 404);
     }
 
     return workspaceMember;
