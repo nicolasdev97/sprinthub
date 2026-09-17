@@ -2,6 +2,8 @@ import { AppError } from "../../../shared/errors";
 
 import { WorkspaceRole } from "@prisma/client";
 
+import { WorkspaceFilterParams } from "../types";
+
 import {
   CreateWorkspaceDto,
   UpdateWorkspaceDto,
@@ -24,9 +26,11 @@ export class WorkspaceService {
     return this.workspaceRepository.createWorkspace(data, ownerId);
   }
 
-  async getWorkspaces(userId: string) {
-    const workspaceMembers =
-      await this.workspaceRepository.getWorkspaces(userId);
+  async getWorkspaces(userId: string, filters?: WorkspaceFilterParams) {
+    const workspaceMembers = await this.workspaceRepository.getWorkspaces(
+      userId,
+      filters,
+    );
 
     return workspaceMembers.map((workspaceMember) => workspaceMember.workspace);
   }

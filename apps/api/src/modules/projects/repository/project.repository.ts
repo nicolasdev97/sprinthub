@@ -1,5 +1,6 @@
 import { prisma } from "../../../database/prisma";
 import { CreateProjectDto, UpdateProjectDto } from "../dto";
+import { ProjectFilterParams } from "../types";
 
 export class ProjectRepository {
   async createProject(data: CreateProjectDto) {
@@ -8,11 +9,26 @@ export class ProjectRepository {
     });
   }
 
-  async getProjects(workspaceId: string) {
+  async getProjects(workspaceId: string, filters?: ProjectFilterParams) {
+    console.log("FILTERS IN REPOSITORY:", filters);
+
     return prisma.project.findMany({
       where: {
         workspaceId,
+        status: filters?.status,
+        archived: filters?.archived,
+        ...(filters?.search && {
+          name: {
+            contains: filters.search,
+            mode: "insensitive",
+          },
+        }),
       },
+      orderBy: filters?.sortBy
+        ? {
+            [filters.sortBy]: filters.sortOrder ?? "asc",
+          }
+        : undefined,
     });
   }
 

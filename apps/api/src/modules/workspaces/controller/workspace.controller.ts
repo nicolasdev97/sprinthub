@@ -1,6 +1,10 @@
 import { Request, Response } from "express";
 
-import { WorkspaceParams, WorkspaceMemberParams } from "../types";
+import {
+  WorkspaceParams,
+  WorkspaceMemberParams,
+  WorkspaceFilterParams,
+} from "../types";
 
 import {
   CreateWorkspaceDto,
@@ -25,10 +29,17 @@ export class WorkspaceController {
     res.status(201).json(workspace);
   }
 
-  async getWorkspaces(req: Request, res: Response) {
+  async getWorkspaces(
+    req: Request<unknown, unknown, unknown, WorkspaceFilterParams>,
+    res: Response,
+  ) {
     const userId = req.user!.userId;
+    const filters = req.query;
 
-    const workspaces = await this.workspaceService.getWorkspaces(userId);
+    const workspaces = await this.workspaceService.getWorkspaces(
+      userId,
+      filters,
+    );
 
     res.status(200).json(workspaces);
   }
