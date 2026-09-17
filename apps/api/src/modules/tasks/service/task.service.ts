@@ -50,6 +50,13 @@ export class TaskService {
       throw new AppError("Task title already exists in this project", 409);
     }
 
+    if (data.assigneeId) {
+      await this.workspaceService.getWorkspaceMemberByUser(
+        project.workspaceId,
+        data.assigneeId,
+      );
+    }
+
     const taskData: CreateTaskDto = {
       ...data,
       projectId,
