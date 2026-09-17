@@ -1,14 +1,14 @@
 import { Router } from "express";
 
 import { authenticate } from "../../../middleware/auth";
-import { validate } from "../../../middleware/validation";
-
+import { validate, validateQuery } from "../../../middleware/validation";
 import { WorkspaceController } from "../controller";
 import {
   createWorkspaceSchema,
   updateWorkspaceSchema,
   addWorkspaceMemberSchema,
   updateWorkspaceMemberRoleSchema,
+  workspaceFilterSchema,
 } from "../schema";
 import { WorkspaceRepository } from "../repository";
 import { WorkspaceService } from "../service";
@@ -29,6 +29,7 @@ workspaceRouter.post(
 workspaceRouter.get(
   "/",
   authenticate,
+  validateQuery(workspaceFilterSchema),
   workspaceController.getWorkspaces.bind(workspaceController),
 );
 

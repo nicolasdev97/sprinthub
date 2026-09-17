@@ -2,6 +2,8 @@ import { WorkspaceRole } from "@prisma/client";
 
 import { prisma } from "../../../database/prisma";
 
+import { WorkspaceFilterParams } from "../types";
+
 import { CreateWorkspaceDto } from "../dto";
 import { UpdateWorkspaceDto } from "../dto";
 
@@ -29,17 +31,31 @@ export class WorkspaceRepository {
     });
   }
 
-  async getWorkspaces(userId: string) {
+  async getWorkspaces(userId: string, filters?: WorkspaceFilterParams) {
     return prisma.workspaceMember.findMany({
       where: {
         userId,
+        ...(filters?.search && {
+          workspace: {
+            name: {
+              contains: filters.search,
+              mode: "insensitive",
+            },
+          },
+        }),
       },
       include: {
         workspace: true,
       },
-      orderBy: {
-        joinedAt: "asc",
-      },
+      orderBy: filters?.sortBy
+        ? {
+            workspace: {
+              [filters.sortBy]: filters.sortOrder ?? "asc",
+            },
+          }
+        : {
+            joinedAt: "asc",
+          },
     });
   }
 
