@@ -8,10 +8,10 @@
 | ---------------- | --------------- |
 | **Document**     | Blueprint       |
 | **Project**      | SprintHub       |
-| **Version**      | 1.0             |
+| **Version**      | 1.1             |
 | **Status**       | Approved        |
 | **Owner**        | Nicolás Palacio |
-| **Last Updated** | July 2026       |
+| **Last Updated** | September 2026  |
 
 ---
 
@@ -80,10 +80,10 @@ SprintHub aims to showcase how a modern SaaS application should be designed, doc
 
 The application should demonstrate:
 
-- Clean Architecture principles
-- Modular application design
-- Scalable backend architecture
+- Modular monolith architecture
+- Layered backend architecture
 - Feature-based frontend architecture
+- Scalable backend architecture
 - Professional documentation
 - Security best practices
 - Automated testing
@@ -166,12 +166,37 @@ The Minimum Viable Product includes the essential functionality required for a c
 - Remove members
 - Manage member roles
 
+### Workspace Search and Sorting
+
+Users can search workspaces by their `name`.
+
+Workspace listing supports:
+
+- **Search:** Matches only the workspace `name`.
+- **Sorting:** By `name` or `createdAt`.
+- **Sort order:** `asc` or `desc`.
+- **Filters:** Not supported, since workspaces do not have filterable attributes.
+
 ## Project Management
 
 - Create project
 - Update project
 - Archive project
+- Unarchive project
 - Delete project
+
+### Project Search and Filtering
+
+Users can search projects by their `name`.
+
+Project listing supports:
+
+- **Search:** Matches only the project `name`.
+- **Filters:**
+  - `status`: `PLANNING`, `ACTIVE`, or `COMPLETED`.
+  - `archived`: `true` or `false`.
+- **Sorting:** By `name` or `createdAt`.
+- **Sort order:** `asc` or `desc`.
 
 ## Task Management
 
@@ -179,9 +204,25 @@ The Minimum Viable Product includes the essential functionality required for a c
 - Update task
 - Delete task
 - Assign users
+- Unassign users
 - Change status
 - Set priority
 - Due dates
+
+### Task Search and Filtering
+
+Users can search tasks by their `title`.
+
+Task listing supports:
+
+- **Search:** Matches only the task `title`.
+- **Filters:**
+  - `status`: `BACKLOG`, `TODO`, `IN_PROGRESS`, `REVIEW`, or `DONE`.
+  - `priority`: `LOW`, `MEDIUM`, `HIGH`, or `CRITICAL`.
+  - `assigneeId`: Filter tasks assigned to a specific user.
+  - `dueDate`: Filter tasks by due date.
+- **Sorting:** By `createdAt`, `dueDate`, or `priority`.
+- **Sort order:** `asc` or `desc`.
 
 ## Dashboard
 
@@ -260,6 +301,8 @@ The system shall allow users to:
 - Invite members.
 - Remove members.
 - Assign member roles.
+- Search workspaces by name.
+- Sort workspaces by name or creation date.
 
 Supported roles include:
 
@@ -277,6 +320,10 @@ The system shall allow authorized users to:
 - Update project information.
 - Archive projects.
 - Delete projects.
+- Search projects by name.
+- Filter projects by status.
+- Filter projects by archived status.
+- Sort projects by name or creation date.
 
 Each project belongs to exactly one workspace.
 
@@ -290,10 +337,16 @@ The system shall allow users to:
 - Update tasks.
 - Delete tasks.
 - Assign tasks.
+- Unassign tasks.
 - Change task status.
 - Change task priority.
 - Set due dates.
-- Move tasks between projects.
+- Search tasks by title.
+- Filter tasks by status.
+- Filter tasks by priority.
+- Filter tasks by assignee.
+- Filter tasks by due date.
+- Sort tasks by creation date, due date, or priority.
 
 ---
 
@@ -551,8 +604,7 @@ src/
 ├── services/
 ├── styles/
 ├── types/
-├── utils/
-└── middleware.ts
+└── utils/
 ```
 
 Each feature owns its own:
@@ -775,30 +827,26 @@ DELETE /api/tasks/{taskId}
 
 ## Response Format
 
-Successful responses follow a standardized structure.
+The API uses standard HTTP status codes and returns the requested resource or collection directly in the response body.
 
-Example:
+### Success Response
 
-```json
+Successful responses return the resource or collection directly as JSON.
+
 {
-  "success": true,
-  "data": {}
+"id": "uuid",
+"name": "Example",
+"description": "Example description"
 }
-```
 
-Error responses follow the same structure.
+### Error Response
 
-Example:
+Errors are returned using the application's standard error structure.
 
-```json
 {
-  "success": false,
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Validation failed."
-  }
+"success": false,
+"message": "Project not found"
 }
-```
 
 ## API Documentation
 
@@ -833,9 +881,10 @@ feature/*
 | `develop`    | Integration branch         |
 | `feature/*`  | New features               |
 | `fix/*`      | Bug fixes                  |
-| `hotfix/*`   | Production fixes           |
-| `docs/*`     | Documentation updates      |
 | `refactor/*` | Internal code improvements |
+| `docs/*`     | Documentation updates      |
+| `chore/*`    | Maintenance tasks          |
+| `hotfix/*`   | Production fixes           |
 
 ## Commit Convention
 
@@ -848,7 +897,7 @@ feat(auth): add login endpoint
 
 feat(tasks): implement task assignment
 
-fix(projects): validate duplicate project names
+fix(projects): validate unique project names
 
 refactor(api): simplify error handling
 
@@ -907,7 +956,6 @@ Examples include:
 
 Recommended tools:
 
-- Vitest
 - Jest
 
 ---
@@ -922,6 +970,10 @@ Examples include:
 - Database operations
 - Authentication flow
 - Repository interactions
+
+Recommended tool:
+
+- Jest
 
 ---
 
@@ -996,8 +1048,8 @@ Production deployments should only occur after:
 Deployment targets may include:
 
 - Vercel (Frontend)
-- Railway / Render (Backend)
-- Supabase / Neon PostgreSQL (Database)
+- Render (Backend)
+- PostgreSQL (Database)
 
 ---
 
@@ -1098,11 +1150,11 @@ All documentation is written in Markdown and stored within the project repositor
 
 # 23. Deployment Strategy
 
-SprintHub follows a containerized deployment approach.
+SprintHub uses cloud platforms for production deployment and Docker for local development and testing.
 
 ## Frontend
 
-Recommended deployment:
+Deployment:
 
 - Vercel
 
@@ -1110,34 +1162,31 @@ Recommended deployment:
 
 ## Backend
 
-Recommended deployment:
+Deployment:
 
-- Railway
 - Render
 
 ---
 
 ## Database
 
-Recommended providers:
+Provider:
 
 - PostgreSQL
-- Supabase PostgreSQL
-- Neon PostgreSQL
 
 ---
 
-## Containerization
+## Local Development Environment
 
-The application uses Docker for consistent development and deployment environments.
+SprintHub uses Docker to provide a consistent local development environment and to run the application locally.
 
-Services include:
+The Docker environment includes:
 
 - Frontend
 - Backend
-- PostgreSQL
+- PostgreSQL database
 
-Additional infrastructure components, such as Redis, may be introduced in future versions as application requirements evolve.
+Docker allows the application and its required services to be run locally using a consistent and reproducible environment.
 
 ---
 
@@ -1152,7 +1201,6 @@ Examples include:
 - Database connection strings
 - JWT secrets
 - API keys
-- OAuth credentials
 
 ---
 
@@ -1195,8 +1243,7 @@ These components are intentionally excluded from the MVP but can be incorporated
 
 SprintHub is designed to evolve from a portfolio-quality application into a production-ready SaaS platform by maintaining:
 
-- Clean Architecture
-- Modular Design
+- Modular and layered architecture
 - Comprehensive Documentation
 - Automated Testing
 - Secure Development Practices
