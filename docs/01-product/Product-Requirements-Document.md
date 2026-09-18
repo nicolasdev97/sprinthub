@@ -504,7 +504,7 @@ Future infrastructure improvements may include:
 
 The following journey illustrates the primary experience of a new user interacting with SprintHub.
 
-````mermaid
+```mermaid
 flowchart LR
 
 A[Register Account]
@@ -525,6 +525,7 @@ E --> F
 F --> G
 G --> H
 H --> I
+```
 
 ---
 
@@ -546,7 +547,7 @@ Access Dashboard
 Use Application
     ↓
 Logout
-````
+```
 
 ---
 
