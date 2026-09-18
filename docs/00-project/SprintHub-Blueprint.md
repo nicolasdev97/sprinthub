@@ -715,10 +715,7 @@ Example response:
 ```json
 {
   "success": false,
-  "error": {
-    "code": "RESOURCE_NOT_FOUND",
-    "message": "Project not found."
-  }
+  "message": "Project not found"
 }
 ```
 
@@ -833,20 +830,24 @@ The API uses standard HTTP status codes and returns the requested resource or co
 
 Successful responses return the resource or collection directly as JSON.
 
+```json
 {
-"id": "uuid",
-"name": "Example",
-"description": "Example description"
+  "id": "uuid",
+  "name": "Example",
+  "description": "Example description"
 }
+```
 
 ### Error Response
 
 Errors are returned using the application's standard error structure.
 
+```json
 {
-"success": false,
-"message": "Project not found"
+  "success": false,
+  "message": "Project not found"
 }
+```
 
 ## API Documentation
 
