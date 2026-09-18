@@ -8,10 +8,10 @@
 | ---------------- | ----------------------------------- |
 | **Document**     | Product Requirements Document (PRD) |
 | **Project**      | SprintHub                           |
-| **Version**      | 1.0                                 |
+| **Version**      | 1.1                                 |
 | **Status**       | Approved                            |
 | **Owner**        | Nicolás Palacio                     |
-| **Last Updated** | July 2026                           |
+| **Last Updated** | September 2026                      |
 
 ---
 
@@ -229,12 +229,44 @@ The MVP includes:
 
 ## Workspace Management
 
-The MVP supports:
+The system shall allow users to:
 
-- Create workspace.
-- Update workspace.
-- Delete workspace.
+- Create workspaces.
+- Update workspace information.
+- Delete workspaces.
 - Invite members.
+- Remove members.
+- Assign member roles.
+- Search workspaces by name.
+- Sort workspaces by name or creation date.
+
+Workspace names must be unique.
+
+Supported roles include:
+
+- OWNER
+- ADMIN
+- MEMBER
+
+### Workspace Search and Sorting
+
+Users can search workspaces by their `name`.
+
+Workspace listing supports:
+
+- **Search:** Matches only the workspace `name`.
+- **Sorting:** By `name` or `createdAt`.
+- **Sort order:** `asc` or `desc`.
+- **Filters:** Not supported, since workspaces do not have filterable attributes.
+
+### Workspace Information
+
+Workspaces include:
+
+- `name`: Required and unique.
+- `description`: Optional.
+- `createdAt`: Workspace creation timestamp.
+- `updatedAt`: Last workspace update timestamp.
 
 ---
 
@@ -256,26 +288,124 @@ Supported roles include:
 
 ## Project Management
 
-Users can:
+The system shall allow authorized users to:
 
 - Create projects.
 - Update project information.
 - Archive projects.
+- Unarchive projects.
 - Delete projects.
+- Search projects by name.
+- Filter projects by status.
+- Filter projects by archived status.
+- Sort projects by name or creation date.
+
+Each project belongs to exactly one workspace.
+
+Project names must be unique within their workspace.
+
+### Project Search and Filtering
+
+Users can search projects by their `name`.
+
+Project listing supports:
+
+- **Search:** Matches only the project `name`.
+- **Filters:**
+  - `status`: `PLANNING`, `ACTIVE`, or `COMPLETED`.
+  - `archived`: `true` or `false`.
+- **Sorting:** By `name` or `createdAt`.
+- **Sort order:** `asc` or `desc`.
+
+### Project Information
+
+Projects include:
+
+- `name`: Required and unique within the workspace.
+- `description`: Optional.
+- `status`: `PLANNING`, `ACTIVE`, or `COMPLETED`.
+- `archived`: Indicates whether the project is archived.
+- `createdAt`: Project creation timestamp.
+- `updatedAt`: Last project update timestamp.
 
 ---
 
 ## Task Management
 
-Users can:
+The system shall allow users to:
 
 - Create tasks.
 - Update tasks.
 - Delete tasks.
 - Assign tasks.
-- Update task status.
-- Set task priority.
-- Define due dates.
+- Unassign tasks.
+- Change task status.
+- Change task priority.
+- Set due dates.
+- Search tasks by title.
+- Filter tasks by status.
+- Filter tasks by priority.
+- Filter tasks by assignee.
+- Filter tasks by due date.
+- Sort tasks by creation date, due date, or priority.
+
+Task titles must be unique within their project.
+
+### Task Search and Filtering
+
+Users can search tasks by their `title`.
+
+Task listing supports:
+
+- **Search:** Matches only the task `title`.
+- **Filters:**
+  - `status`: `BACKLOG`, `TODO`, `IN_PROGRESS`, `REVIEW`, or `DONE`.
+  - `priority`: `LOW`, `MEDIUM`, `HIGH`, or `CRITICAL`.
+  - `assigneeId`: Filter tasks assigned to a specific user.
+  - `dueDate`: Filter tasks by due date.
+- **Sorting:** By `createdAt`, `dueDate`, or `priority`.
+- **Sort order:** `asc` or `desc`.
+
+### Task Information
+
+Tasks include:
+
+- `title`: Required and unique within the project.
+- `description`: Optional.
+- `status`: `BACKLOG`, `TODO`, `IN_PROGRESS`, `REVIEW`, or `DONE`.
+- `priority`: `LOW`, `MEDIUM`, `HIGH`, or `CRITICAL`.
+- `assigneeId`: Optional user assigned to the task.
+- `dueDate`: Optional task due date.
+- `completedAt`: Completion timestamp when the task is in the `DONE` status.
+- `createdAt`: Task creation timestamp.
+- `updatedAt`: Last task update timestamp.
+
+---
+
+## Workspace, Project and Task Rules
+
+### Name Uniqueness
+
+The following naming rules apply:
+
+- Workspace names must be unique.
+- Project names must be unique within their workspace.
+- Task titles must be unique within their project.
+
+### Deletion Rules
+
+The following deletion rules apply:
+
+- Deleting a workspace deletes all projects belonging to that workspace.
+- Deleting a project deletes all tasks belonging to that project.
+- Deleting a user removes their workspace memberships, notifications, and refresh tokens according to the configured data integrity rules.
+- If a user is deleted, tasks assigned to that user remain and their assignment is cleared.
+
+### Task Completion Rules
+
+When a task changes from `DONE` to another status, its `completedAt` value must be reset to `null`.
+
+The `completedAt` field represents the completion state of the task and must only contain a completion timestamp when the task is in the `DONE` status.
 
 ---
 
@@ -374,7 +504,7 @@ Future infrastructure improvements may include:
 
 The following journey illustrates the primary experience of a new user interacting with SprintHub.
 
-```mermaid
+````mermaid
 flowchart LR
 
 A[Register Account]
@@ -384,6 +514,8 @@ D[Create Project]
 E[Create Tasks]
 F[Assign Tasks]
 G[Track Progress]
+H[Search and Filter Work]
+I[Archive or Complete Work]
 
 A --> B
 B --> C
@@ -391,19 +523,8 @@ C --> D
 D --> E
 E --> F
 F --> G
-```
-
-## Journey Summary
-
-A typical user will:
-
-1. Register an account.
-2. Create a workspace.
-3. Invite team members.
-4. Create a project.
-5. Add tasks.
-6. Assign responsibilities.
-7. Monitor project progress through the dashboard.
+G --> H
+H --> I
 
 ---
 
@@ -425,7 +546,7 @@ Access Dashboard
 Use Application
     ↓
 Logout
-```
+````
 
 ---
 
@@ -455,6 +576,8 @@ Assign Tasks
 Track Progress
     ↓
 Archive Project
+    ↓
+Unarchive Project
 ```
 
 ---
@@ -469,6 +592,8 @@ Assign User
 Update Status
     ↓
 Complete Task
+    ↓
+Unassign or Reassign User
 ```
 
 ---
@@ -484,8 +609,12 @@ The MVP is considered successful if users can:
 - Register and authenticate successfully.
 - Create and manage workspaces.
 - Collaborate with team members.
+- Search and sort workspaces.
 - Create and manage projects.
-- Create, assign, and complete tasks.
+- Search, filter, and sort projects.
+- Archive and unarchive projects.
+- Create, assign, unassign, and complete tasks.
+- Search, filter, and sort tasks.
 - Track project progress through the dashboard.
 
 ---
@@ -540,9 +669,12 @@ Deliverables include:
 
 - User authentication.
 - Workspace management.
+- Workspace search and sorting.
 - Member management.
 - Project management.
+- Project search, filtering, and sorting.
 - Task management.
+- Task search, filtering, and sorting.
 - Dashboard.
 - In-application notifications.
 
