@@ -8,10 +8,10 @@
 | ---------------- | ----------------------------------- |
 | **Document**     | Database Design Specification (DDS) |
 | **Project**      | SprintHub                           |
-| **Version**      | 1.0                                 |
+| **Version**      | 1.1                                 |
 | **Status**       | Approved                            |
 | **Owner**        | Nicolás Palacio                     |
-| **Last Updated** | July 2026                           |
+| **Last Updated** | September 2026                      |
 
 ---
 
@@ -185,24 +185,24 @@ The following diagram illustrates the high-level relationships between the prima
 ```text
 User
  │
- ├───────────────┐
- │               │
- ▼               ▼
-WorkspaceMember  Notification
+ ├───────────────┬───────────────┐
+ │               │               │
+ ▼               ▼               ▼
+WorkspaceMember  Notification  RefreshToken
  │
  ▼
 Workspace
  │
- ▼
-Project
- │
- ▼
-Task
-
-User
- │
- ▼
-RefreshToken
+ ├──────────────► Project
+ │                    │
+ │                    ▼
+ │                   Task
+ │                    │
+ └────────────────────┘
+                      │
+                      ▼
+                     User
+                 (Assignee)
 ```
 
 ---
@@ -215,6 +215,7 @@ RefreshToken
 | Workspace     | WorkspaceMember | One-to-Many  |
 | Workspace     | Project         | One-to-Many  |
 | Project       | Task            | One-to-Many  |
+| User          | Task            | One-to-Many  |
 | User          | Notification    | One-to-Many  |
 | User          | RefreshToken    | One-to-Many  |
 
@@ -238,6 +239,7 @@ Represents an authenticated application user.
 | name         | String   | Required         |
 | email        | String   | Unique, Required |
 | passwordHash | String   | Required         |
+| isActive     | Boolean  | Default: false   |
 | createdAt    | DateTime | Required         |
 | updatedAt    | DateTime | Required         |
 
@@ -249,13 +251,16 @@ Represents a collaborative environment where users manage projects.
 
 ### Attributes
 
-| Field       | Type     | Constraints |
-| ----------- | -------- | ----------- |
-| id          | UUID     | Primary Key |
-| name        | String   | Required    |
-| description | String   | Optional    |
-| createdAt   | DateTime | Required    |
-| updatedAt   | DateTime | Required    |
+### Attributes
+
+| Field       | Type     | Constraints      |
+| ----------- | -------- | ---------------- |
+| id          | UUID     | Primary Key      |
+| ownerId     | UUID     | Foreign Key      |
+| name        | String   | Unique, Required |
+| description | String   | Required         |
+| createdAt   | DateTime | Required         |
+| updatedAt   | DateTime | Required         |
 
 ---
 
@@ -265,13 +270,20 @@ Associates users with workspaces and defines their role.
 
 ### Attributes
 
-| Field       | Type     | Constraints          |
-| ----------- | -------- | -------------------- |
-| id          | UUID     | Primary Key          |
-| workspaceId | UUID     | Foreign Key          |
-| userId      | UUID     | Foreign Key          |
-| role        | Enum     | OWNER, ADMIN, MEMBER |
-| joinedAt    | DateTime | Required             |
+| Field       | Type     | Constraints |
+| ----------- | -------- | ----------- |
+| id          | UUID     | Primary Key |
+| workspaceId | UUID     | Foreign Key |
+| userId      | UUID     | Foreign Key |
+| role        | Enum     | Required    |
+| joinedAt    | DateTime | Required    |
+
+### Constraints
+
+- The combination of `workspaceId` and `userId` must be unique.
+- A user may have only one membership record per workspace.
+- The `role` field defaults to `MEMBER`.
+- The `OWNER` role is assigned explicitly when the workspace is created and its corresponding membership is created.
 
 ---
 
@@ -286,10 +298,21 @@ Represents a project within a workspace.
 | id          | UUID     | Primary Key    |
 | workspaceId | UUID     | Foreign Key    |
 | name        | String   | Required       |
-| description | String   | Optional       |
+| description | String   | Required       |
+| status      | Enum     | Required       |
 | archived    | Boolean  | Default: false |
 | createdAt   | DateTime | Required       |
 | updatedAt   | DateTime | Required       |
+
+### Constraints
+
+- The combination of `workspaceId` and `name` must be unique.
+- Each project belongs to exactly one workspace.
+- `status` must be one of:
+  - `PLANNING`
+  - `ACTIVE`
+  - `COMPLETED`
+- `archived` defaults to `false`.
 
 ---
 
@@ -309,8 +332,30 @@ Represents an individual work item within a project.
 | status      | Enum     | Required               |
 | priority    | Enum     | Required               |
 | dueDate     | DateTime | Optional               |
+| completedAt | DateTime | Nullable               |
 | createdAt   | DateTime | Required               |
 | updatedAt   | DateTime | Required               |
+
+### Constraints
+
+- The combination of `projectId` and `title` must be unique.
+- Each task belongs to exactly one project.
+- `assigneeId` is optional.
+- A task may be assigned only to a user who is a member of the task's workspace.
+- `status` must be one of:
+  - `BACKLOG`
+  - `TODO`
+  - `IN_PROGRESS`
+  - `REVIEW`
+  - `DONE`
+- `priority` must be one of:
+  - `LOW`
+  - `MEDIUM`
+  - `HIGH`
+  - `CRITICAL`
+- `completedAt` is nullable.
+- When a task changes from `DONE` to another status, the application layer must reset `completedAt` to `null`.
+- The application layer must ensure that `completedAt` is only populated when the task status is `DONE`.
 
 ---
 
@@ -327,8 +372,33 @@ Represents an in-application notification delivered to a user.
 | type      | Enum     | Required       |
 | title     | String   | Required       |
 | message   | String   | Required       |
-| read      | Boolean  | Default: false |
+| isRead    | Boolean  | Default: false |
 | createdAt | DateTime | Required       |
+
+### Notification Types
+
+The MVP supports the following notification events:
+
+- Workspace invitation.
+- Project creation.
+- Task assignment.
+- Task status change.
+- Task priority change.
+
+- Task assignment, status change, and priority change notifications are sent only to the user currently assigned to the task.
+- If the task has no assignee, no notification is created for these events.
+- Project creation notifications are sent to all members of the workspace.
+
+### Notification Recipients
+
+Notification recipients depend on the event:
+
+- Workspace invitation notifications are sent to the invited user.
+- Project creation notifications are sent to all members of the workspace.
+- Task assignment notifications are sent only to the user assigned to the task.
+- Task status change notifications are sent only to the user assigned to the task.
+- Task priority change notifications are sent only to the user assigned to the task.
+- No task assignment, status change, or priority change notification is created when the task has no assignee.
 
 ---
 
@@ -346,6 +416,12 @@ Represents a persisted refresh token associated with a user session.
 | expiresAt | DateTime | Required    |
 | createdAt | DateTime | Required    |
 
+### Constraints
+
+- `tokenHash` stores the hashed refresh token.
+- Each refresh token belongs to exactly one user.
+- Refresh tokens may be removed when the associated user is deleted.
+
 ---
 
 # 6. Relationships
@@ -359,6 +435,15 @@ SprintHub uses explicit foreign key relationships to preserve referential integr
 - One User may belong to multiple Workspaces.
 - A Workspace may contain multiple Users.
 - The relationship is implemented through the WorkspaceMember entity.
+
+---
+
+## Workspace → User (Owner)
+
+- Each Workspace has exactly one Owner.
+- The Owner is represented by the `ownerId` foreign key.
+- The corresponding WorkspaceMember record must have the `OWNER` role.
+- The workspace owner is explicitly assigned when the workspace is created.
 
 ---
 
@@ -380,6 +465,8 @@ SprintHub uses explicit foreign key relationships to preserve referential integr
 
 - A User may be assigned multiple Tasks.
 - Task assignment is optional.
+- A Task may have zero or one assigned User.
+- If the assigned User is deleted, the Task remains and its `assigneeId` is set to `null`.
 
 ---
 
@@ -441,23 +528,79 @@ The following uniqueness rules are enforced:
 
 | Entity          | Constraint                                    |
 | --------------- | --------------------------------------------- |
-| User            | Email must be unique                          |
-| WorkspaceMember | User and Workspace combination must be unique |
+| User            | `email` must be unique                        |
+| Workspace       | `name` must be unique                         |
+| WorkspaceMember | `workspaceId` and `userId` combination unique |
+| Project         | `workspaceId` and `name` combination unique   |
+| Task            | `projectId` and `title` combination unique    |
 
 ---
 
 ## Required Fields
 
-Business-critical attributes cannot be null.
+The following business-critical attributes cannot be null:
 
-Examples include:
+### User
 
-- User email
-- Password hash
-- Workspace name
-- Project name
-- Task title
-- RefreshToken tokenHash
+- `name`
+- `email`
+- `passwordHash`
+
+### Workspace
+
+- `name`
+- `description`
+- `ownerId`
+
+### WorkspaceMember
+
+- `workspaceId`
+- `userId`
+- `role`
+- `joinedAt`
+
+### Project
+
+- `workspaceId`
+- `name`
+- `description`
+- `status`
+
+### Task
+
+- `projectId`
+- `title`
+- `status`
+- `priority`
+
+### Notification
+
+- `userId`
+- `type`
+- `title`
+- `message`
+
+### RefreshToken
+
+- `userId`
+- `tokenHash`
+- `expiresAt`
+
+---
+
+## Default Values
+
+The database defines the following default values:
+
+- `WorkspaceMember.role` defaults to `MEMBER`.
+- `Notification.isRead` defaults to `false`.
+- `User.isActive` defaults to `false`.
+- `Project.archived` defaults to `false`.
+- UUID primary keys are generated automatically.
+- `createdAt` timestamps are generated automatically.
+- `updatedAt` timestamps are automatically updated when records change.
+
+The `OWNER` role is assigned explicitly when a workspace is created and is not provided by the `WorkspaceMember.role` default.
 
 ---
 
@@ -475,22 +618,32 @@ Every primary key is automatically indexed.
 
 ## Unique Indexes
 
+The database uses unique constraints to enforce entity-level uniqueness.
+
 Unique indexes include:
 
-- User.email
+- `User.email`
+- `Workspace.name`
+- `WorkspaceMember(workspaceId, userId)`
+- `Project(workspaceId, name)`
+- `Task(projectId, title)`
 
 ---
 
 ## Foreign Key Indexes
 
-Indexes are created for frequently queried relationships.
+Indexes are created for frequently queried foreign key fields.
 
-Examples include:
+The database includes indexes for:
 
-- workspaceId
-- projectId
-- userId
-- assigneeId
+- `Workspace.ownerId`
+- `WorkspaceMember.userId`
+- `Project.workspaceId`
+- `Task.projectId`
+- `Notification.userId`
+- `RefreshToken.userId`
+
+These indexes improve the performance of relationship lookups and frequently executed queries.
 
 ---
 
@@ -510,39 +663,55 @@ Additional indexes may be introduced in future versions based on query analysis 
 
 # 9. Cascade Rules
 
-SprintHub follows conservative cascade behaviors to prevent accidental data loss.
+SprintHub uses explicit referential actions to preserve data integrity while preventing unintended deletion of independent records.
 
 ---
 
 ## Workspace Deletion
 
-Workspace deletion requires explicit confirmation.
+When a workspace is deleted:
 
-Once confirmed, associated projects, tasks, workspace memberships, and related records are removed according to the defined cascade strategy.
+- Its WorkspaceMember records are deleted.
+- Its Projects are deleted.
+- Tasks belonging to those Projects are deleted through the Project → Task cascade.
 
 ---
 
 ## Project Deletion
 
-Deleting a project removes all tasks that belong exclusively to that project.
+When a project is deleted:
+
+- All Tasks belonging to the project are deleted.
 
 ---
 
 ## User Deletion
 
-User deletion removes:
+When a user is deleted:
 
-- Workspace memberships
-- Notifications
-- Refresh Tokens
+- Their WorkspaceMember records are deleted.
+- Their Notifications are deleted.
+- Their RefreshTokens are deleted.
+- Tasks assigned to the user are preserved.
+- The `assigneeId` of assigned tasks is set to `null`.
 
-Tasks assigned to the user are not deleted automatically. Instead, task assignments should be cleared or reassigned according to business rules.
+---
+
+## Task Assignment Removal
+
+Removing the relationship between a Task and its assignee does not delete the Task or the User.
+
+The Task remains with:
+
+```text
+assigneeId = null
+```
 
 ---
 
 ## Refresh Token Cleanup
 
-Expired Refresh Tokens may be removed through scheduled cleanup processes without affecting user accounts or active sessions.
+Expired RefreshTokens may be removed without affecting the associated User account.
 
 ---
 
@@ -571,16 +740,34 @@ Examples include:
 
 ---
 
+## Task Completion Integrity
+
+The `completedAt` field represents the completion state of a task.
+
+The following rules apply:
+
+- `completedAt` is set when a task reaches the `DONE` status.
+- `completedAt` must be `null` when the task is not in the `DONE` status.
+- When a task changes from `DONE` to another status, `completedAt` must be reset to `null`.
+
+This rule is enforced by the application layer because it depends on the task status transition.
+
+---
+
 ## Transaction Consistency
 
 Operations affecting multiple related entities should execute within database transactions whenever required.
 
 Examples include:
 
-- Workspace creation
-- Member invitation
-- Workspace deletion
-- Project deletion
+- Workspace creation and owner membership creation.
+- Workspace deletion.
+- Project deletion.
+- Project creation and creation of related notifications.
+- Member invitation and notification creation.
+- Task assignment and creation of the related notification when the task has an assignee.
+- Task status change and creation of the related notification when the task has an assignee.
+- Task priority change and creation of the related notification when the task has an assignee.
 
 ---
 
@@ -592,6 +779,8 @@ Data validation is performed at multiple layers:
 | ----------- | ----------------------------------------------------- |
 | Application | Business rules and request validation                 |
 | Database    | Constraints, relationships, and referential integrity |
+
+Workspace membership rules and task assignment eligibility are enforced by the application layer because they depend on relationships across multiple entities.
 
 ---
 
@@ -733,7 +922,7 @@ These optimizations are intentionally deferred until they become necessary based
 
 The SprintHub data model has been designed to support future business capabilities without requiring major structural changes.
 
-Potential future entities include:
+Potential future entities and capabilities include:
 
 - Comment
 - Attachment
@@ -741,10 +930,9 @@ Potential future entities include:
 - Mention
 - Label
 - TimeEntry
+- Additional notification types
 
-Additional attributes and relationships may be introduced as new features are implemented.
-
-The existing relational model has been designed to accommodate these extensions while preserving consistency and maintainability.
+These capabilities are intentionally excluded from the MVP but have been considered during the database design.
 
 ---
 
