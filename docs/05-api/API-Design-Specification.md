@@ -8,10 +8,10 @@
 | ---------------- | ------------------------------ |
 | **Document**     | API Design Specification (ADS) |
 | **Project**      | SprintHub                      |
-| **Version**      | 1.0                            |
+| **Version**      | 1.1                            |
 | **Status**       | Approved                       |
 | **Owner**        | Nicolás Palacio                |
-| **Last Updated** | July 2026                      |
+| **Last Updated** | September 2026                 |
 
 ---
 
@@ -34,18 +34,17 @@
 15. Task API
 16. Notification API
 17. Health API
-18. Pagination Standards
-19. Filtering Standards
-20. Sorting Standards
-21. Search Standards
-22. Rate Limiting
-23. API Security
-24. API Versioning Strategy
-25. OpenAPI & Swagger
-26. API Best Practices
-27. Future API Evolution
-28. API Change Management
-29. Conclusion
+18. Filtering Standards
+19. Sorting Standards
+20. Search Standards
+21. Rate Limiting
+22. API Security
+23. API Versioning Strategy
+24. OpenAPI & Swagger
+25. API Best Practices
+26. Future API Evolution
+27. API Change Management
+28. Conclusion
 
 ---
 
@@ -126,11 +125,11 @@ Every request is stateless, and authentication information is included with ever
 
 ## Base URLs
 
-| Environment | Base URL                                   |
-| ----------- | ------------------------------------------ |
-| Development | `http://localhost:3001/api/v1`             |
-| Staging     | `https://staging-api.sprinthub.com/api/v1` |
-| Production  | `https://api.sprinthub.com/api/v1`         |
+| Environment | Base URL                              |
+| ----------- | ------------------------------------- |
+| Development | `http://localhost:3001/api`           |
+| Staging     | `<configured staging API URL>/api`    |
+| Production  | `<configured production API URL>/api` |
 
 ---
 
@@ -158,13 +157,13 @@ Endpoints represent resources rather than actions.
 ### Good
 
 ```text
-GET /projects
+GET /api/projects
 ```
 
 ### Bad
 
 ```text
-GET /getProjects
+GET /api/getProjects
 ```
 
 ---
@@ -184,10 +183,10 @@ URLs use nouns instead of verbs.
 Examples:
 
 ```text
+/users
+/workspaces
 /projects
 /tasks
-/workspaces
-/users
 ```
 
 ---
@@ -366,30 +365,17 @@ Authorization determines whether the authenticated user is allowed to perform th
 
 # 6. API Versioning
 
-Every endpoint is versioned.
+SprintHub exposes its API under the `/api` base path.
 
-Current version:
-
-```text
-/api/v1
-```
-
-Future versions:
+Current API base path:
 
 ```text
-/api/v2
+/api
 ```
+
+Future API versions may introduce explicit versioning if required by breaking changes.
 
 Versioning ensures backward compatibility while allowing the API to evolve.
-
----
-
-## Versioning Strategy
-
-| Change Type     | Strategy         |
-| --------------- | ---------------- |
-| Major changes   | New API version  |
-| Minor additions | Same API version |
 
 ---
 
@@ -454,26 +440,7 @@ The `message` field is optional and may be omitted for read-only operations such
 ```json
 {
   "success": true,
-  "message": "Operation completed successfully.",
-  "data": {}
-}
-```
-
----
-
-## Collection Response
-
-```json
-{
-  "success": true,
-  "message": "Projects retrieved successfully.",
-  "data": [],
-  "pagination": {
-    "page": 1,
-    "pageSize": 20,
-    "totalItems": 45,
-    "totalPages": 3
-  }
+  "message": "Operation completed successfully"
 }
 ```
 
@@ -484,8 +451,7 @@ The `message` field is optional and may be omitted for read-only operations such
 ```json
 {
   "success": true,
-  "message": "No tasks found.",
-  "data": []
+  "message": "No tasks found"
 }
 ```
 
@@ -502,13 +468,7 @@ Every API error follows a consistent structure.
 ```json
 {
   "success": false,
-  "message": "Validation failed.",
-  "errors": [
-    {
-      "field": "email",
-      "message": "Email already exists."
-    }
-  ]
+  "message": "Validation failed"
 }
 ```
 
@@ -595,7 +555,7 @@ Query parameters use camelCase.
 Example:
 
 ```text
-/tasks?page=1&pageSize=20&status=TODO
+/tasks?search=implement&status=TODO
 ```
 
 ---
@@ -623,9 +583,9 @@ The Authentication API manages user authentication and session lifecycle.
 
 ## Register
 
-| Method | Endpoint         |
-| ------ | ---------------- |
-| POST   | `/auth/register` |
+| Method | Endpoint             |
+| ------ | -------------------- |
+| POST   | `/api/auth/register` |
 
 ### Description
 
@@ -635,9 +595,9 @@ Creates a new user account.
 
 ## Login
 
-| Method | Endpoint      |
-| ------ | ------------- |
-| POST   | `/auth/login` |
+| Method | Endpoint          |
+| ------ | ----------------- |
+| POST   | `/api/auth/login` |
 
 ### Description
 
@@ -647,9 +607,9 @@ Authenticates a user and returns an Access Token together with a Refresh Token.
 
 ## Refresh Token
 
-| Method | Endpoint        |
-| ------ | --------------- |
-| POST   | `/auth/refresh` |
+| Method | Endpoint            |
+| ------ | ------------------- |
+| POST   | `/api/auth/refresh` |
 
 ### Description
 
@@ -659,9 +619,9 @@ Generates a new Access Token using a valid Refresh Token.
 
 ## Logout
 
-| Method | Endpoint       |
-| ------ | -------------- |
-| POST   | `/auth/logout` |
+| Method | Endpoint           |
+| ------ | ------------------ |
+| POST   | `/api/auth/logout` |
 
 ### Description
 
@@ -677,23 +637,23 @@ The Workspace API manages collaborative workspaces and their members.
 
 ## Endpoints
 
-| Method | Endpoint                    | Description                        |
-| ------ | --------------------------- | ---------------------------------- |
-| GET    | `/workspaces`               | Retrieve all accessible workspaces |
-| GET    | `/workspaces/{workspaceId}` | Retrieve a workspace               |
-| POST   | `/workspaces`               | Create a workspace                 |
-| PATCH  | `/workspaces/{workspaceId}` | Update a workspace                 |
-| DELETE | `/workspaces/{workspaceId}` | Delete a workspace                 |
+| Method | Endpoint                        | Description                        |
+| ------ | ------------------------------- | ---------------------------------- |
+| GET    | `/api/workspaces`               | Retrieve all accessible workspaces |
+| GET    | `/api/workspaces/{workspaceId}` | Retrieve a workspace               |
+| POST   | `/api/workspaces`               | Create a workspace                 |
+| PATCH  | `/api/workspaces/{workspaceId}` | Update a workspace                 |
+| DELETE | `/api/workspaces/{workspaceId}` | Delete a workspace                 |
 
 ---
 
 ## Member Management
 
-| Method | Endpoint                                       | Description        |
-| ------ | ---------------------------------------------- | ------------------ |
-| POST   | `/workspaces/{workspaceId}/members`            | Invite a member    |
-| PATCH  | `/workspaces/{workspaceId}/members/{memberId}` | Update member role |
-| DELETE | `/workspaces/{workspaceId}/members/{memberId}` | Remove a member    |
+| Method | Endpoint                                           | Description        |
+| ------ | -------------------------------------------------- | ------------------ |
+| POST   | `/api/workspaces/{workspaceId}/members`            | Invite a member    |
+| PATCH  | `/api/workspaces/{workspaceId}/members/{memberId}` | Update member role |
+| DELETE | `/api/workspaces/{workspaceId}/members/{memberId}` | Remove a member    |
 
 ---
 
@@ -705,25 +665,37 @@ The Project API manages projects within workspaces.
 
 ## Endpoints
 
-| Method | Endpoint                | Description        |
-| ------ | ----------------------- | ------------------ |
-| GET    | `/projects`             | Retrieve projects  |
-| GET    | `/projects/{projectId}` | Retrieve a project |
-| POST   | `/projects`             | Create a project   |
-| PATCH  | `/projects/{projectId}` | Update a project   |
-| DELETE | `/projects/{projectId}` | Delete a project   |
+| Method | Endpoint                                 | Description        |
+| ------ | ---------------------------------------- | ------------------ |
+| GET    | `/api/workspaces/{workspaceId}/projects` | Retrieve projects  |
+| GET    | `/api/projects/{projectId}`              | Retrieve a project |
+| POST   | `/api/workspaces/{workspaceId}/projects` | Create a project   |
+| PATCH  | `/api/projects/{projectId}`              | Update a project   |
+| DELETE | `/api/projects/{projectId}`              | Delete a project   |
 
 ---
 
 ## Archive Project
 
-| Method | Endpoint                        |
-| ------ | ------------------------------- |
-| PATCH  | `/projects/{projectId}/archive` |
+| Method | Endpoint                            |
+| ------ | ----------------------------------- |
+| PATCH  | `/api/projects/{projectId}/archive` |
 
 ### Description
 
 Archives a project without permanently removing it.
+
+---
+
+## Unarchive Project
+
+| Method | Endpoint                              |
+| ------ | ------------------------------------- |
+| PATCH  | `/api/projects/{projectId}/unarchive` |
+
+### Description
+
+Restores an archived project to an active state.
 
 ---
 
@@ -735,21 +707,21 @@ The Task API manages project tasks.
 
 ## Endpoints
 
-| Method | Endpoint          | Description     |
-| ------ | ----------------- | --------------- |
-| GET    | `/tasks`          | Retrieve tasks  |
-| GET    | `/tasks/{taskId}` | Retrieve a task |
-| POST   | `/tasks`          | Create a task   |
-| PATCH  | `/tasks/{taskId}` | Update a task   |
-| DELETE | `/tasks/{taskId}` | Delete a task   |
+| Method | Endpoint                          | Description     |
+| ------ | --------------------------------- | --------------- |
+| GET    | `/api/projects/{projectId}/tasks` | Retrieve tasks  |
+| GET    | `/api/tasks/{taskId}`             | Retrieve a task |
+| POST   | `/api/projects/{projectId}/tasks` | Create a task   |
+| PATCH  | `/api/tasks/{taskId}`             | Update a task   |
+| DELETE | `/api/tasks/{taskId}`             | Delete a task   |
 
 ---
 
 ## Task Assignment
 
-| Method | Endpoint                 |
-| ------ | ------------------------ |
-| PATCH  | `/tasks/{taskId}/assign` |
+| Method | Endpoint                     |
+| ------ | ---------------------------- |
+| PATCH  | `/api/tasks/{taskId}/assign` |
 
 ### Description
 
@@ -759,9 +731,9 @@ Assigns a task to a workspace member.
 
 ## Task Status
 
-| Method | Endpoint                 |
-| ------ | ------------------------ |
-| PATCH  | `/tasks/{taskId}/status` |
+| Method | Endpoint                     |
+| ------ | ---------------------------- |
+| PATCH  | `/api/tasks/{taskId}/status` |
 
 ### Description
 
@@ -771,9 +743,9 @@ Updates the task status.
 
 ## Task Priority
 
-| Method | Endpoint                   |
-| ------ | -------------------------- |
-| PATCH  | `/tasks/{taskId}/priority` |
+| Method | Endpoint                       |
+| ------ | ------------------------------ |
+| PATCH  | `/api/tasks/{taskId}/priority` |
 
 ### Description
 
@@ -789,10 +761,10 @@ The Notification API provides access to in-application notifications.
 
 ## Endpoints
 
-| Method | Endpoint                               | Description                 |
-| ------ | -------------------------------------- | --------------------------- |
-| GET    | `/notifications`                       | Retrieve notifications      |
-| PATCH  | `/notifications/{notificationId}/read` | Mark a notification as read |
+| Method | Endpoint                                   | Description                 |
+| ------ | ------------------------------------------ | --------------------------- |
+| GET    | `/api/notifications`                       | Retrieve notifications      |
+| PATCH  | `/api/notifications/{notificationId}/read` | Mark a notification as read |
 
 ---
 
@@ -800,28 +772,36 @@ The Notification API provides access to in-application notifications.
 
 The MVP supports only in-application notifications.
 
-Future versions may introduce:
+The following notification events are supported:
 
-- Email notifications
-- Push notifications
-- Real-time notifications
+- Workspace invitations.
+- Project creation.
+- Task assignment.
+- Task status changes.
+- Task priority changes.
 
-These notification channels are intentionally excluded from the MVP.
+Notification recipients depend on the event:
+
+- Workspace invitation notifications are sent to the invited user.
+- Project creation notifications are sent to all members of the workspace.
+- Task assignment notifications are sent only to the user assigned to the task.
+- Task status change notifications are sent only to the user assigned to the task.
+- Task priority change notifications are sent only to the user assigned to the task.
+- If a task has no assignee, no notification is created for task assignment, status change, or priority change events.
 
 ---
 
 # 17. Health API
 
-The Health API provides endpoints to verify the operational status of SprintHub services.
+The Health API provide an endpoint to verify the operational status of SprintHub services.
 
 ---
 
-## Health Endpoints
+## Health Endpoint
 
-| Method | Endpoint           | Purpose                    |
-| ------ | ------------------ | -------------------------- |
-| GET    | `/health`          | Overall application health |
-| GET    | `/health/database` | Database connectivity      |
+| Method | Endpoint      | Purpose                    |
+| ------ | ------------- | -------------------------- |
+| GET    | `/api/health` | Overall application health |
 
 ---
 
@@ -829,11 +809,8 @@ The Health API provides endpoints to verify the operational status of SprintHub 
 
 ```json
 {
-  "status": "healthy",
-  "services": {
-    "application": "up",
-    "database": "up"
-  }
+  "success": true,
+  "message": "SprintHub API is running"
 }
 ```
 
@@ -841,92 +818,103 @@ The Health API provides endpoints to verify the operational status of SprintHub 
 
 ## Future Health Checks
 
-As the platform evolves, additional health endpoints may be introduced for infrastructure components such as:
+As the platform evolves, additional health endpoints may be introduced for future infrastructure components such as:
 
-- Distributed caching
-- Background workers
-- Queue processing
+- Redis distributed caching.
+- Background workers.
+- Queue processing.
 
 These endpoints are intentionally excluded from the MVP.
 
 ---
 
-# 18. Pagination Standards
+# 18. Filtering Standards
 
-Collection endpoints support pagination to improve performance and reduce response size.
-
----
-
-## Query Parameters
-
-| Parameter | Description              | Default |
-| --------- | ------------------------ | ------- |
-| page      | Page number              | 1       |
-| pageSize  | Number of items per page | 20      |
+Filtering is supported for resources where filtering criteria are defined by the product requirements.
 
 ---
 
-## Example
+## Workspaces
 
-```text
-GET /tasks?page=2&pageSize=20
-```
+Workspaces do not support attribute-based filtering.
 
 ---
 
-## Pagination Response
+## Projects
 
-```json
-{
-  "pagination": {
-    "page": 2,
-    "pageSize": 20,
-    "totalItems": 120,
-    "totalPages": 6
-  }
-}
-```
+Projects support filtering by:
+
+- `status`
+- `archived`
 
 ---
 
-# 19. Filtering Standards
+## Tasks
 
-Collection endpoints may support filtering using query parameters.
+Tasks support filtering by:
+
+- `status`
+- `priority`
+- `assigneeId`
+- `dueDate`
 
 ---
 
 ## Example
 
 ```text
-GET /tasks?status=IN_PROGRESS&priority=HIGH
+GET /api/projects/{projectId}/tasks?status=IN_PROGRESS&priority=HIGH
 ```
 
 ---
 
-## Supported Filters
+# 19. Sorting Standards
 
-Typical filters include:
-
-- Status
-- Priority
-- Assignee
-- Workspace
-- Project
-
-Available filters depend on the resource being queried.
+Collection resources support sorting by the fields defined for each resource.
 
 ---
 
-# 20. Sorting Standards
+## Workspaces
 
-Collection endpoints may support server-side sorting.
+Workspaces support sorting by:
+
+- `name`
+- `createdAt`
+
+---
+
+## Projects
+
+Projects support sorting by:
+
+- `name`
+- `createdAt`
+
+---
+
+## Tasks
+
+Tasks support sorting by:
+
+- `createdAt`
+- `dueDate`
+- `priority`
+
+---
+
+## Sort Order
+
+Supported sort orders are:
+
+- `asc`
+- `desc`
 
 ---
 
 ## Example
 
 ```text
-GET /tasks?sortBy=createdAt&order=desc
+GET /api/workspaces?sortBy=name&sortOrder=asc
 ```
 
 ---
@@ -936,21 +924,49 @@ GET /tasks?sortBy=createdAt&order=desc
 | Parameter | Description            |
 | --------- | ---------------------- |
 | sortBy    | Field used for sorting |
-| order     | asc or desc            |
+| sortOrder | asc or desc            |
 
 ---
 
-# 21. Search Standards
+# 20. Search Standards
 
-Resources may support text-based searching.
+Search is supported for collection resources using the primary searchable field defined for each resource.
+
+---
+
+## Workspaces
+
+Workspaces support search by:
+
+- `name`
+
+---
+
+## Projects
+
+Projects support search by:
+
+- `name`
+
+---
+
+## Tasks
+
+Tasks support search by:
+
+- `title`
+
+Task search is limited exclusively to the `title` field.
 
 ---
 
 ## Example
 
 ```text
-GET /projects?search=sprint
+GET /api/workspaces/{workspaceId}/projects?search=sprint
 ```
+
+Search matches only the project `name`.
 
 ---
 
@@ -960,11 +976,12 @@ Search should:
 
 - Be case-insensitive.
 - Match partial text where appropriate.
-- Return paginated results.
+
+Search is restricted to the primary `name` field of workspaces and projects, and to the `title` field of tasks.
 
 ---
 
-# 22. Rate Limiting
+# 21. Rate Limiting
 
 Rate limiting protects the API from abuse and excessive traffic.
 
@@ -989,7 +1006,7 @@ HTTP 429 Too Many Requests
 
 ---
 
-# 23. API Security
+# 22. API Security
 
 SprintHub applies multiple security mechanisms across the API.
 
@@ -1024,18 +1041,18 @@ Sensitive information is never exposed through API responses.
 
 ---
 
-# 24. API Versioning Strategy
+# 23. API Versioning Strategy
 
 SprintHub follows a versioned API strategy to support future evolution without breaking existing clients.
 
 ---
 
-## Current Version
+## Current API Base Path
 
 The MVP exposes all endpoints under:
 
 ```text
-/api/v1
+/api
 ```
 
 ---
@@ -1055,7 +1072,7 @@ Non-breaking additions, such as optional fields or new endpoints, may be introdu
 
 ---
 
-# 25. OpenAPI & Swagger
+# 24. OpenAPI & Swagger
 
 SprintHub supports API documentation through the OpenAPI Specification.
 
@@ -1075,13 +1092,20 @@ The API documentation should:
 
 ## Documentation Standard
 
-The project follows the OpenAPI Specification and may expose interactive documentation through Swagger UI during development.
+SprintHub documents its REST API using:
 
-API documentation should remain synchronized with the implementation.
+- OpenAPI Specification
+- Swagger UI
+
+OpenAPI defines the API contract, including endpoints, request and response schemas, authentication requirements, and available parameters.
+
+Swagger UI provides interactive API documentation during development.
+
+The ADS serves as the authoritative design reference for the API, while the OpenAPI documentation must remain synchronized with the implementation.
 
 ---
 
-# 26. API Best Practices
+# 25. API Best Practices
 
 SprintHub follows industry-standard API design practices.
 
@@ -1112,27 +1136,56 @@ Errors should:
 
 ---
 
-# 27. Future API Evolution
+# 26. Future API Evolution
 
-The API has been designed to evolve without requiring major redesign.
+The API has been designed to evolve as new SprintHub capabilities are introduced.
 
-Potential future capabilities include:
+Potential future API capabilities include:
+
+## Collaboration
+
+- Comment endpoints.
+- File attachment endpoints.
+- Activity timeline endpoints.
+- Mention endpoints.
+- Team chat endpoints.
+
+## Productivity
+
+- Label endpoints.
+- Custom field endpoints.
+- Time tracking endpoints.
+- Sprint planning endpoints.
+- Kanban board improvement endpoints.
+
+## Notifications
 
 - Email notification endpoints.
 - Push notification endpoints.
-- Real-time communication endpoints.
-- File upload endpoints.
-- Comment endpoints.
-- Activity timeline endpoints.
-- Calendar integration endpoints.
+- Real-time notification endpoints.
 
-Future infrastructure improvements may also introduce endpoints related to background processing or additional platform capabilities.
+## Integrations
 
-These features are intentionally excluded from the MVP.
+- Google Calendar integration endpoints.
+- GitHub integration endpoints.
+- Slack integration endpoints.
+- Microsoft Teams integration endpoints.
+
+## Infrastructure
+
+Future infrastructure improvements may introduce API capabilities related to:
+
+- Redis distributed caching.
+- Background workers.
+- Queue processing.
+- WebSockets.
+- Horizontal scaling.
+
+These capabilities are intentionally excluded from the MVP and may be introduced in future versions.
 
 ---
 
-# 28. API Change Management
+# 27. API Change Management
 
 API changes should be introduced in a controlled and backward-compatible manner.
 
@@ -1159,7 +1212,7 @@ Deprecated endpoints should:
 
 ---
 
-# 29. Conclusion
+# 28. Conclusion
 
 The API Design Specification defines the communication contract for SprintHub.
 
