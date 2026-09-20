@@ -8,7 +8,7 @@ export class AuthService {
   constructor(private readonly authRepository: AuthRepository) {}
 
   async register(data: RegisterDto) {
-    const existingUser = await this.authRepository.findUserByEmail(data.email);
+    const existingUser = await this.authRepository.getUserByEmail(data.email);
 
     if (existingUser) {
       throw new AppError("Email already exists", 409);
@@ -18,7 +18,7 @@ export class AuthService {
   }
 
   async login(data: LoginDto) {
-    const user = await this.authRepository.findUserByEmail(data.email);
+    const user = await this.authRepository.getUserByEmail(data.email);
 
     if (!user) {
       throw new AppError("Invalid email or password", 401);

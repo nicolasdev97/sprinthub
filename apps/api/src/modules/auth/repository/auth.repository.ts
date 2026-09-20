@@ -3,7 +3,7 @@ import { prisma } from "../../../database/prisma";
 import { RegisterDto } from "../dto";
 
 export class AuthRepository {
-  async findUserByEmail(email: string) {
+  async getUserByEmail(email: string) {
     return prisma.user.findUnique({
       where: {
         email,
