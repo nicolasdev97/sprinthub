@@ -9,11 +9,11 @@
 | **Document**        | ADR-002                                                  |
 | **Title**           | Use PostgreSQL as the Primary Database Management System |
 | **Project**         | SprintHub                                                |
-| **Version**         | 1.0                                                      |
+| **Version**         | 1.1                                                      |
 | **Status**          | Approved                                                 |
 | **Owner**           | Nicolás Palacio                                          |
 | **Decision Makers** | SprintHub Architecture Team                              |
-| **Last Updated**    | July 2026                                                |
+| **Last Updated**    | September 2026                                           |
 
 ---
 
@@ -208,7 +208,7 @@ Examples include:
 - Projects contain Tasks.
 - Tasks reference Users.
 - Notifications belong to Users.
-- Refresh Tokens belong to Users.
+- Refresh Tokens belong to Users and store a cryptographic hash of the token for secure token persistence.
 
 PostgreSQL naturally models these relationships through foreign keys and constraints while providing robust transactional integrity.
 
@@ -317,7 +317,6 @@ Future capabilities may include:
 - Materialized views.
 - Full-text search.
 - JSONB support for semi-structured data.
-- Horizontal scaling through managed cloud infrastructure.
 
 These capabilities are considered future enhancements and are intentionally outside the scope of the MVP.
 
@@ -381,12 +380,12 @@ Overall, PostgreSQL provides the best balance between consistency, maintainabili
 
 The database implementation should follow these conventions:
 
-- PostgreSQL 17 (or the latest stable version).
+- PostgreSQL, using the version defined by the project's development and deployment environment.
 - Prisma ORM for all database access.
 - UUID primary keys.
 - `snake_case` table names.
 - `camelCase` Prisma models.
-- `createdAt` and `updatedAt` timestamp fields on all entities.
+- Timestamp fields are defined according to the requirements of each entity, including `createdAt` and `updatedAt` where applicable.
 - Database configuration managed through environment variables.
 
 Soft deletes may be considered in future versions if business requirements evolve.
@@ -397,12 +396,12 @@ Soft deletes may be considered in future versions if business requirements evolv
 
 This decision is supported by the following project documentation.
 
-| Document  | Relationship                          |
-| --------- | ------------------------------------- |
-| Blueprint | Defines the overall technical vision. |
-| ADD       | Defines the persistence architecture. |
-| DDS       | Defines the relational data model.    |
-| ADR-003   | Documents the adoption of Prisma ORM. |
+| Document  | Relationship                                                        |
+| --------- | ------------------------------------------------------------------- |
+| Blueprint | Defines the overall technical vision.                               |
+| ADD       | Defines the persistence architecture.                               |
+| DDS       | Defines the current relational data model and database constraints. |
+| ADR-003   | Documents the adoption of Prisma ORM.                               |
 
 ---
 

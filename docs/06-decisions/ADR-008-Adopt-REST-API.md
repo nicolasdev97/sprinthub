@@ -9,11 +9,11 @@
 | **Document**        | ADR-008                                    |
 | **Title**           | Adopt REST as the Primary API Architecture |
 | **Project**         | SprintHub                                  |
-| **Version**         | 1.0                                        |
+| **Version**         | 1.1                                        |
 | **Status**          | Approved                                   |
 | **Owner**           | Nicolás Palacio                            |
 | **Decision Makers** | SprintHub Architecture Team                |
-| **Last Updated**    | July 2026                                  |
+| **Last Updated**    | September 2026                             |
 
 ---
 
@@ -260,25 +260,26 @@ GET /getTasks
 
 ## Stateless Communication
 
-Each request contains all information required for processing.
+API requests are processed without relying on server-side application session state.
 
-The server does not maintain client session state. Authentication is handled using JWT Access Tokens.
+Authentication uses short-lived JWT Access Tokens, while Refresh Tokens are persisted as cryptographic hashes in the database to support session renewal and token revocation.
 
 ---
 
 ## Consistent Responses
 
-All endpoints follow a standardized response structure.
+API responses follow the response structures defined in the API Design Specification (ADS).
 
-Example:
+Successful responses may include:
 
 ```json
 {
   "success": true,
-  "message": "Operation completed successfully.",
-  "data": {}
+  "message": "Operation completed successfully"
 }
 ```
+
+Error responses follow the standardized error structure defined in the ADS, including the appropriate HTTP status code and error information.
 
 ---
 
@@ -330,21 +331,23 @@ The REST API is documented using:
 - OpenAPI 3.x
 - Swagger UI
 
-The API Design Specification (ADS) remains the authoritative API reference.
+The API Design Specification (ADS) remains the authoritative API design reference.
+
+OpenAPI documentation must remain synchronized with the API implementation.
 
 ---
 
 ## Versioning
 
-SprintHub uses URI versioning.
+SprintHub exposes the API under the `/api` base path.
 
 Example:
 
 ```text
-/api/v1/projects
+/api/projects
 ```
 
-Breaking changes require a new API version.
+Explicit API versioning may be introduced in the future if breaking changes require a new API version.
 
 ---
 
@@ -354,10 +357,8 @@ SprintHub follows REST best practices to improve API performance.
 
 Current strategies include:
 
-- Pagination.
 - Filtering.
 - Sorting.
-- Response compression (Gzip/Brotli).
 
 Future enhancements may include:
 
@@ -432,7 +433,7 @@ The API should follow these implementation conventions:
 - JSON request and response bodies.
 - Consistent response structure.
 - Standard HTTP status codes.
-- URI versioning (`/api/v1`).
+- API endpoints exposed under the `/api` base path.
 - OpenAPI 3.x documentation.
 - Authentication using JWT Access Tokens and Refresh Tokens.
 

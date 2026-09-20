@@ -9,11 +9,11 @@
 | **Document**        | ADR-003                                 |
 | **Title**           | Use Prisma ORM as the Data Access Layer |
 | **Project**         | SprintHub                               |
-| **Version**         | 1.0                                     |
+| **Version**         | 1.1                                     |
 | **Status**          | Approved                                |
 | **Owner**           | Nicolás Palacio                         |
 | **Decision Makers** | SprintHub Architecture Team             |
-| **Last Updated**    | July 2026                               |
+| **Last Updated**    | September 2026                          |
 
 ---
 
@@ -72,8 +72,6 @@ Prisma is responsible for:
 - Transaction support.
 
 All database interactions must be performed through **Prisma Client**.
-
-Direct SQL should only be used when Prisma cannot efficiently express a required operation.
 
 ---
 
@@ -256,7 +254,7 @@ Key capabilities include:
 
 ## Schema Management
 
-The `schema.prisma` file serves as the single source of truth for the database model.
+The Prisma schema serves as the source of truth for the database model.
 
 It defines:
 
@@ -291,9 +289,9 @@ Adopting Prisma influences several architectural decisions within the persistenc
 
 ## Data Access Layer
 
-Prisma Client is the exclusive mechanism for interacting with the database.
+Prisma Client is used as the data access mechanism through the Repository layer.
 
-Business logic remains in the Service layer, while repositories are responsible only for data access.
+Business logic remains in the Service layer, while repositories are responsible for database access and Prisma query execution.
 
 ---
 
@@ -314,7 +312,6 @@ Examples include:
 - Workspace creation.
 - Member invitation.
 - Project creation.
-- Authentication session management.
 
 ---
 
@@ -393,15 +390,17 @@ Overall, Prisma provides the best balance between maintainability, productivity,
 
 The persistence layer should follow these implementation guidelines:
 
-- Use a single `schema.prisma` file.
-- Use Prisma Client for all database operations.
+- Use the Prisma schema as the source of truth for the database model.
+- Use Prisma Client through the Repository layer for database operations.
 - Manage every schema change through Prisma Migrate.
 - Use UUIDs as primary keys.
-- Define explicit relationships when appropriate.
+- Define explicit relationships between related entities.
 - Use enums for business states.
 - Keep models normalized and aligned with the DDS.
+- Keep repositories focused exclusively on data access.
+- Keep business rules and domain logic in the Service layer.
 
-Business rules must remain in the Service layer and never be implemented in Prisma models or repositories.
+Prisma-specific implementation details must remain isolated within the persistence layer.
 
 ---
 
@@ -409,14 +408,14 @@ Business rules must remain in the Service layer and never be implemented in Pris
 
 This decision is supported by the following project documentation.
 
-| Document  | Relationship                               |
-| --------- | ------------------------------------------ |
-| Blueprint | Defines the overall technical vision.      |
-| ADD       | Defines the persistence architecture.      |
-| DDS       | Defines the relational data model.         |
-| ADR-002   | Documents the adoption of PostgreSQL.      |
-| ADR-005   | Defines the Modular Monolith Architecture. |
-| ADR-007   | Defines the Layered Backend Architecture.  |
+| Document  | Relationship                                                   |
+| --------- | -------------------------------------------------------------- |
+| Blueprint | Defines the overall technical vision.                          |
+| ADD       | Defines the persistence architecture.                          |
+| DDS       | Defines the relational data model.                             |
+| ADR-002   | Documents the adoption of PostgreSQL.                          |
+| ADR-005   | Defines the Modular Monolith Architecture used by the backend. |
+| ADR-007   | Defines the Layered Backend Architecture.                      |
 
 ---
 

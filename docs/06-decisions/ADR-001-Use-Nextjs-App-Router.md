@@ -9,11 +9,11 @@
 | **Document**        | ADR-001                     |
 | **Title**           | Adopt Next.js App Router    |
 | **Project**         | SprintHub                   |
-| **Version**         | 1.0                         |
+| **Version**         | 1.1                         |
 | **Status**          | Approved                    |
 | **Owner**           | Nicolás Palacio             |
 | **Decision Makers** | SprintHub Architecture Team |
-| **Last Updated**    | July 2026                   |
+| **Last Updated**    | September 2026              |
 
 ---
 
@@ -221,7 +221,6 @@ Next.js offers a streamlined development experience through:
 - File-based routing
 - TypeScript support
 - Fast Refresh
-- Built-in API routes
 - Excellent documentation
 - Strong ecosystem support
 
@@ -229,7 +228,9 @@ Next.js offers a streamlined development experience through:
 
 ## Deployment
 
-SprintHub is designed to be deployed on **Vercel**, allowing seamless integration with the framework while remaining portable to other hosting providers if needed.
+SprintHub's frontend deployment strategy will follow the project's overall deployment and infrastructure strategy.
+
+The frontend remains portable and is not architecturally coupled to a specific hosting provider.
 
 ---
 
@@ -293,8 +294,7 @@ apps/
         ├── services/
         ├── styles/
         ├── types/
-        ├── utils/
-        └── middleware.ts
+        └── utils/
 ```
 
 This organization promotes modularity, maintainability, and scalability as the application evolves.
@@ -309,7 +309,9 @@ TypeScript is used across the frontend to improve reliability, maintainability, 
 
 ## Deployment
 
-The frontend is designed for deployment on Vercel while remaining independent of any specific hosting provider.
+The frontend remains independent of any specific hosting provider.
+
+The deployment strategy is defined separately as part of the project's infrastructure and deployment decisions.
 
 ---
 
@@ -323,7 +325,7 @@ Adopting Next.js App Router provides several long-term benefits for SprintHub.
 - Excellent scalability for future features.
 - Built-in support for server-side rendering and optimized routing.
 - Improved performance through Server Components and automatic optimizations.
-- Simplified deployment workflow with Vercel.
+- Simplified deployment through the project's defined infrastructure strategy.
 - Reduced need for third-party libraries and custom infrastructure.
 
 ---
@@ -359,11 +361,11 @@ The frontend implementation should follow these guidelines:
 - Use the App Router exclusively.
 - Prefer Server Components by default.
 - Use Client Components only when browser APIs or interactivity are required.
-- Organize code using the Feature-Based Architecture defined in the ADD.
+- Organize code using the Feature-Based Architecture defined in the ADD and ADR-006.
 - Keep business logic outside presentation components.
 - Maintain strict TypeScript usage across the application.
-
-These guidelines ensure consistency with the project's architectural principles.
+- Prefer server-side data fetching whenever appropriate.
+- Use client-side data fetching for interactive features that require live updates or user-driven state.
 
 ---
 
@@ -376,7 +378,7 @@ This decision is supported by the following project documentation.
 | Blueprint       | Defines the overall technical vision.                      |
 | ADD             | Defines the frontend architecture.                         |
 | Developer Guide | Describes the project structure and development standards. |
-| ADR-002         | Defines the Feature-Based Frontend Architecture.           |
+| ADR-006         | Defines the Feature-Based Frontend Architecture.           |
 
 ---
 

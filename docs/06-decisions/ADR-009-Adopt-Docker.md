@@ -9,11 +9,11 @@
 | **Document**        | ADR-009                             |
 | **Title**           | Adopt Containerization Using Docker |
 | **Project**         | SprintHub                           |
-| **Version**         | 1.0                                 |
+| **Version**         | 1.1                                 |
 | **Status**          | Approved                            |
 | **Owner**           | Nicolás Palacio                     |
 | **Decision Makers** | SprintHub Architecture Team         |
-| **Last Updated**    | July 2026                           |
+| **Last Updated**    | September 2026                      |
 
 ---
 
@@ -42,27 +42,25 @@
 
 SprintHub consists of multiple application components that must run consistently across development, testing, and production environments.
 
-The initial platform includes:
+The current platform includes:
 
-- Next.js Frontend
-- Node.js Backend
-- PostgreSQL Database
-
-Future enhancements may include:
-
-- Redis Cache
-- Additional infrastructure services
+- Next.js Frontend.
+- Node.js Backend.
+- PostgreSQL Database.
 
 The containerization strategy must provide:
 
 - Consistent development environments.
 - Reproducible builds.
 - Easy onboarding.
-- Reliable CI integration.
+- CI compatibility.
 - Predictable deployments.
-- Long-term scalability.
+- Portability across environments.
+- Low operational complexity.
 
 The selected solution should minimize environment-specific issues while remaining simple to adopt and maintain.
+
+Docker must also integrate naturally with the Modular Monolith Architecture defined in ADR-005 and the PostgreSQL persistence strategy defined in ADR-002.
 
 ---
 
@@ -70,9 +68,13 @@ The selected solution should minimize environment-specific issues while remainin
 
 SprintHub adopts **Docker** as its official containerization platform.
 
-Each major application component runs inside its own container, while local orchestration is managed through **Docker Compose**.
+Each major application component runs inside its own container, while local multi-container orchestration is managed through **Docker Compose**.
 
-This approach ensures consistent environments throughout the software development lifecycle.
+Docker is responsible for packaging applications and their runtime dependencies into reproducible environments.
+
+Docker Compose is responsible for coordinating the services required by the local development environment.
+
+The specific CI/CD pipeline, image promotion process, and production deployment strategy are defined separately as part of the project's delivery and infrastructure strategy.
 
 ---
 
@@ -99,8 +101,9 @@ The following criteria guided this decision.
 
 ### Advantages
 
-- No additional tooling.
+- No additional container tooling.
 - Simple for very small projects.
+- Minimal initial configuration.
 
 ### Disadvantages
 
@@ -108,13 +111,14 @@ The following criteria guided this decision.
 - Dependency conflicts.
 - Difficult onboarding.
 - "Works on my machine" issues.
-- Harder CI integration.
+- More difficult CI configuration.
+- Increased configuration maintenance.
 
 ### Decision
 
 **Rejected.**
 
-Manual environment configuration reduces reproducibility and increases maintenance effort.
+Manual environment configuration reduces reproducibility and increases the risk of environment-specific issues.
 
 ---
 
@@ -124,23 +128,25 @@ Manual environment configuration reduces reproducibility and increases maintenan
 
 - Consistent environments.
 - Cross-platform compatibility.
+- Reproducible builds.
 - Easy onboarding.
 - Strong ecosystem.
-- Excellent CI/CD integration.
+- Excellent CI/CD compatibility.
 - Broad industry adoption.
-- Lightweight containers.
+- Lightweight compared with full virtual machines.
 
 ### Disadvantages
 
 - Initial learning curve.
-- Docker installation required.
-- Small local resource overhead.
+- Docker installation required for local development.
+- Additional local resource consumption.
+- Container configuration introduces additional project files.
 
 ### Decision
 
 **Accepted.**
 
-Docker provides the best balance between simplicity, portability, reproducibility, and ecosystem support.
+Docker provides the best balance between simplicity, portability, reproducibility, and ecosystem support for SprintHub.
 
 ---
 
@@ -157,13 +163,14 @@ Docker provides the best balance between simplicity, portability, reproducibilit
 
 - Smaller ecosystem.
 - Fewer learning resources.
-- Lower industry adoption.
+- Lower adoption within the project's target development workflow.
+- Additional tooling differences compared with Docker-based workflows.
 
 ### Decision
 
 **Rejected.**
 
-Although technically strong, Podman does not currently offer the same level of ecosystem maturity and educational value as Docker.
+Although technically strong, Podman does not provide sufficient advantages over Docker for SprintHub's current requirements.
 
 ---
 
@@ -171,10 +178,11 @@ Although technically strong, Podman does not currently offer the same level of e
 
 ### Advantages
 
-- Advanced orchestration.
+- Advanced container orchestration.
 - Automatic scaling.
-- High availability.
+- High availability capabilities.
 - Service discovery.
+- Extensive production deployment capabilities.
 
 ### Disadvantages
 
@@ -187,24 +195,26 @@ Although technically strong, Podman does not currently offer the same level of e
 
 **Rejected.**
 
-Kubernetes is an orchestration platform rather than a containerization solution. SprintHub's current scope does not justify its operational complexity.
+Kubernetes is an orchestration platform rather than a replacement for Docker-based containerization. SprintHub's current scope does not justify introducing Kubernetes-level operational complexity.
 
 ---
 
 # 5. Rationale
 
-Docker was selected because it packages applications together with their dependencies into isolated, reproducible environments.
+Docker was selected because it packages applications together with their runtime dependencies into isolated and reproducible environments.
 
 Key benefits include:
 
 - Predictable environments.
 - Consistent dependency versions.
 - Cross-platform compatibility.
-- Simplified deployment.
+- Reproducible builds.
+- Simplified local setup.
 - Service isolation.
 - Easier onboarding.
+- Compatibility with CI/CD workflows.
 
-This approach ensures that every contributor works in an identical environment, reducing configuration-related issues throughout the software lifecycle.
+Containerization reduces differences between development and deployment environments and provides a consistent foundation for the project's future infrastructure evolution.
 
 ---
 
@@ -212,7 +222,7 @@ This approach ensures that every contributor works in an identical environment, 
 
 SprintHub follows a **one container per service** strategy.
 
-Initial development architecture:
+The initial architecture consists of the following services:
 
 ```text
 ┌─────────────────────┐
@@ -232,13 +242,11 @@ Initial development architecture:
 └─────────────────────┘
 ```
 
-Future versions may introduce additional containers for services such as:
+The backend remains a single deployable application in accordance with the Modular Monolith Architecture defined in ADR-005.
 
-- Redis
-- Mail Service
-- Background Workers
+Containerization does not change the application's internal modular architecture.
 
-Each service will remain independently containerized.
+Future infrastructure services may be introduced as independent containers if justified by new functional or operational requirements.
 
 ---
 
@@ -248,17 +256,20 @@ Docker Compose orchestrates the local development environment.
 
 Responsibilities include:
 
-- Starting all services.
-- Creating the internal network.
+- Starting the required services.
+- Creating the internal container network.
 - Managing persistent volumes.
-- Injecting environment variables.
-- Managing service dependencies.
+- Providing environment configuration.
+- Defining service dependencies.
+- Simplifying local environment startup.
 
-Developers start the complete environment with:
+Developers can start the complete local environment with:
 
 ```bash
 docker compose up -d
 ```
+
+The Docker Compose configuration should remain focused on local development and should not be treated as the definition of the production deployment architecture.
 
 ---
 
@@ -270,87 +281,104 @@ The adoption of Docker influences several architectural aspects.
 
 ## Development
 
-Every contributor works in the same isolated environment, regardless of operating system.
+Docker provides a consistent environment for contributors regardless of their host operating system.
+
+Application dependencies and infrastructure services can be started using the same containerized configuration, reducing environment-specific configuration problems.
 
 ---
 
 ## Testing
 
-Integration tests execute inside the same containerized environment used during development, improving reliability and reducing environment-specific failures.
+Docker provides a reproducible environment that can support integration and end-to-end testing when required.
+
+Test environments may use containerized dependencies to reduce differences between development and automated execution environments.
+
+The specific automated testing infrastructure is defined separately within the project's testing and CI/CD strategy.
 
 ---
 
 ## Deployment
 
-The same container images are promoted across environments:
+Docker provides reproducible container images that can be used across deployment environments.
 
-```text
-Development
-      │
-      ▼
-Testing
-      │
-      ▼
-Production
-```
+The container image becomes a consistent artifact that can be built, tested, and promoted through the project's delivery pipeline.
 
-No rebuild is required between environments.
+The specific CI/CD workflow and image promotion strategy are defined separately.
 
 ---
 
 ## Database
 
-PostgreSQL runs in its own container.
+PostgreSQL runs in its own container for local development.
 
-Persistent data is managed through Docker volumes.
+Persistent database data is managed through Docker volumes.
+
+Prisma remains the application's data access layer, as defined in ADR-003, while PostgreSQL remains the primary relational database, as defined in ADR-002.
+
+---
+
+## Configuration
+
+Environment-specific configuration is provided through environment variables.
+
+Sensitive configuration values must not be embedded directly into Docker images or committed to source control.
 
 ---
 
 # 9. Security Considerations
 
-Docker images follow established container security practices.
+Docker images and containers should follow established container security practices.
 
 Recommended measures include:
 
 - Minimal base images.
-- Non-root users.
-- Environment variables for secrets.
+- Non-root users whenever possible.
+- Environment variables for configuration and secrets.
 - Multi-stage builds.
 - Image vulnerability scanning.
 - Regular dependency updates.
+- Avoiding unnecessary packages and services.
+- Keeping production images as small as practical.
 
-Sensitive information must never be embedded in container images.
+Sensitive information must never be embedded directly in container images.
+
+Container security does not replace application-level security controls defined by the project's authentication and authorization architecture.
 
 ---
 
 # 10. Performance Considerations
 
-Containers introduce minimal runtime overhead while providing significant operational benefits.
+Containers introduce additional infrastructure overhead but provide significant operational and development benefits.
 
 Current optimization strategies include:
 
 - Multi-stage builds.
-- Layer caching.
+- Docker layer caching.
 - Small production images.
 - Optimized dependency installation.
+- Avoiding unnecessary processes inside containers.
 
-Future enhancements may introduce additional image optimization and deployment strategies as the platform evolves.
+Application and database performance should continue to be optimized independently through appropriate application, database, and infrastructure strategies.
+
+Containerization itself is not considered a substitute for application or database performance optimization.
 
 ---
 
 # 11. Consequences
 
-Adopting Docker establishes a consistent, portable, and reproducible development and deployment environment for SprintHub.
+Adopting Docker establishes a consistent, portable, and reproducible development and deployment foundation for SprintHub.
 
 ## Positive Consequences
 
-- Consistent environments across all stages.
+- Consistent environments across development and deployment stages.
 - Simplified onboarding.
-- Improved deployment reliability.
-- Better CI/CD integration.
+- Improved reproducibility.
+- Reduced environment-specific configuration issues.
+- Better compatibility with CI/CD workflows.
 - Service isolation.
 - Cross-platform compatibility.
 - Easier dependency management.
+- Reproducible deployment artifacts.
 
 ---
 
@@ -358,7 +386,9 @@ Adopting Docker establishes a consistent, portable, and reproducible development
 
 - Initial Docker learning curve.
 - Additional local resource consumption.
-- Container management introduces extra operational tasks.
+- Container configuration introduces additional infrastructure files.
+- Container management adds operational considerations.
+- Developers must understand basic Docker workflows.
 
 These trade-offs are acceptable given SprintHub's long-term development and deployment goals.
 
@@ -366,14 +396,15 @@ These trade-offs are acceptable given SprintHub's long-term development and depl
 
 # 12. Trade-offs
 
-| Benefit                  | Trade-off                         |
-| ------------------------ | --------------------------------- |
-| Consistent environments  | Docker knowledge required         |
-| Portable deployments     | Additional local resource usage   |
-| Simplified onboarding    | Container management overhead     |
-| Better CI/CD integration | More infrastructure configuration |
+| Benefit                  | Trade-off                        |
+| ------------------------ | -------------------------------- |
+| Consistent environments  | Docker knowledge required        |
+| Portable deployments     | Additional local resource usage  |
+| Reproducible builds      | Container configuration overhead |
+| Simplified onboarding    | Additional infrastructure setup  |
+| Better CI/CD integration | More deployment configuration    |
 
-Overall, Docker provides the best balance between portability, reproducibility, maintainability, and developer productivity.
+Overall, Docker provides the best balance between portability, reproducibility, maintainability, and developer productivity for SprintHub.
 
 ---
 
@@ -383,13 +414,20 @@ SprintHub follows these containerization conventions:
 
 - One container per service.
 - Docker Compose for local orchestration.
-- Multi-stage Docker builds.
-- Environment variables managed through `.env` files.
-- Persistent PostgreSQL volumes.
-- Official base images whenever possible.
-- Keep production images as small as practical.
+- Multi-stage Docker builds where appropriate.
+- Environment-specific configuration through environment variables.
+- Persistent PostgreSQL volumes for local development.
+- Official and maintained base images whenever practical.
+- Production images should be kept as small as practical.
+- Sensitive values must never be embedded in container images.
+- Dockerfiles should remain reproducible and deterministic.
+- Container-specific configuration should remain separate from application business logic.
 
-Future versions may introduce additional containers or orchestration capabilities if the platform evolves beyond the current MVP.
+The backend remains a Modular Monolith inside its container, as defined in ADR-005.
+
+Prisma remains responsible for database access, while PostgreSQL remains the primary database.
+
+The CI/CD implementation and deployment automation are defined separately from this ADR.
 
 ---
 
@@ -397,13 +435,19 @@ Future versions may introduce additional containers or orchestration capabilitie
 
 This decision is supported by the following project documentation.
 
-| Document        | Relationship                                      |
-| --------------- | ------------------------------------------------- |
-| Blueprint       | Defines the overall infrastructure vision.        |
-| ADD             | Defines the deployment architecture.              |
-| Developer Guide | Defines local development and Docker conventions. |
-| ADR-002         | Documents the adoption of PostgreSQL.             |
-| ADR-005         | Defines the Modular Monolith Architecture.        |
+| Document        | Relationship                                           |
+| --------------- | ------------------------------------------------------ |
+| Blueprint       | Defines the overall project and infrastructure vision. |
+| PRD             | Defines the product scope and requirements.            |
+| SRS             | Defines the system requirements.                       |
+| ADD             | Defines the deployment and system architecture.        |
+| DDS             | Defines the detailed technical design.                 |
+| ADS             | Defines the API design and communication standards.    |
+| Developer Guide | Defines local development and Docker conventions.      |
+| ADR-002         | Documents the adoption of PostgreSQL.                  |
+| ADR-003         | Documents the adoption of Prisma ORM.                  |
+| ADR-005         | Defines the Modular Monolith Architecture.             |
+| ADR-007         | Defines the Layered Backend Architecture.              |
 
 ---
 
@@ -419,8 +463,12 @@ This decision is supported by the following project documentation.
 
 # 16. Conclusion
 
-SprintHub adopts Docker as its containerization platform because it provides the best balance between consistency, portability, reproducibility, and operational simplicity.
+SprintHub adopts Docker as its containerization platform because it provides a strong balance between consistency, portability, reproducibility, and operational simplicity.
 
-By containerizing the application's services, the project ensures reliable development, testing, and deployment environments while remaining easy to maintain and ready for future infrastructure evolution.
+By containerizing the application's services, SprintHub establishes reproducible development and deployment environments while reducing environment-specific configuration issues.
+
+Docker complements the project's Modular Monolith, Layered Backend, PostgreSQL, and Prisma architecture without introducing unnecessary orchestration complexity.
+
+The decision provides a solid foundation for the current MVP while allowing the infrastructure strategy to evolve independently as the project's deployment and scalability requirements grow.
 
 ---
