@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 
 import { UserService } from "../service";
-import { UpdateUserDto } from "../dto";
+import { UpdateUserDto, DeleteUserDto } from "../dto";
 
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -23,5 +23,16 @@ export class UserController {
     const user = await this.userService.updateUser(userId, req.body);
 
     res.status(200).json(user);
+  }
+
+  async deleteUser(
+    req: Request<unknown, unknown, DeleteUserDto>,
+    res: Response,
+  ) {
+    const userId = req.user.userId;
+
+    await this.userService.deleteUser(userId, req.body.confirmationName);
+
+    res.status(204).send();
   }
 }

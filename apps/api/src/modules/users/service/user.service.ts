@@ -25,4 +25,20 @@ export class UserService {
 
     return this.userRepository.updateUser(userId, data);
   }
+
+  async deleteUser(userId: string, confirmationName: string) {
+    const user = await this.userRepository.getUserById(userId);
+
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+
+    const fullName = `${user.firstName} ${user.lastName}`;
+
+    if (confirmationName !== fullName) {
+      throw new AppError("Confirmation name does not match", 400);
+    }
+
+    await this.userRepository.deleteUser(userId);
+  }
 }

@@ -2,7 +2,7 @@ import { Router } from "express";
 
 import { authenticate, validate } from "../../../middleware";
 
-import { updateUserSchema } from "../schema";
+import { updateUserSchema, deleteUserSchema } from "../schema";
 
 import { UserController } from "../controller";
 import { UserRepository } from "../repository";
@@ -25,6 +25,13 @@ userRouter.patch(
   authenticate,
   validate(updateUserSchema),
   userController.updateUser.bind(userController),
+);
+
+userRouter.delete(
+  "/me",
+  authenticate,
+  validate(deleteUserSchema),
+  userController.deleteUser.bind(userController),
 );
 
 export default userRouter;
