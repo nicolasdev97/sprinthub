@@ -374,7 +374,6 @@ Tasks include:
 - `description`: Optional.
 - `status`: `BACKLOG`, `TODO`, `IN_PROGRESS`, `REVIEW`, or `DONE`.
 - `priority`: `LOW`, `MEDIUM`, `HIGH`, or `CRITICAL`.
-- `assigneeId`: Optional user assigned to the task.
 - `dueDate`: Optional task due date.
 - `completedAt`: Completion timestamp when the task is in the `DONE` status.
 - `createdAt`: Task creation timestamp.

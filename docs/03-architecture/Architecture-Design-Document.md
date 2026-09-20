@@ -736,7 +736,6 @@ The database defines the following default values:
 
 - `WorkspaceMember.role` defaults to `MEMBER`.
 - `Notification.isRead` defaults to `false`.
-- `User.isActive` defaults to `false`.
 - `Project.archived` defaults to `false`.
 - UUID primary keys are generated automatically.
 - `createdAt` timestamps are generated automatically.

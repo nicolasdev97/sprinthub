@@ -153,7 +153,7 @@ The following functional requirements define the core capabilities of the Sprint
 
 #### Description
 
-The system shall allow a guest user to create a new account using their name, email address, and password.
+The system shall allow a guest user to create a new account using their first name, last name, email address, and password.
 
 #### Preconditions
 
@@ -485,6 +485,7 @@ Each task includes:
 - Status
 - Priority
 - Due Date
+- Creator (`createdById`)
 - Optional Assignee (`assigneeId`)
 
 The `assigneeId` field is optional and may reference a workspace member.
@@ -879,7 +880,6 @@ The data model includes the following relevant entity attributes and constraints
 ### User
 
 - `email` must be unique.
-- `isActive` defaults to `false`.
 - `createdAt` stores the account creation timestamp.
 - `updatedAt` stores the last account update timestamp.
 
@@ -911,12 +911,14 @@ The data model includes the following relevant entity attributes and constraints
 
 ### Task
 
+- `projectId` identifies the project the task belongs to.
+- `createdById` identifies the user who created the task.
+- `assigneeId` is optional.
 - `title` is required and must be unique within its project.
 - `description` is optional.
 - `status` represents the current task status.
 - `priority` represents the task priority.
 - `dueDate` is optional.
-- `assigneeId` is optional.
 - `completedAt` is optional and stores the completion timestamp when the task is in the `DONE` status.
 - `createdAt` stores the task creation timestamp.
 - `updatedAt` stores the last task update timestamp.
