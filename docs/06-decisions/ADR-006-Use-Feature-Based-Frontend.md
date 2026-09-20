@@ -9,11 +9,11 @@
 | **Document**        | ADR-006                                   |
 | **Title**           | Use a Feature-Based Frontend Architecture |
 | **Project**         | SprintHub                                 |
-| **Version**         | 1.0                                       |
+| **Version**         | 1.1                                       |
 | **Status**          | Approved                                  |
 | **Owner**           | Nicolás Palacio                           |
 | **Decision Makers** | SprintHub Architecture Team               |
-| **Last Updated**    | July 2026                                 |
+| **Last Updated**    | September 2026                            |
 
 ---
 
@@ -70,15 +70,7 @@ SprintHub adopts a **Feature-Based Frontend Architecture**.
 
 The frontend is organized around business capabilities rather than technical file types.
 
-Each feature owns its own:
-
-- Components
-- Hooks
-- Services
-- Validation Schemas
-- Types
-- Utilities
-- API Layer
+Each feature owns the code directly related to its business domain, including components, hooks, validation, types, utilities, and feature-specific logic as required.
 
 Shared functionality is extracted only when it is genuinely reusable across multiple features.
 
@@ -201,7 +193,7 @@ Core features include:
 - Notifications
 - User Profile
 
-Each feature encapsulates everything required for its implementation, including UI, business logic, API communication, validation, and supporting types.
+Each feature encapsulates the code directly related to its business domain, including UI, business logic, API communication, validation, and supporting types as required.
 
 This organization keeps related code together, improving maintainability, discoverability, and scalability as the application evolves.
 
@@ -243,8 +235,10 @@ Responsibilities are clearly divided:
 
 - Components focus on presentation.
 - Hooks encapsulate reusable logic.
-- Services manage API communication.
-- Schemas define validation.
+- Services handle API communication when required.
+- Schemas define validation when required.
+
+Feature internals are not required to follow a fixed structure. Files and folders are added according to the needs of each feature.
 
 ---
 
@@ -274,30 +268,19 @@ apps/
         ├── services/
         ├── styles/
         ├── types/
-        ├── utils/
-        └── middleware.ts
+        └── utils/
 ```
 
-Each feature follows a consistent internal structure.
+Features are organized by business domain. Internal files and folders are added according to the needs of each feature rather than requiring every feature to follow a fixed internal structure.
+
+This keeps the Feature-Based Architecture flexible while avoiding unnecessary folders and abstractions.
 
 Example:
 
 ```text
 features/
-
-tasks/
-
-├── api/
-├── components/
-├── hooks/
-├── schemas/
-├── services/
-├── types/
-├── utils/
-└── index.ts
+└── tasks/
 ```
-
-A consistent organization reduces cognitive load, simplifies onboarding, and improves maintainability.
 
 ---
 
@@ -328,16 +311,7 @@ Example:
 
 ```text
 features/
-
-comments/
-
-├── api/
-├── components/
-├── hooks/
-├── schemas/
-├── services/
-├── types/
-└── utils/
+└── comments/
 ```
 
 Existing features remain unchanged, reducing regression risk and supporting incremental growth.
@@ -411,7 +385,7 @@ The frontend should follow these architectural conventions:
 - Tailwind CSS.
 - shadcn/ui.
 
-Every new feature must follow the established internal structure.
+Every new feature should organize its internal files and folders according to its specific needs while following the Feature-Based Architecture principles.
 
 Shared directories should remain small and contain only functionality reused across multiple features.
 

@@ -9,11 +9,11 @@
 | **Document**        | ADR-005                               |
 | **Title**           | Adopt a Modular Monolith Architecture |
 | **Project**         | SprintHub                             |
-| **Version**         | 1.0                                   |
+| **Version**         | 1.1                                   |
 | **Status**          | Approved                              |
 | **Owner**           | Nicolás Palacio                       |
 | **Decision Makers** | SprintHub Architecture Team           |
-| **Last Updated**    | July 2026                             |
+| **Last Updated**    | September 2026                        |
 
 ---
 
@@ -65,7 +65,9 @@ SprintHub adopts a **Modular Monolith Architecture** for the backend.
 
 The application is deployed as a single backend service while internally organizing the codebase into independent business modules.
 
-Each module owns its:
+Each module encapsulates its own business logic and data access components, with internal files and folders organized according to the needs of the module.
+
+Modules may contain components such as:
 
 - Controllers.
 - Services.
@@ -74,9 +76,8 @@ Each module owns its:
 - Validation Schemas.
 - Routes.
 - Types.
-- Business Logic.
 
-Modules communicate only through well-defined public interfaces.
+Not every module is required to contain all of these components.
 
 ---
 
@@ -201,15 +202,12 @@ SprintHub is organized around business domains rather than technical layers.
 Core modules include:
 
 - Authentication
-- Users
 - Workspaces
 - Projects
 - Tasks
 - Notifications
 
-Each module encapsulates its own business logic and internal implementation, improving cohesion while reducing coupling between unrelated domains.
-
-This approach provides a scalable architecture without introducing the operational complexity of distributed systems.
+Each module encapsulates its own business logic and internal implementation while respecting the boundaries defined by the backend architecture.
 
 ---
 
@@ -221,17 +219,11 @@ The Modular Monolith follows a set of architectural principles that promote main
 
 ## Module Independence
 
-Each module owns its:
+Each module encapsulates its own business logic and internal implementation.
 
-- Controllers
-- Services
-- Repositories
-- DTOs
-- Validation Schemas
-- Routes
-- Business Rules
+Modules may contain controllers, services, repositories, DTOs, validation schemas, routes, types, and other components according to their specific requirements.
 
-Modules expose only public interfaces and never depend on another module's internal implementation.
+Modules expose only their public interfaces and do not depend on another module's internal implementation.
 
 ---
 
@@ -253,7 +245,7 @@ Implementation details remain private to each module.
 
 ## Separation of Concerns
 
-Each module internally follows a layered organization:
+Business modules follow the Layered Backend Architecture where applicable:
 
 - Controller
 - Service
@@ -261,68 +253,63 @@ Each module internally follows a layered organization:
 
 Each layer has a single, well-defined responsibility.
 
+Modules may omit layers or components that are not required by their specific responsibilities.
+
 ---
 
 # 7. Module Organization
 
-The backend follows a consistent module structure.
+Each business module is organized according to its specific needs.
+
+Example:
 
 ```text
 apps/
 
 └── api/
     └── src/
+        ├── config/
+        ├── database/
+        ├── middleware/
         ├── modules/
         │   ├── auth/
+            │     ├── controller/
+            │     ├── service/
+            │     ├── repository/
+            │     ├── dto/
+            │     ├── schema/
+            │     └── types/
         │   ├── users/
         │   ├── workspaces/
         │   ├── projects/
         │   ├── tasks/
         │   └── notifications/
-        ├── shared/
-        ├── config/
-        ├── database/
-        ├── middleware/
         ├── routes/
+        ├── shared/
         ├── app.ts
         └── server.ts
 ```
 
-Each business module follows the same internal organization.
-
-Example:
-
-```text
-tasks/
-
-├── controller/
-├── service/
-├── repository/
-├── dto/
-├── schema/
-├── routes/
-├── types/
-└── index.ts
-```
-
-A consistent structure simplifies maintenance, onboarding, and feature development.
+The internal structure is not required to be identical across all modules. Components are added only when required by the module's responsibilities.
 
 ---
 
 # 8. Module Communication
 
-Modules communicate exclusively through their public services.
+Modules communicate through their public services.
+
+A module must not access another module's repository or database layer directly.
 
 Preferred interaction:
 
 ```text
-TaskService
+Module A Service
       │
       ▼
-WorkspaceService
+Module B Public Service
       │
       ▼
-Repository
+Module B Repository
 ```
 
 Instead of:
@@ -334,7 +321,7 @@ TaskRepository
 WorkspaceRepository
 ```
 
-This preserves module boundaries and prevents tight coupling between domains.
+This preserves module boundaries and keeps persistence concerns encapsulated within each module.
 
 ---
 
@@ -342,13 +329,14 @@ This preserves module boundaries and prevents tight coupling between domains.
 
 The Modular Monolith supports incremental growth by allowing new business modules to be added without restructuring the existing architecture.
 
-Potential future modules include:
+Potential future modules and capabilities include:
 
 - Comments
-- Attachments
-- Labels
+- File Uploads
 - Activity Timeline
-- AI Assistant
+- Calendar Integration
+- Push Notifications
+- Email Notifications
 
 If future requirements justify it, individual modules may be extracted into independent microservices.
 
@@ -386,11 +374,10 @@ Shared infrastructure includes:
 
 - Authentication Middleware
 - Authorization Middleware
-- Input Validation
 - Global Error Handling
 - Logging
 
-Each business module focuses exclusively on domain-specific responsibilities.
+Request validation is performed using the validation schemas defined within each business module.
 
 ---
 
@@ -444,7 +431,8 @@ The backend should follow these architectural conventions:
 - Shared infrastructure for cross-cutting concerns.
 - No direct repository-to-repository communication between modules.
 - Communication through public services only.
-- Consistent folder structure across all modules.
+- Consistent architectural conventions across modules.
+- Internal folder structures should reflect each module's specific responsibilities.
 
 These conventions are defined in the Architecture Design Document (ADD) and Developer Guide.
 
@@ -456,14 +444,16 @@ Future architectural evolution may extract individual modules into independent s
 
 This decision is supported by the following project documentation.
 
-| Document        | Relationship                                                     |
-| --------------- | ---------------------------------------------------------------- |
-| Blueprint       | Defines the overall technical vision.                            |
-| ADD             | Defines the backend architecture.                                |
-| Developer Guide | Defines the backend project structure and development standards. |
-| ADR-002         | Documents the adoption of PostgreSQL.                            |
-| ADR-003         | Documents the adoption of Prisma ORM.                            |
-| ADR-007         | Defines the Layered Backend Architecture.                        |
+| Document        | Relationship                                                               |
+| --------------- | -------------------------------------------------------------------------- |
+| Blueprint       | Defines the overall technical vision and architectural direction.          |
+| ADD             | Defines the backend architecture and system structure.                     |
+| DDS             | Defines the detailed technical and domain design.                          |
+| ADS             | Defines the REST API design and communication contract.                    |
+| Developer Guide | Defines backend project structure and development standards.               |
+| ADR-002         | Documents the adoption of PostgreSQL.                                      |
+| ADR-003         | Documents the adoption of Prisma ORM.                                      |
+| ADR-007         | Defines the Layered Backend Architecture used within each business module. |
 
 ---
 
@@ -479,8 +469,10 @@ This decision is supported by the following project documentation.
 
 # 17. Conclusion
 
-SprintHub adopts a Modular Monolith Architecture because it provides the best balance between maintainability, scalability, simplicity, and developer productivity.
+SprintHub adopts a Modular Monolith Architecture for its backend, organizing the application into cohesive business modules within a single deployable service.
 
-By organizing the backend into cohesive business modules while maintaining a single deployment unit, the architecture supports the MVP today and provides a clear path for future evolution without introducing unnecessary operational complexity.
+Each module encapsulates its business logic, persistence, validation, routes, and related components while communicating with other modules through defined service interfaces.
+
+This architecture provides a maintainable and scalable foundation for the current MVP while preserving a clear path for future evolution, including the potential extraction of individual modules into independent services when justified by business or scalability requirements.
 
 ---

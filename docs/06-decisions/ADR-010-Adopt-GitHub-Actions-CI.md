@@ -9,11 +9,11 @@
 | **Document**        | ADR-010                                           |
 | **Title**           | Adopt Continuous Integration Using GitHub Actions |
 | **Project**         | SprintHub                                         |
-| **Version**         | 1.0                                               |
+| **Version**         | 1.1                                               |
 | **Status**          | Approved                                          |
 | **Owner**           | Nicolás Palacio                                   |
 | **Decision Makers** | SprintHub Architecture Team                       |
-| **Last Updated**    | July 2026                                         |
+| **Last Updated**    | September 2026                                    |
 
 ---
 
@@ -59,15 +59,21 @@ The Continuous Integration solution must provide:
 
 The selected solution should align with SprintHub's Git workflow, Docker-based development environment, and long-term DevOps strategy.
 
+Continuous Integration must remain independent from the deployment strategy so that automated validation can evolve without coupling it to a specific production deployment platform.
+
 ---
 
 # 2. Decision
 
 SprintHub adopts **GitHub Actions** as its Continuous Integration (CI) platform.
 
-Every Pull Request and every push to protected branches automatically trigger a CI pipeline.
+GitHub Actions workflows are used to automatically validate code changes through repository events such as Pull Requests and pushes to relevant branches.
 
-The pipeline validates that the application remains stable before changes are merged.
+The CI pipeline validates that the application remains consistent and buildable before changes are merged into protected branches.
+
+Branch protection rules are responsible for enforcing successful required checks before allowing merges.
+
+Continuous Deployment (CD) is intentionally outside the scope of this ADR and may be introduced as a separate architectural decision or implementation phase.
 
 ---
 
@@ -95,21 +101,23 @@ The following criteria guided this decision.
 ### Advantages
 
 - No setup required.
-- Simpler repository.
+- Simpler repository configuration.
+- No CI infrastructure to maintain.
 
 ### Disadvantages
 
-- Errors detected late.
+- Errors detected later.
 - Manual testing required.
 - Higher regression risk.
-- Inconsistent code quality.
-- Poor collaboration.
+- Inconsistent validation.
+- Reduced collaboration confidence.
+- Greater risk of broken code reaching protected branches.
 
 ### Decision
 
 **Rejected.**
 
-SprintHub should automatically validate every change before it reaches protected branches.
+SprintHub should automatically validate changes before they are merged into protected branches.
 
 ---
 
@@ -120,18 +128,20 @@ SprintHub should automatically validate every change before it reaches protected
 - Highly flexible.
 - Mature ecosystem.
 - Extensive customization.
+- Supports complex CI/CD workflows.
 
 ### Disadvantages
 
 - Requires infrastructure management.
 - Higher maintenance cost.
 - More complex configuration.
+- Additional operational responsibilities.
 
 ### Decision
 
 **Rejected.**
 
-Jenkins introduces operational complexity that is unnecessary for SprintHub.
+Jenkins introduces infrastructure and operational complexity that is unnecessary for SprintHub's current scope.
 
 ---
 
@@ -140,19 +150,21 @@ Jenkins introduces operational complexity that is unnecessary for SprintHub.
 ### Advantages
 
 - Excellent CI/CD capabilities.
-- Powerful pipelines.
+- Powerful pipeline configuration.
 - Integrated DevOps tooling.
+- Strong automation capabilities.
 
 ### Disadvantages
 
-- Best suited for GitLab-hosted repositories.
-- Less integrated with GitHub.
+- Designed primarily around GitLab's platform.
+- Requires additional integration for a GitHub-hosted repository.
+- Introduces unnecessary platform separation.
 
 ### Decision
 
 **Rejected.**
 
-SprintHub is hosted on GitHub, making GitHub Actions the more natural choice.
+SprintHub is hosted on GitHub, making GitHub Actions the more natural choice for repository-integrated CI.
 
 ---
 
@@ -163,18 +175,20 @@ SprintHub is hosted on GitHub, making GitHub Actions the more natural choice.
 - Enterprise-ready.
 - Strong Azure ecosystem integration.
 - Robust pipeline capabilities.
+- Extensive DevOps tooling.
 
 ### Disadvantages
 
 - Steeper learning curve.
-- More complex for small teams.
-- Better suited for Microsoft-centric environments.
+- Additional platform configuration.
+- More complexity for the current project scope.
+- No requirement for Azure-specific tooling.
 
 ### Decision
 
 **Rejected.**
 
-SprintHub does not require Azure-specific tooling.
+SprintHub does not currently require Azure-specific infrastructure or DevOps capabilities.
 
 ---
 
@@ -184,74 +198,85 @@ SprintHub does not require Azure-specific tooling.
 
 - Native GitHub integration.
 - Event-driven workflows.
-- Excellent community support.
-- Marketplace ecosystem.
-- Easy setup.
+- Extensive ecosystem.
+- Marketplace integrations.
+- Simple repository configuration.
 - Strong documentation.
-- Free tier for public repositories.
+- Flexible workflow definitions.
+- Supports CI and future automation workflows.
 
 ### Disadvantages
 
-- GitHub-dependent.
-- Complex workflows can become verbose.
+- GitHub dependency.
+- Complex workflows can become difficult to maintain.
+- Workflow configuration requires ongoing maintenance.
 
 ### Decision
 
 **Accepted.**
 
-GitHub Actions provides the best balance between automation, simplicity, ecosystem integration, and developer experience.
+GitHub Actions provides the best balance between automation, simplicity, ecosystem integration, and developer experience for SprintHub.
 
 ---
 
 # 5. Rationale
 
-GitHub Actions was selected because it integrates natively with GitHub while providing a flexible, event-driven automation platform.
+GitHub Actions was selected because it integrates directly with SprintHub's GitHub repository while providing a flexible event-driven automation platform.
 
 Key benefits include:
 
 - Native repository integration.
 - Automated workflow execution.
-- Strong community ecosystem.
-- Marketplace extensions.
-- Simple configuration.
-- Broad industry adoption.
+- Pull Request validation.
+- Strong ecosystem support.
+- Reusable actions and workflow components.
+- Straightforward configuration.
+- Minimal additional infrastructure.
 
-This approach enables SprintHub to automate quality checks without introducing additional infrastructure.
+The decision allows SprintHub to establish automated quality gates without introducing a separate CI platform or dedicated CI infrastructure.
 
 ---
 
 # 6. CI Workflow
 
-The Continuous Integration workflow validates every code change before it reaches protected branches.
+The Continuous Integration workflow validates code changes before they are merged into protected branches.
 
-Typical workflow:
+The target workflow is:
 
 ```text
-Developer Push
-        │
-        ▼
-GitHub Actions Trigger
-        │
-        ▼
-Install Dependencies
-        │
-        ▼
-Type Check
-        │
-        ▼
-Lint
-        │
-        ▼
-Tests
-        │
-        ▼
-Build
-        │
-        ▼
-Pipeline Result
+Developer Push / Pull Request
+            │
+            ▼
+     GitHub Actions Trigger
+            │
+            ▼
+    Install Dependencies
+            │
+            ▼
+        Type Check
+            │
+            ▼
+           Lint
+            │
+            ▼
+          Tests
+            │
+            ▼
+          Build
+            │
+            ▼
+       CI Result
+            │
+            ▼
+ Branch Protection Checks
+            │
+            ▼
+       Merge Allowed
 ```
 
-Only successful pipelines allow changes to be merged.
+Each validation stage must complete successfully for the CI workflow to be considered successful.
+
+Required CI checks are enforced through GitHub branch protection rules.
 
 ---
 
@@ -261,10 +286,14 @@ GitHub Actions workflows are triggered automatically by repository events.
 
 Primary triggers include:
 
-- Pull Requests.
+- Pull Requests targeting protected branches.
 - Pushes to protected branches.
 
-Additional workflows may be introduced in the future as development processes evolve.
+Additional triggers may be introduced as the development workflow evolves.
+
+The exact branch configuration is maintained within the workflow definitions and repository branch protection settings.
+
+The CI strategy should avoid unnecessary duplicate executions while maintaining reliable validation for changes entering protected branches.
 
 ---
 
@@ -282,19 +311,35 @@ The default CI pipeline consists of the following stages:
 
 Each stage must complete successfully before the pipeline is considered successful.
 
+The pipeline may be extended with additional validation stages as project requirements evolve.
+
+Examples include:
+
+- Security scanning.
+- Dependency auditing.
+- Integration tests.
+- End-to-end tests.
+- Container image validation.
+
+These extensions are outside the initial scope unless explicitly incorporated into the CI implementation.
+
 ---
 
 # 9. Branch Protection
 
-Protected branches enforce quality standards before accepting changes.
+Protected branches enforce repository quality standards before accepting changes.
 
-Rules include:
+The branch protection strategy includes:
 
-- Successful CI pipeline required.
 - Pull Request required before merge.
+- Successful required CI checks before merge.
 - No direct pushes to protected branches.
 
-These protections help maintain a stable and reliable codebase.
+The exact protected branches and required status checks are defined in the repository configuration.
+
+Branch protection is responsible for enforcing the CI result as a merge requirement; GitHub Actions itself does not independently prevent merges.
+
+These protections help maintain a stable and consistently validated codebase.
 
 ---
 
@@ -309,8 +354,12 @@ Recommended measures include:
 - No hardcoded credentials.
 - Pinned action versions where appropriate.
 - Regular dependency updates.
+- Avoiding unnecessary write permissions.
+- Reviewing third-party actions before adoption.
 
-Future workflows may incorporate additional security scanning as the project evolves.
+Sensitive credentials must never be committed to the repository or embedded directly in workflow files.
+
+Future workflows may incorporate additional security validation as the project's security and CI strategy evolves.
 
 ---
 
@@ -322,15 +371,32 @@ Continuous Integration influences multiple aspects of the development lifecycle.
 
 ## Development Workflow
 
-Every code change is automatically validated before it can be merged into protected branches.
+Code changes are automatically validated before they can be merged into protected branches.
 
-Developers receive immediate feedback, reducing integration issues and improving development efficiency.
+Developers receive automated feedback through GitHub, reducing integration issues and improving development efficiency.
 
 ---
 
 ## Quality Assurance
 
-Automated validation prevents broken code from reaching protected branches and helps maintain a stable codebase.
+Automated validation helps prevent broken or invalid code from reaching protected branches.
+
+The CI pipeline establishes a consistent quality gate for:
+
+- Type correctness.
+- Code style.
+- Automated tests.
+- Production build validity.
+
+---
+
+## Docker Integration
+
+Docker, adopted in ADR-009, provides the containerization foundation for SprintHub.
+
+GitHub Actions may use Docker during CI when containerized services or reproducible environments are required.
+
+The CI pipeline should not duplicate container orchestration unnecessarily when native CI execution is sufficient.
 
 ---
 
@@ -338,29 +404,40 @@ Automated validation prevents broken code from reaching protected branches and h
 
 The CI pipeline establishes the foundation for future Continuous Deployment (CD) workflows.
 
-Deployment automation is intentionally outside the scope of the current MVP.
+Deployment automation is intentionally outside the scope of this ADR.
+
+Future CD workflows may consume successful CI artifacts or container images without changing the core CI responsibilities defined here.
 
 ---
 
 ## Documentation
 
-Changes to the CI pipeline should be reflected in the Developer Guide to keep development practices aligned with the implementation.
+Changes to the CI workflow should be reflected in the Developer Guide when they affect the development workflow or contributor responsibilities.
+
+CI configuration itself remains version-controlled under:
+
+```text
+.github/
+└── workflows/
+```
 
 ---
 
 # 12. Consequences
 
-Adopting GitHub Actions establishes an automated and reliable Continuous Integration process for SprintHub.
+Adopting GitHub Actions establishes an automated and reproducible Continuous Integration process for SprintHub.
 
 ## Positive Consequences
 
 - Higher code quality.
 - Faster developer feedback.
-- Reduced regressions.
+- Reduced regression risk.
 - Better collaboration.
 - Automated validation.
 - Consistent development workflow.
 - Greater confidence before merging.
+- No dedicated CI infrastructure required.
+- Version-controlled CI configuration.
 
 ---
 
@@ -368,9 +445,11 @@ Adopting GitHub Actions establishes an automated and reliable Continuous Integra
 
 - Initial pipeline setup effort.
 - Ongoing workflow maintenance.
-- Longer execution times as pipelines grow.
+- CI execution time increases as validation stages grow.
+- Dependence on GitHub's CI platform.
+- Workflow configuration can become complex if not kept modular.
 
-These trade-offs are acceptable given SprintHub's engineering goals.
+These trade-offs are acceptable given SprintHub's engineering and development goals.
 
 ---
 
@@ -379,11 +458,13 @@ These trade-offs are acceptable given SprintHub's engineering goals.
 | Benefit                   | Trade-off                                  |
 | ------------------------- | ------------------------------------------ |
 | Automated validation      | Initial pipeline configuration             |
-| Early error detection     | Longer execution time for larger pipelines |
+| Early error detection     | CI execution time                          |
 | Consistent quality checks | Workflow maintenance                       |
-| Better collaboration      | Additional CI configuration effort         |
+| Native GitHub integration | ADependency on GitHub                      |
+| Version-controlled CI     | Additional repository configuration        |
+| Future CD foundation      | Separation between CI and deployment setup |
 
-Overall, GitHub Actions provides the best balance between automation, reliability, maintainability, and developer productivity.
+Overall, GitHub Actions provides the best balance between automation, reliability, maintainability, and developer productivity for SprintHub.
 
 ---
 
@@ -391,23 +472,50 @@ Overall, GitHub Actions provides the best balance between automation, reliabilit
 
 SprintHub follows these Continuous Integration conventions:
 
-- Workflows are stored in `.github/workflows/`.
-- Every Pull Request is validated automatically.
-- Protected branches require a successful CI pipeline.
-- Type checking, linting, testing, and build validation are part of the default pipeline.
+- Workflows are stored in .github/workflows/.
+- Pull Requests targeting protected branches are validated automatically.
+- Protected branches require successful CI checks before merge.
+- Direct pushes to protected branches are disabled.
+- Type checking is part of the default pipeline.
+- Linting is part of the default pipeline.
+- Automated tests are part of the default pipeline.
+- Build validation is part of the default pipeline.
+- Workflow permissions follow the principle of least privilege.
+- Sensitive configuration is provided through GitHub Secrets or appropriate environment configuration.
+- Third-party actions should be reviewed and pinned where appropriate.
 
-Initial workflows include:
+The initial CI workflow will be implemented as part of the project's CI/CD development phase.
 
-- `ci.yml`
-- `pull-request.yml`
+The initial workflow will include:
 
-Future workflows may include:
+```text
+Install Dependencies
+        │
+        ▼
+    Type Check
+        │
+        ▼
+       Lint
+        │
+        ▼
+      Tests
+        │
+        ▼
+      Build
+```
 
-- `release.yml`
-- `security.yml`
-- `dependency-update.yml`
+Pipeline execution should remain fast enough to provide timely feedback while maintaining the required validation coverage.
 
-Pipeline execution should remain fast enough to provide timely feedback while ensuring code quality.
+Future CI improvements may include:
+
+- Integration tests.
+- End-to-end tests.
+- Security scanning.
+- Dependency auditing.
+- Docker image validation.
+- Artifact generation.
+
+Continuous Deployment remains outside the scope of this ADR.
 
 ---
 
@@ -417,8 +525,12 @@ This decision is supported by the following project documentation.
 
 | Document        | Relationship                                                     |
 | --------------- | ---------------------------------------------------------------- |
-| Blueprint       | Defines the DevOps and infrastructure vision.                    |
+| Blueprint       | Defines the overall project, DevOps, and infrastructure vision.  |
+| PRD             | Defines the product scope and requirements.                      |
+| SRS             | Defines the system requirements.                                 |
 | ADD             | Defines deployment and development architecture.                 |
+| DDS             | Defines detailed technical design.                               |
+| ADS             | Defines API design and communication standards.                  |
 | Developer Guide | Defines development workflow and CI conventions.                 |
 | ADR-009         | Documents the adoption of Docker for containerized environments. |
 
@@ -429,15 +541,19 @@ This decision is supported by the following project documentation.
 - GitHub Actions Documentation
 - GitHub Actions Marketplace
 - Twelve-Factor App
-- _The DevOps Handbook_
-- _Accelerate: The Science of Lean Software and DevOps_
+- The DevOps Handbook
+- Accelerate: The Science of Lean Software and DevOps
 
 ---
 
 # 17. Conclusion
 
-SprintHub adopts GitHub Actions as its Continuous Integration platform because it provides the best balance between automation, reliability, developer experience, and seamless GitHub integration.
+SprintHub adopts GitHub Actions as its Continuous Integration platform because it provides a strong balance between automation, reliability, developer experience, and seamless GitHub integration.
 
-By automatically validating every change before it reaches protected branches, the project improves software quality, supports collaborative development, and establishes a solid foundation for future Continuous Deployment capabilities.
+By automatically validating code changes before they reach protected branches, SprintHub establishes a consistent quality gate for type checking, linting, testing, and build validation.
+
+The decision complements the Docker-based development environment defined in ADR-009 while keeping Continuous Integration independent from the future Continuous Deployment strategy.
+
+This architecture provides a maintainable foundation for the project's current development workflow while allowing additional validation and deployment capabilities to be introduced as SprintHub evolves.
 
 ---

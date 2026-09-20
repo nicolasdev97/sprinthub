@@ -8,10 +8,10 @@
 | ---------------- | ---------------------------------- |
 | **Document**     | Architecture Design Document (ADD) |
 | **Project**      | SprintHub                          |
-| **Version**      | 1.0                                |
+| **Version**      | 1.1                                |
 | **Status**       | Approved                           |
 | **Owner**        | Nicolás Palacio                    |
-| **Last Updated** | July 2026                          |
+| **Last Updated** | September 2026                     |
 
 ---
 
@@ -33,7 +33,7 @@
 14. Global Error Handling Architecture
 15. Notification Architecture
 16. External Integrations
-17. Architectural Decision
+17. Architectural Decisions
 18. Infrastructure Architecture
 19. Docker Strategy
 20. CI/CD Architecture
@@ -191,14 +191,15 @@ Future modules may include:
 - Comments
 - Mentions
 - Activity Timeline
-- File Uploads
-- Attachments
-- Productivity Reports
+- File Attachments
+- Labels
+- Custom Fields
+- Time Tracking
+- Sprint Planning
+- Task Dependencies
+- Advanced Reporting
 - Team Analytics
-- Live Updates
-- Presence Indicators
-- Automatic Task Suggestions
-- Productivity Insights
+- Real-Time Collaboration
 
 These additions should not require significant architectural redesign.
 
@@ -278,7 +279,7 @@ SprintHub has been designed to scale as new features and infrastructure requirem
 The architecture supports:
 
 - Modular business features
-- Independent services
+- Independent modules
 - Future distributed caching
 - Additional infrastructure components
 
@@ -377,7 +378,7 @@ Security is integrated into every architectural layer rather than being treated 
 
 The backend exposes well-defined REST APIs that act as the communication contract between the frontend and backend.
 
-This separation also enables future integrations with mobile applications and third-party clients.
+This separation enables the frontend and backend to evolve independently and provides a foundation for future integrations with mobile applications and third-party clients.
 
 ---
 
@@ -398,8 +399,9 @@ External services are incorporated only when required.
 ## External Actors
 
 - End Users
-- Developers
-- Administrators
+- Workspace Owners
+- Workspace Administrators
+- Workspace Members
 
 ---
 
@@ -573,8 +575,7 @@ apps/
         ├── services/
         ├── styles/
         ├── types/
-        ├── utils/
-        └── middleware.ts
+        └── utils/
 ```
 
 ---
@@ -631,9 +632,13 @@ PostgreSQL
 Responsible for:
 
 - Receiving HTTP requests.
-- Validating request format.
+- Passing validated request data to application services.
 - Calling application services.
 - Returning HTTP responses.
+
+### Validation
+
+Request validation is handled through dedicated validation middleware using Zod schemas before requests reach the application services.
 
 ---
 
@@ -645,6 +650,10 @@ Responsible for:
 - Authorization.
 - Workflow orchestration.
 - Transaction coordination.
+
+The Service Layer is also responsible for enforcing domain-specific business rules, including task lifecycle rules.
+
+For example, when a task changes from `DONE` to another status, its `completedAt` value must be reset to `null`.
 
 ---
 
@@ -702,11 +711,49 @@ Detailed entity definitions, relationships, constraints, and indexes are documen
 
 The data model enforces:
 
-- Primary keys
-- Foreign keys
-- Unique constraints
-- Cascade rules
-- Database indexes
+- Primary keys.
+- Foreign keys.
+- Unique constraints.
+- Referential integrity rules.
+- Cascade deletion rules.
+- Nullable relationships where required.
+- Database indexes for frequently queried foreign keys.
+
+The database also enforces uniqueness rules for workspace membership relationships and entity names according to the application requirements.
+
+### Referential Integrity
+
+The database enforces the following deletion behavior:
+
+- Deleting a workspace deletes its workspace memberships and projects.
+- Deleting a project deletes its tasks.
+- Deleting a user deletes their workspace memberships, notifications, and refresh tokens.
+- If a user assigned to a task is deleted, the task remains and its `assigneeId` is set to `null`.
+
+### Default Values
+
+The database defines the following default values:
+
+- `WorkspaceMember.role` defaults to `MEMBER`.
+- `Notification.isRead` defaults to `false`.
+- `User.isActive` defaults to `false`.
+- `Project.archived` defaults to `false`.
+- UUID primary keys are generated automatically.
+- `createdAt` timestamps are generated automatically.
+- `updatedAt` timestamps are automatically updated when records change.
+
+### Database Indexes
+
+Indexes are defined for frequently queried foreign key fields:
+
+- `Workspace.ownerId`
+- `WorkspaceMember.userId`
+- `Project.workspaceId`
+- `Task.projectId`
+- `Notification.userId`
+- `RefreshToken.userId`
+
+These indexes support common lookup and relationship queries while maintaining the relational integrity of the database.
 
 ---
 
@@ -742,11 +789,53 @@ The API should be:
 
 ---
 
+## Search, Filtering and Sorting
+
+The API supports query-based search, filtering, and sorting for collection resources.
+
+### Workspaces
+
+Workspaces support:
+
+- Search by `name`.
+- Sorting by `name` or `createdAt`.
+- Sort order: `asc` or `desc`.
+
+Workspace filtering is not supported.
+
+### Projects
+
+Projects support:
+
+- Search by `name`.
+- Filtering by `status`.
+- Filtering by `archived`.
+- Sorting by `name` or `createdAt`.
+- Sort order: `asc` or `desc`.
+
+### Tasks
+
+Tasks support:
+
+- Search by `title`.
+- Filtering by `status`.
+- Filtering by `priority`.
+- Filtering by `assigneeId`.
+- Filtering by `dueDate`.
+- Sorting by `createdAt`, `dueDate`, or `priority`.
+- Sort order: `asc` or `desc`.
+
+Search is limited to the primary name field of each resource.
+
+---
+
 ## Response Standardization
 
-All endpoints return a consistent response structure for both successful and failed operations.
+All endpoints follow consistent response conventions for successful and failed operations.
 
-Detailed endpoint specifications are documented in the **API Design Specification (ADS)**.
+Error responses are handled centrally by the Global Error Handler to ensure a predictable structure across the API.
+
+Detailed endpoint specifications and response contracts are documented in the **API Design Specification (ADS)**.
 
 ---
 
@@ -908,11 +997,8 @@ Example:
 
 ```json
 {
-  "success": false,
-  "error": {
-    "code": "RESOURCE_NOT_FOUND",
-    "message": "Project not found."
-  }
+  "status": "error",
+  "message": "Project not found."
 }
 ```
 
@@ -926,11 +1012,21 @@ SprintHub provides a centralized notification mechanism for user-facing events.
 
 ## MVP Notifications
 
-The MVP supports in-application notifications for:
+The MVP supports in-application notifications for the following events:
 
 - Workspace invitations.
+- Project creation within a workspace.
 - Task assignments.
 - Task status changes.
+- Task priority changes.
+
+Notification recipients depend on the type of event:
+
+- **Workspace invitations:** The invited user receives the notification.
+- **Project creation:** All members of the workspace receive the notification.
+- **Task assignment:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
+- **Task status changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
+- **Task priority changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
 
 ---
 
@@ -974,12 +1070,13 @@ SprintHub has been designed to support external integrations while keeping the M
 
 ## Current Integrations
 
-The MVP currently integrates with:
+The MVP currently integrates with the following external platforms and services:
 
-- PostgreSQL
-- GitHub Actions
-- Vercel
-- Render
+- Vercel for frontend deployment.
+- Render for backend deployment.
+- GitHub Actions for CI/CD automation.
+
+PostgreSQL is used as the primary database and Docker is used for local development and testing. These are infrastructure components rather than external product integrations.
 
 ---
 
@@ -1000,16 +1097,16 @@ Future versions may integrate with:
 
 The following high-level decisions define the architectural foundation of SprintHub.
 
-| Decision               | Rationale                                               |
-| ---------------------- | ------------------------------------------------------- |
-| Modular Monolith       | Simplifies development while remaining scalable.        |
-| Feature-Based Frontend | Improves modularity and maintainability.                |
-| Layered Backend        | Separates business logic from infrastructure concerns.  |
-| PostgreSQL             | Reliable relational database with strong consistency.   |
-| Prisma ORM             | Type-safe database access and migrations.               |
-| JWT Authentication     | Stateless authentication for REST APIs.                 |
-| RBAC                   | Flexible authorization model for workspace permissions. |
-| Docker                 | Consistent development and deployment environments.     |
+| Decision               | Rationale                                                               |
+| ---------------------- | ----------------------------------------------------------------------- |
+| Modular Monolith       | Simplifies development while remaining scalable.                        |
+| Feature-Based Frontend | Improves modularity and maintainability.                                |
+| Layered Backend        | Separates business logic from infrastructure concerns.                  |
+| PostgreSQL             | Reliable relational database with strong consistency.                   |
+| Prisma ORM             | Type-safe database access and migrations.                               |
+| JWT Authentication     | Stateless authentication for REST APIs.                                 |
+| RBAC                   | Flexible authorization model for workspace permissions.                 |
+| Docker                 | Consistent and reproducible local development and testing environments. |
 
 Detailed architectural decisions are documented individually in the project's Architecture Decision Records (ADRs).
 
@@ -1040,11 +1137,13 @@ PostgreSQL
 
 ## Supporting Services
 
-The MVP infrastructure includes:
+The MVP development and delivery infrastructure includes:
 
 - Docker
 - Docker Compose
 - GitHub Actions
+
+Docker and Docker Compose are used for local development and testing, while GitHub Actions is used for continuous integration and deployment automation.
 
 ---
 
@@ -1063,7 +1162,9 @@ These components are reserved for future scalability improvements and are not pa
 
 # 19. Docker Strategy
 
-SprintHub uses Docker to provide consistent development and deployment environments.
+SprintHub uses Docker to provide a consistent and reproducible local development and testing environment.
+
+Docker is not used as the production deployment platform. Production deployments are handled by Vercel for the frontend and Render for the backend.
 
 ---
 
@@ -1071,32 +1172,35 @@ SprintHub uses Docker to provide consistent development and deployment environme
 
 Docker is used to:
 
-- Standardize development environments.
+- Standardize local development environments.
 - Simplify onboarding.
-- Ensure deployment consistency.
+- Ensure consistent local dependencies.
+- Provide reproducible development and testing environments.
 - Reduce environment-specific issues.
 
 ---
 
 ## MVP Services
 
-The initial Docker Compose configuration includes:
+The Docker Compose environment includes:
 
 - Frontend
 - Backend
 - PostgreSQL
 
+These services are intended to run locally during development and testing.
+
 ---
 
-## Future Services
+## Production Deployment
 
-Additional services may be incorporated in future versions as infrastructure requirements evolve.
+Docker is not the production deployment platform for the MVP.
 
-Examples include:
+Production services are deployed independently:
 
-- Distributed caching
-- Background workers
-- Queue processing
+- Frontend → Vercel
+- Backend → Render
+- Database → PostgreSQL
 
 ---
 
@@ -1163,11 +1267,11 @@ Users
    ▼
 Frontend (Vercel)
    │
-REST API
-   │
+   │ REST API
    ▼
 Backend (Render)
    │
+   │ Prisma
    ▼
 PostgreSQL
 ```
@@ -1194,7 +1298,6 @@ Examples include:
 - Database connection strings.
 - JWT secrets.
 - API keys.
-- OAuth credentials.
 
 No secrets are stored in the source code repository.
 
