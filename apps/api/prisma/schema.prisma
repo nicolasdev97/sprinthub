@@ -49,9 +49,6 @@ model User {
   email        String  @unique
   passwordHash String
 
-  // Account status
-  isActive Boolean @default(false)
-
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
