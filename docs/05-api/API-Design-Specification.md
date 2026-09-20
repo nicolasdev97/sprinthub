@@ -29,22 +29,23 @@
 10. HTTP Status Codes
 11. API Naming Conventions
 12. Authentication API
-13. Workspace API
-14. Project API
-15. Task API
-16. Notification API
-17. Health API
-18. Filtering Standards
-19. Sorting Standards
-20. Search Standards
-21. Rate Limiting
-22. API Security
-23. API Versioning Strategy
-24. OpenAPI & Swagger
-25. API Best Practices
-26. Future API Evolution
-27. API Change Management
-28. Conclusion
+13. User API
+14. Workspace API
+15. Project API
+16. Task API
+17. Notification API
+18. Health API
+19. Filtering Standards
+20. Sorting Standards
+21. Search Standards
+22. Rate Limiting
+23. API Security
+24. API Versioning Strategy
+25. OpenAPI & Swagger
+26. API Best Practices
+27. Future API Evolution
+28. API Change Management
+29. Conclusion
 
 ---
 
@@ -629,7 +630,29 @@ Terminates the current authenticated session by invalidating the Refresh Token.
 
 ---
 
-# 13. Workspace API
+# 13. User API
+
+The User API manages the authenticated user's account.
+
+---
+
+## Endpoints
+
+| Method | Endpoint        | Description               |
+| ------ | --------------- | ------------------------- |
+| GET    | `/api/users/me` | Retrieve the current user |
+| PATCH  | `/api/users/me` | Update the current user   |
+| DELETE | `/api/users/me` | Delete the current user   |
+
+### Delete Account
+
+The `DELETE /api/users/me` endpoint allows an authenticated user to delete their own account.
+
+A user can only delete their own account through this endpoint.
+
+---
+
+# 14. Workspace API
 
 The Workspace API manages collaborative workspaces and their members.
 
@@ -657,7 +680,7 @@ The Workspace API manages collaborative workspaces and their members.
 
 ---
 
-# 14. Project API
+# 15. Project API
 
 The Project API manages projects within workspaces.
 
@@ -699,7 +722,7 @@ Restores an archived project to an active state.
 
 ---
 
-# 15. Task API
+# 16. Task API
 
 The Task API manages project tasks.
 
@@ -753,7 +776,7 @@ Updates the task priority.
 
 ---
 
-# 16. Notification API
+# 17. Notification API
 
 The Notification API provides access to in-application notifications.
 
@@ -791,7 +814,7 @@ Notification recipients depend on the event:
 
 ---
 
-# 17. Health API
+# 18. Health API
 
 The Health API provide an endpoint to verify the operational status of SprintHub services.
 
@@ -828,7 +851,7 @@ These endpoints are intentionally excluded from the MVP.
 
 ---
 
-# 18. Filtering Standards
+# 19. Filtering Standards
 
 Filtering is supported for resources where filtering criteria are defined by the product requirements.
 
@@ -868,7 +891,7 @@ GET /api/projects/{projectId}/tasks?status=IN_PROGRESS&priority=HIGH
 
 ---
 
-# 19. Sorting Standards
+# 20. Sorting Standards
 
 Collection resources support sorting by the fields defined for each resource.
 
@@ -928,7 +951,7 @@ GET /api/workspaces?sortBy=name&sortOrder=asc
 
 ---
 
-# 20. Search Standards
+# 21. Search Standards
 
 Search is supported for collection resources using the primary searchable field defined for each resource.
 
@@ -981,7 +1004,7 @@ Search is restricted to the primary `name` field of workspaces and projects, and
 
 ---
 
-# 21. Rate Limiting
+# 22. Rate Limiting
 
 Rate limiting protects the API from abuse and excessive traffic.
 
@@ -1006,7 +1029,7 @@ HTTP 429 Too Many Requests
 
 ---
 
-# 22. API Security
+# 23. API Security
 
 SprintHub applies multiple security mechanisms across the API.
 
@@ -1041,7 +1064,7 @@ Sensitive information is never exposed through API responses.
 
 ---
 
-# 23. API Versioning Strategy
+# 24. API Versioning Strategy
 
 SprintHub follows a versioned API strategy to support future evolution without breaking existing clients.
 
@@ -1072,7 +1095,7 @@ Non-breaking additions, such as optional fields or new endpoints, may be introdu
 
 ---
 
-# 24. OpenAPI & Swagger
+# 25. OpenAPI & Swagger
 
 SprintHub supports API documentation through the OpenAPI Specification.
 
@@ -1105,7 +1128,7 @@ The ADS serves as the authoritative design reference for the API, while the Open
 
 ---
 
-# 25. API Best Practices
+# 26. API Best Practices
 
 SprintHub follows industry-standard API design practices.
 
@@ -1136,7 +1159,7 @@ Errors should:
 
 ---
 
-# 26. Future API Evolution
+# 27. Future API Evolution
 
 The API has been designed to evolve as new SprintHub capabilities are introduced.
 
@@ -1185,7 +1208,7 @@ These capabilities are intentionally excluded from the MVP and may be introduced
 
 ---
 
-# 27. API Change Management
+# 28. API Change Management
 
 API changes should be introduced in a controlled and backward-compatible manner.
 
@@ -1212,7 +1235,7 @@ Deprecated endpoints should:
 
 ---
 
-# 28. Conclusion
+# 29. Conclusion
 
 The API Design Specification defines the communication contract for SprintHub.
 

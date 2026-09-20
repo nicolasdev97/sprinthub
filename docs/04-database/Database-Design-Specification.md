@@ -236,10 +236,10 @@ Represents an authenticated application user.
 | Field        | Type     | Constraints      |
 | ------------ | -------- | ---------------- |
 | id           | UUID     | Primary Key      |
-| name         | String   | Required         |
+| firstName    | String   | Required         |
+| lastName     | String   | Required         |
 | email        | String   | Unique, Required |
 | passwordHash | String   | Required         |
-| isActive     | Boolean  | Default: false   |
 | createdAt    | DateTime | Required         |
 | updatedAt    | DateTime | Required         |
 
@@ -326,6 +326,7 @@ Represents an individual work item within a project.
 | ----------- | -------- | ---------------------- |
 | id          | UUID     | Primary Key            |
 | projectId   | UUID     | Foreign Key            |
+| createdById | UUID     | Foreign Key            |
 | assigneeId  | UUID     | Foreign Key (Nullable) |
 | title       | String   | Required               |
 | description | String   | Optional               |
@@ -369,13 +370,12 @@ Represents an in-application notification delivered to a user.
 | --------- | -------- | -------------- |
 | id        | UUID     | Primary Key    |
 | userId    | UUID     | Foreign Key    |
-| type      | Enum     | Required       |
 | title     | String   | Required       |
 | message   | String   | Required       |
 | isRead    | Boolean  | Default: false |
 | createdAt | DateTime | Required       |
 
-### Notification Types
+### MVP Notification Events
 
 The MVP supports the following notification events:
 
@@ -384,10 +384,6 @@ The MVP supports the following notification events:
 - Task assignment.
 - Task status change.
 - Task priority change.
-
-- Task assignment, status change, and priority change notifications are sent only to the user currently assigned to the task.
-- If the task has no assignee, no notification is created for these events.
-- Project creation notifications are sent to all members of the workspace.
 
 ### Notification Recipients
 
@@ -463,8 +459,10 @@ SprintHub uses explicit foreign key relationships to preserve referential integr
 
 ## User → Task
 
-- A User may be assigned multiple Tasks.
+- A User may create multiple Tasks through the `createdById` relationship.
+- A User may be assigned multiple Tasks through the `assigneeId` relationship.
 - Task assignment is optional.
+- A Task must have exactly one creator.
 - A Task may have zero or one assigned User.
 - If the assigned User is deleted, the Task remains and its `assigneeId` is set to `null`.
 
@@ -516,6 +514,7 @@ Examples include:
 - WorkspaceMember → Workspace
 - Project → Workspace
 - Task → Project
+- Task → User (Creator)
 - Task → User (Assignee)
 - Notification → User
 - RefreshToken → User
@@ -542,7 +541,8 @@ The following business-critical attributes cannot be null:
 
 ### User
 
-- `name`
+- `firstName`
+- `lastName`
 - `email`
 - `passwordHash`
 
@@ -576,7 +576,6 @@ The following business-critical attributes cannot be null:
 ### Notification
 
 - `userId`
-- `type`
 - `title`
 - `message`
 
@@ -594,7 +593,6 @@ The database defines the following default values:
 
 - `WorkspaceMember.role` defaults to `MEMBER`.
 - `Notification.isRead` defaults to `false`.
-- `User.isActive` defaults to `false`.
 - `Project.archived` defaults to `false`.
 - UUID primary keys are generated automatically.
 - `createdAt` timestamps are generated automatically.

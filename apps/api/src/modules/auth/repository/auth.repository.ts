@@ -1,9 +1,9 @@
 import { prisma } from "../../../database/prisma";
 
-import { RegisterDto } from "../dto";
+import { CreateUserDto } from "../dto";
 
 export class AuthRepository {
-  async findUserByEmail(email: string) {
+  async getUserByEmail(email: string) {
     return prisma.user.findUnique({
       where: {
         email,
@@ -11,14 +11,13 @@ export class AuthRepository {
     });
   }
 
-  async createUser(data: RegisterDto) {
+  async createUser(data: CreateUserDto) {
     return prisma.user.create({
       data: {
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
-        passwordHash: data.password,
-        isActive: true,
+        passwordHash: data.passwordHash,
       },
     });
   }

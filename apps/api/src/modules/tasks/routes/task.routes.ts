@@ -1,7 +1,6 @@
 import { Router } from "express";
 
-import { authenticate } from "../../../middleware/auth";
-import { validate, validateQuery } from "../../../middleware/validation";
+import { authenticate, validate, validateQuery } from "../../../middleware";
 
 import { TaskController } from "../controller";
 import {
