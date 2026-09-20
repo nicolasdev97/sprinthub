@@ -1,6 +1,6 @@
 import { prisma } from "../../../database/prisma";
 
-import { RegisterDto } from "../dto";
+import { CreateUserDto } from "../dto";
 
 export class AuthRepository {
   async getUserByEmail(email: string) {
@@ -11,13 +11,13 @@ export class AuthRepository {
     });
   }
 
-  async createUser(data: RegisterDto) {
+  async createUser(data: CreateUserDto) {
     return prisma.user.create({
       data: {
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
-        passwordHash: data.password,
+        passwordHash: data.passwordHash,
       },
     });
   }
