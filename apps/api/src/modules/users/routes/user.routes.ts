@@ -1,6 +1,8 @@
 import { Router } from "express";
 
-import { authenticate } from "../../../middleware/auth";
+import { authenticate, validate } from "../../../middleware";
+
+import { updateUserSchema } from "../schema";
 
 import { UserController } from "../controller";
 import { UserRepository } from "../repository";
@@ -16,6 +18,13 @@ userRouter.get(
   "/me",
   authenticate,
   userController.getUser.bind(userController),
+);
+
+userRouter.patch(
+  "/me",
+  authenticate,
+  validate(updateUserSchema),
+  userController.updateUser.bind(userController),
 );
 
 export default userRouter;
