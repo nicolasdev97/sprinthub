@@ -18,7 +18,6 @@ export class AuthRepository {
         lastName: data.lastName,
         email: data.email,
         passwordHash: data.password,
-        isActive: true,
       },
     });
   }
