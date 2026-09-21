@@ -1089,7 +1089,6 @@ Strategies include:
 
 - Database indexing
 - Optimized SQL queries
-- Efficient pagination
 - Request validation
 - Connection pooling
 - Asynchronous processing where appropriate

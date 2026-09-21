@@ -237,7 +237,6 @@ Design strategies include:
 - Query optimization
 - Lazy loading
 - Code splitting
-- Efficient pagination
 
 Future infrastructure improvements may include distributed caching to further optimize application performance.
 
@@ -1326,7 +1325,6 @@ Backend performance is achieved through:
 
 - Optimized database queries.
 - Proper indexing.
-- Pagination.
 - Efficient validation.
 - Connection pooling.
 
