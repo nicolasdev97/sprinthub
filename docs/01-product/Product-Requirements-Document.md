@@ -423,7 +423,7 @@ The MVP dashboard provides:
 
 The MVP includes in-application notifications for:
 
-- Workspace invitations.
+- Users being added to a workspace.
 - New project creation within a workspace.
 - Task assignments.
 - Task status changes.
@@ -431,7 +431,7 @@ The MVP includes in-application notifications for:
 
 Notification recipients depend on the event:
 
-- **Workspace invitations:** The invited user receives the notification.
+- **Users added to a workspace:** The added user receives the notification.
 - **Project creation:** All members of the workspace receive the notification.
 - **Task assignment:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
 - **Task status changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
