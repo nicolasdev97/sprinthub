@@ -5,11 +5,13 @@ import { CreateProjectDto, UpdateProjectDto } from "../dto";
 import { ProjectRepository } from "../repository";
 import { WorkspaceService } from "../../workspaces/service";
 import { ProjectFilterParams } from "../types";
+import { NotificationService } from "../../notifications";
 
 export class ProjectService {
   constructor(
     private readonly projectRepository: ProjectRepository,
     private readonly workspaceService: WorkspaceService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async createProject(data: CreateProjectDto, userId: string) {
@@ -35,7 +37,22 @@ export class ProjectService {
       throw new AppError("Project name already exists in this workspace", 409);
     }
 
-    return this.projectRepository.createProject(data);
+    const project = await this.projectRepository.createProject(data);
+
+    const workspaceMembers = await this.workspaceService.getWorkspaceMembers(
+      data.workspaceId,
+      userId,
+    );
+
+    for (const workspaceMember of workspaceMembers) {
+      await this.notificationService.createNotification(
+        workspaceMember.user.id,
+        "Project created",
+        "A new project has been created in your workspace.",
+      );
+    }
+
+    return project;
   }
 
   async getProjects(

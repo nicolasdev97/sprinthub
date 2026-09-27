@@ -14,14 +14,27 @@ import { WorkspaceService } from "../../workspaces/service";
 import { WorkspaceRepository } from "../../workspaces/repository";
 import { ProjectParams, WorkspaceProjectParams } from "../types";
 
+import { NotificationRepository } from "../../notifications/repository";
+import { NotificationService } from "../../notifications/service";
+
 export const projectRouter = Router();
 
 const projectRepository = new ProjectRepository();
 
-const workspaceRepository = new WorkspaceRepository();
-const workspaceService = new WorkspaceService(workspaceRepository);
+const notificationRepository = new NotificationRepository();
+const notificationService = new NotificationService(notificationRepository);
 
-const projectService = new ProjectService(projectRepository, workspaceService);
+const workspaceRepository = new WorkspaceRepository();
+const workspaceService = new WorkspaceService(
+  workspaceRepository,
+  notificationService,
+);
+
+const projectService = new ProjectService(
+  projectRepository,
+  workspaceService,
+  notificationService,
+);
 
 const projectController = new ProjectController(projectService);
 
