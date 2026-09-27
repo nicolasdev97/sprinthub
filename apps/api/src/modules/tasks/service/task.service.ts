@@ -228,11 +228,21 @@ export class TaskService {
 
     const completedAt = data.status === TaskStatus.DONE ? new Date() : null;
 
-    return this.taskRepository.updateTaskStatus(
+    const updatedTask = await this.taskRepository.updateTaskStatus(
       taskId,
       data.status,
       completedAt,
     );
+
+    if (task.assigneeId) {
+      await this.notificationService.createNotification(
+        task.assigneeId,
+        "Task status changed",
+        "The status of your assigned task has changed.",
+      );
+    }
+
+    return updatedTask;
   }
 
   async updateTaskPriority(taskId: string, data: UpdateTaskPriorityDto) {
