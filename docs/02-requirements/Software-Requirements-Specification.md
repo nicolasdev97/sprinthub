@@ -672,11 +672,44 @@ The dashboard shall display:
 
 #### Description
 
-The system shall generate in-application notifications when:
+The system shall generate in-application notifications for the following events:
 
-- A task is assigned.
-- A workspace invitation is sent.
+- A user is added to a workspace.
+- A project is created within a workspace.
+- A task is assigned to a user.
 - A task status changes.
+- A task priority changes.
+
+#### Notification Recipients
+
+The notification recipient depends on the event:
+
+- **Member added to workspace:** The added user receives the notification.
+- **Project creation:** All members of the workspace receive the notification.
+- **Task assignment:** Only the user assigned to the task receives the notification.
+- **Task status changes:** Only the user assigned to the task receives the notification.
+- **Task priority changes:** Only the user assigned to the task receives the notification.
+
+If a task has no assignee, no notification shall be generated for task assignment, task status changes, or task priority changes.
+
+#### Notification State
+
+Each notification shall:
+
+- Belong to exactly one user.
+- Be created with `isRead` set to `false`.
+- Allow the recipient to mark the notification as read.
+
+#### Acceptance Criteria
+
+- A notification is created when a user is added to a workspace.
+- A notification is created for all workspace members when a project is created.
+- A notification is created for the assigned user when a task is assigned.
+- A notification is created for the assigned user when a task status changes.
+- A notification is created for the assigned user when a task priority changes.
+- No task notification is created when the task has no assignee.
+- Notifications are initially marked as unread.
+- Users can mark their own notifications as read.
 
 > **Note**
 >

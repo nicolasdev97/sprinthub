@@ -6,6 +6,7 @@ import { workspaceRouter } from "../modules/workspaces/routes";
 import { projectRouter } from "../modules/projects/routes";
 import { taskRouter } from "../modules/tasks/routes";
 import { userRouter } from "../modules/users";
+import { notificationRouter } from "../modules/notifications";
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use("/users", userRouter);
 router.use("/workspaces", workspaceRouter);
 router.use("/", projectRouter);
 router.use("/", taskRouter);
+router.use("/notifications", notificationRouter);
 
 export default router;

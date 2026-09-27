@@ -791,6 +791,18 @@ The Notification API provides access to in-application notifications.
 
 ---
 
+## Notification Access
+
+Users can retrieve only their own notifications.
+
+The authenticated user is determined from the access token.
+
+`GET /api/notifications` returns only notifications associated with the authenticated user.
+
+The API does not provide an endpoint for directly creating notifications. Notifications are generated internally as a result of business events handled by the application.
+
+---
+
 ## Notification Scope
 
 The MVP supports only in-application notifications.

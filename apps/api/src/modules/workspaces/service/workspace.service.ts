@@ -10,9 +10,13 @@ import {
   AddWorkspaceMemberDto,
 } from "../dto";
 import { WorkspaceRepository } from "../repository";
+import { NotificationService } from "../../notifications";
 
 export class WorkspaceService {
-  constructor(private readonly workspaceRepository: WorkspaceRepository) {}
+  constructor(
+    private readonly workspaceRepository: WorkspaceRepository,
+    private readonly notificationService: NotificationService,
+  ) {}
 
   async createWorkspace(data: CreateWorkspaceDto, ownerId: string) {
     const existingWorkspace = await this.workspaceRepository.getWorkspaceByName(
@@ -144,11 +148,20 @@ export class WorkspaceService {
       throw new AppError("User is already a workspace member", 409);
     }
 
-    return this.workspaceRepository.addWorkspaceMember(
-      workspaceId,
+    const workspaceMemberCreated =
+      await this.workspaceRepository.addWorkspaceMember(
+        workspaceId,
+        memberUser.id,
+        data.role,
+      );
+
+    await this.notificationService.createNotification(
       memberUser.id,
-      data.role,
+      "Added to workspace",
+      "You have been added to a workspace.",
     );
+
+    return workspaceMemberCreated;
   }
 
   async getWorkspaceMembers(workspaceId: string, userId: string) {

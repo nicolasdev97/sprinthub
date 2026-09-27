@@ -133,7 +133,7 @@ SprintHub focuses on project management for small teams.
 The platform allows authenticated users to:
 
 - Create workspaces.
-- Invite collaborators.
+- Add members.
 - Create projects.
 - Manage tasks.
 - Assign responsibilities.
@@ -162,7 +162,7 @@ The Minimum Viable Product includes the essential functionality required for a c
 - Create workspace
 - Update workspace
 - Delete workspace
-- Invite members
+- Add members
 - Remove members
 - Manage member roles
 
@@ -223,6 +223,24 @@ Task listing supports:
   - `dueDate`: Filter tasks by due date.
 - **Sorting:** By `createdAt`, `dueDate`, or `priority`.
 - **Sort order:** `asc` or `desc`.
+
+## Notifications
+
+The MVP includes in-application notifications for:
+
+- Users being added to a workspace.
+- New project creation within a workspace.
+- Task assignments.
+- Task status changes.
+- Task priority changes.
+
+Notification recipients depend on the event:
+
+- **Users added to a workspace:** The added user receives the notification.
+- **Project creation:** All members of the workspace receive the notification.
+- **Task assignment:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
+- **Task status changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
+- **Task priority changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
 
 ## Dashboard
 
@@ -298,7 +316,7 @@ The system shall allow users to:
 - Create workspaces.
 - Update workspace information.
 - Delete workspaces.
-- Invite members.
+- Add members.
 - Remove members.
 - Assign member roles.
 - Search workspaces by name.
@@ -347,6 +365,26 @@ The system shall allow users to:
 - Filter tasks by assignee.
 - Filter tasks by due date.
 - Sort tasks by creation date, due date, or priority.
+
+---
+
+## Notifications
+
+The system shall provide in-application notifications for the following events:
+
+- Users being added to a workspace.
+- New project creation within a workspace.
+- Task assignments.
+- Task status changes.
+- Task priority changes.
+
+Notification recipients shall depend on the event:
+
+- **Users added to a workspace:** The added user shall receive the notification.
+- **Project creation:** All members of the workspace shall receive the notification.
+- **Task assignment:** Only the user assigned to the task shall receive the notification. If the task has no assignee, no notification shall be generated.
+- **Task status changes:** Only the user assigned to the task shall receive the notification. If the task has no assignee, no notification shall be generated.
+- **Task priority changes:** Only the user assigned to the task shall receive the notification. If the task has no assignee, no notification shall be generated.
 
 ---
 
@@ -1089,7 +1127,6 @@ Strategies include:
 
 - Database indexing
 - Optimized SQL queries
-- Efficient pagination
 - Request validation
 - Connection pooling
 - Asynchronous processing where appropriate

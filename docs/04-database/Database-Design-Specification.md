@@ -891,18 +891,6 @@ Performance strategies include:
 
 ---
 
-## Pagination
-
-Large collections should be retrieved using pagination to reduce query cost and improve response times.
-
-Examples include:
-
-- Projects
-- Tasks
-- Notifications
-
----
-
 ## Future Optimizations
 
 Future database optimizations may include:
