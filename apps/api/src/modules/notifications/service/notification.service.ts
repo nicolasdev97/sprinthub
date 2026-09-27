@@ -1,3 +1,5 @@
+import { AppError } from "../../../shared/errors";
+
 import { NotificationRepository } from "../repository";
 
 export class NotificationService {
@@ -7,5 +9,22 @@ export class NotificationService {
 
   async getNotificationsByUser(userId: string) {
     return this.notificationRepository.getNotificationsByUser(userId);
+  }
+
+  async updateNotificationReadStatus(notificationId: string, userId: string) {
+    const notification =
+      await this.notificationRepository.getNotificationById(notificationId);
+
+    if (!notification) {
+      throw new AppError("Notification not found", 404);
+    }
+
+    if (notification.userId !== userId) {
+      throw new AppError("Notification not found", 404);
+    }
+
+    return this.notificationRepository.updateNotificationReadStatus(
+      notificationId,
+    );
   }
 }

@@ -11,4 +11,23 @@ export class NotificationRepository {
       },
     });
   }
+
+  async getNotificationById(id: string) {
+    return prisma.notification.findUnique({
+      where: {
+        id,
+      },
+    });
+  }
+
+  async updateNotificationReadStatus(id: string) {
+    return prisma.notification.update({
+      where: {
+        id,
+      },
+      data: {
+        isRead: true,
+      },
+    });
+  }
 }
