@@ -12,10 +12,21 @@ import {
 import { WorkspaceRepository } from "../repository";
 import { WorkspaceService } from "../service";
 
+import { NotificationRepository } from "../../notifications/repository";
+import { NotificationService } from "../../notifications/service";
+
 export const workspaceRouter = Router();
 
 const workspaceRepository = new WorkspaceRepository();
-const workspaceService = new WorkspaceService(workspaceRepository);
+
+const notificationRepository = new NotificationRepository();
+const notificationService = new NotificationService(notificationRepository);
+
+const workspaceService = new WorkspaceService(
+  workspaceRepository,
+  notificationService,
+);
+
 const workspaceController = new WorkspaceController(workspaceService);
 
 workspaceRouter.post(
