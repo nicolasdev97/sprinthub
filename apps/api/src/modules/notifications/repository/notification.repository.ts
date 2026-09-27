@@ -1,13 +1,12 @@
 import { prisma } from "../../../database/prisma";
 
 export class NotificationRepository {
-  async getNotificationsByUser(userId: string) {
-    return prisma.notification.findMany({
-      where: {
+  async createNotification(userId: string, title: string, message: string) {
+    return prisma.notification.create({
+      data: {
         userId,
-      },
-      orderBy: {
-        createdAt: "desc",
+        title,
+        message,
       },
     });
   }
@@ -16,6 +15,17 @@ export class NotificationRepository {
     return prisma.notification.findUnique({
       where: {
         id,
+      },
+    });
+  }
+
+  async getNotificationsByUser(userId: string) {
+    return prisma.notification.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        createdAt: "desc",
       },
     });
   }
