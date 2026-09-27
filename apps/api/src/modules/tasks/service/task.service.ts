@@ -252,6 +252,19 @@ export class TaskService {
       throw new AppError("Task not found", 404);
     }
 
-    return this.taskRepository.updateTaskPriority(taskId, data.priority);
+    const updatedTask = await this.taskRepository.updateTaskPriority(
+      taskId,
+      data.priority,
+    );
+
+    if (task.assigneeId) {
+      await this.notificationService.createNotification(
+        task.assigneeId,
+        "Task priority changed",
+        "The priority of your assigned task has changed.",
+      );
+    }
+
+    return updatedTask;
   }
 }
