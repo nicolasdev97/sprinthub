@@ -14,11 +14,14 @@ import { ProjectRepository } from "../../projects/repository";
 
 import { TaskFilterParams } from "../types";
 
+import { NotificationService } from "../../notifications";
+
 export class TaskService {
   constructor(
     private readonly taskRepository: TaskRepository,
     private readonly projectRepository: ProjectRepository,
     private readonly workspaceService: WorkspaceService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async createTask(
@@ -64,7 +67,17 @@ export class TaskService {
       status: TaskStatus.TODO,
     };
 
-    return this.taskRepository.createTask(taskData);
+    const task = await this.taskRepository.createTask(taskData);
+
+    if (data.assigneeId) {
+      await this.notificationService.createNotification(
+        data.assigneeId,
+        "Task assigned",
+        "You have been assigned a task.",
+      );
+    }
+
+    return task;
   }
 
   async getTasks(
@@ -190,7 +203,20 @@ export class TaskService {
       );
     }
 
-    return this.taskRepository.assignTask(taskId, data.assigneeId);
+    const updatedTask = await this.taskRepository.assignTask(
+      taskId,
+      data.assigneeId,
+    );
+
+    if (data.assigneeId !== null) {
+      await this.notificationService.createNotification(
+        data.assigneeId,
+        "Task assigned",
+        "You have been assigned a task.",
+      );
+    }
+
+    return updatedTask;
   }
 
   async updateTaskStatus(taskId: string, data: UpdateTaskStatusDto) {

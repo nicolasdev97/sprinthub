@@ -19,19 +19,29 @@ import { ProjectRepository } from "../../projects/repository";
 import { CreateTaskDto } from "../dto";
 import { ProjectTaskParams, TaskParams } from "../types";
 
+import { NotificationRepository } from "../../notifications/repository";
+import { NotificationService } from "../../notifications/service";
+
 export const taskRouter = Router();
 
 const taskRepository = new TaskRepository();
 
 const projectRepository = new ProjectRepository();
 
+const notificationRepository = new NotificationRepository();
+const notificationService = new NotificationService(notificationRepository);
+
 const workspaceRepository = new WorkspaceRepository();
-const workspaceService = new WorkspaceService(workspaceRepository);
+const workspaceService = new WorkspaceService(
+  workspaceRepository,
+  notificationService,
+);
 
 const taskService = new TaskService(
   taskRepository,
   projectRepository,
   workspaceService,
+  notificationService,
 );
 
 const taskController = new TaskController(taskService);
