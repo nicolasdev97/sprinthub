@@ -1,6 +1,6 @@
 import { WorkspaceRole } from "@prisma/client";
 
-import { AppError } from "../../../shared/errors";
+import { AppError } from "../../../shared";
 import { CreateProjectDto, UpdateProjectDto } from "../dto";
 import { ProjectRepository } from "../repository";
 import { WorkspaceService } from "../../workspaces/service";

@@ -1,6 +1,6 @@
 import { TaskStatus, WorkspaceRole } from "@prisma/client";
 
-import { AppError } from "../../../shared/errors";
+import { AppError } from "../../../shared";
 import {
   CreateTaskDto,
   UpdateTaskDto,

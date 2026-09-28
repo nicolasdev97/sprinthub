@@ -1,9 +1,9 @@
-import { AppError } from "../../../shared/errors";
 import {
+  AppError,
   hashPassword,
   comparePassword,
   generateToken,
-} from "../../../shared/utils";
+} from "../../../shared";
 
 import { RegisterDto, LoginDto } from "../dto";
 import { AuthRepository } from "../repository";
