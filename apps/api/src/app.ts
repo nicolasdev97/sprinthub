@@ -2,8 +2,7 @@ import express from "express";
 
 import cookieParser from "cookie-parser";
 
-import { errorHandler } from "./shared/errors";
-import { requestLogger } from "./shared/logger";
+import { errorHandler, requestLogger } from "./shared";
 
 import router from "./routes";
 

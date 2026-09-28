@@ -1,4 +1,4 @@
-import { AppError } from "../../../shared/errors";
+import { AppError } from "../../../shared";
 
 import { UserRepository } from "../repository";
 import { UpdateUserDto } from "../dto";

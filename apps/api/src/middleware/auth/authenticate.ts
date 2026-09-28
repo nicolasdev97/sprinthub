@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 
-import { AppError } from "../../shared/errors";
-import { verifyToken } from "../../shared/utils";
+import { AppError, verifyToken } from "../../shared";
 
 export function authenticate(req: Request, _res: Response, next: NextFunction) {
   const token =
