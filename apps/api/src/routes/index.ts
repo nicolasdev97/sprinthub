@@ -10,13 +10,17 @@ import { notificationRouter } from "../modules/notifications";
 
 const router = Router();
 
-router.get("/health", healthController);
+const apiRouter = Router();
 
-router.use("/auth", authRouter);
-router.use("/users", userRouter);
-router.use("/workspaces", workspaceRouter);
-router.use("/", projectRouter);
-router.use("/", taskRouter);
-router.use("/notifications", notificationRouter);
+apiRouter.get("/health", healthController);
+
+apiRouter.use("/auth", authRouter);
+apiRouter.use("/users", userRouter);
+apiRouter.use("/workspaces", workspaceRouter);
+apiRouter.use("/", projectRouter);
+apiRouter.use("/", taskRouter);
+apiRouter.use("/notifications", notificationRouter);
+
+router.use("/api", apiRouter);
 
 export default router;
