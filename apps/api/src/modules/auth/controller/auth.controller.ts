@@ -44,10 +44,19 @@ export class AuthController {
     return res.status(200).json(response);
   }
 
-  async logout(_req: Request, res: Response) {
-    res.clearCookie("accessToken", {
+  async logout(req: Request, res: Response) {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      throw new AppError("Refresh token is required", 401);
+    }
+
+    await this.authService.logout(refreshToken);
+
+    res.clearCookie("refreshToken", {
       httpOnly: true,
-      sameSite: "lax",
+      secure: true,
+      sameSite: "strict",
     });
 
     return res.status(200).json({

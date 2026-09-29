@@ -29,4 +29,4 @@ authRouter.post(
 
 authRouter.post("/refresh", authController.refresh.bind(authController));
 
-authRouter.post("/logout", authController.logout);
+authRouter.post("/logout", authController.logout.bind(authController));

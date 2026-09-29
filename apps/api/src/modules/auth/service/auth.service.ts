@@ -95,4 +95,17 @@ export class AuthService {
       accessToken,
     };
   }
+
+  async logout(refreshToken: string) {
+    const refreshTokenHash = hashRefreshToken(refreshToken);
+
+    const storedRefreshToken =
+      await this.authRepository.getRefreshTokenByHash(refreshTokenHash);
+
+    if (!storedRefreshToken) {
+      throw new AppError("Invalid or expired refresh token", 401);
+    }
+
+    await this.authRepository.deleteRefreshToken(storedRefreshToken.id);
+  }
 }
