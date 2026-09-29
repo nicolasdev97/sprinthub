@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 
 import { RegisterDto, LoginDto } from "../dto";
 import { AuthService } from "../service";
+import { AppError } from "../../../shared";
 
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -19,10 +20,26 @@ export class AuthController {
 
     const response = await this.authService.login(data);
 
-    res.cookie("accessToken", response.accessToken, {
+    res.cookie("refreshToken", response.refreshToken, {
       httpOnly: true,
-      sameSite: "lax",
+      secure: true,
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+
+    const { refreshToken: _, ...responseWithoutRefreshToken } = response;
+
+    return res.status(200).json(responseWithoutRefreshToken);
+  }
+
+  async refresh(req: Request, res: Response) {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      throw new AppError("Refresh token is required", 401);
+    }
+
+    const response = await this.authService.refreshAccessToken(refreshToken);
 
     return res.status(200).json(response);
   }

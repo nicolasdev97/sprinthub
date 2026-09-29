@@ -3,6 +3,8 @@ import {
   hashPassword,
   comparePassword,
   generateToken,
+  generateRefreshToken,
+  hashRefreshToken,
 } from "../../../shared";
 
 import { RegisterDto, LoginDto } from "../dto";
@@ -46,15 +48,51 @@ export class AuthService {
       throw new AppError("Invalid email or password", 401);
     }
 
-    const token = generateToken({
+    const accessToken = generateToken({
       userId: user.id,
+    });
+
+    const refreshToken = generateRefreshToken();
+    const refreshTokenHash = hashRefreshToken(refreshToken);
+
+    const refreshTokenExpiresAt = new Date();
+    refreshTokenExpiresAt.setDate(refreshTokenExpiresAt.getDate() + 7);
+
+    await this.authRepository.createRefreshToken({
+      userId: user.id,
+      tokenHash: refreshTokenHash,
+      expiresAt: refreshTokenExpiresAt,
     });
 
     const { passwordHash, ...userWithoutPassword } = user;
 
     return {
-      accessToken: token,
+      accessToken,
+      refreshToken,
       user: userWithoutPassword,
+    };
+  }
+
+  async refreshAccessToken(refreshToken: string) {
+    const refreshTokenHash = hashRefreshToken(refreshToken);
+
+    const storedRefreshToken =
+      await this.authRepository.getRefreshTokenByHash(refreshTokenHash);
+
+    if (!storedRefreshToken) {
+      throw new AppError("Invalid or expired refresh token", 401);
+    }
+
+    if (storedRefreshToken.expiresAt <= new Date()) {
+      throw new AppError("Invalid or expired refresh token", 401);
+    }
+
+    const accessToken = generateToken({
+      userId: storedRefreshToken.userId,
+    });
+
+    return {
+      accessToken,
     };
   }
 }

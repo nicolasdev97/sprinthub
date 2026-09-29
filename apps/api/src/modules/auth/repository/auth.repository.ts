@@ -21,4 +21,30 @@ export class AuthRepository {
       },
     });
   }
+
+  async createRefreshToken(data: {
+    userId: string;
+    tokenHash: string;
+    expiresAt: Date;
+  }) {
+    return prisma.refreshToken.create({
+      data,
+    });
+  }
+
+  async getRefreshTokenByHash(tokenHash: string) {
+    return prisma.refreshToken.findFirst({
+      where: {
+        tokenHash,
+      },
+    });
+  }
+
+  async deleteRefreshToken(id: string) {
+    return prisma.refreshToken.delete({
+      where: {
+        id,
+      },
+    });
+  }
 }

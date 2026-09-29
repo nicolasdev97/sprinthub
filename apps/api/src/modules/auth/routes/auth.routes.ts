@@ -27,4 +27,6 @@ authRouter.post(
   authController.login.bind(authController),
 );
 
+authRouter.post("/refresh", authController.refresh.bind(authController));
+
 authRouter.post("/logout", authController.logout);

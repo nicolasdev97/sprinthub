@@ -12,7 +12,7 @@ export function generateToken(payload: JwtPayload): string {
   }
 
   return jwt.sign(payload, secret, {
-    expiresIn: "1h",
+    expiresIn: "15m",
   });
 }
 
