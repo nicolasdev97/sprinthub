@@ -2,7 +2,7 @@
 
 import { createContext, ReactNode, useContext, useState } from 'react';
 
-import { setAccessToken } from '@/services/httpClient';
+import { setAccessToken } from '@/services';
 
 import { authService } from '../service';
 import { AuthUser } from '../type';
