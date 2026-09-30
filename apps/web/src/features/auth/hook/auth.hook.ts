@@ -22,9 +22,12 @@ export const useRegister = () => {
 };
 
 export const useLogout = () => {
-  const { logout } = useAuth();
+  const { clearAuth } = useAuth();
 
   return useMutation({
-    mutationFn: () => logout(),
+    mutationFn: () => authService.logout(),
+    onSuccess: () => {
+      clearAuth();
+    },
   });
 };
