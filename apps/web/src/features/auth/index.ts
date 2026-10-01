@@ -1,4 +1,4 @@
 export * from './service';
-export * from './type';
+export * from './types';
 export * from './context';
 export * from './hook';

@@ -5,7 +5,7 @@ import { createContext, ReactNode, useContext, useState } from 'react';
 import { setAccessToken } from '@/services';
 
 import { authService } from '../service';
-import { AuthUser } from '../type';
+import { AuthUser } from '../types';
 
 interface AuthContextValue {
   accessToken: string | null;

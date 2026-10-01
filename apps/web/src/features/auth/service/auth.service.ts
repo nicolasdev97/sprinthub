@@ -6,7 +6,7 @@ import {
   RefreshResponse,
   RegisterRequest,
   RegisterResponse,
-} from '../type';
+} from '../types';
 
 export const authService = {
   async register(data: RegisterRequest): Promise<RegisterResponse> {
