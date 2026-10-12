@@ -319,9 +319,20 @@ All production traffic is encrypted using HTTPS.
 
 ## Token Revocation
 
-Refresh Tokens are revoked during logout by invalidating the active Refresh Token.
+Refresh Tokens are revoked during logout by deleting the active `RefreshToken` record from the database and clearing the `HttpOnly` cookie, rather than maintaining a soft-revocation timestamp.
 
 Additional revocation scenarios may be considered in future versions if required by the product.
+
+---
+
+## Token Refresh & Rotation Strategy
+
+In the MVP, SprintHub implements **token renewal without active rotation**:
+
+- When `POST /api/auth/refresh` is called, the existing Refresh Token is validated against the database.
+- If valid and not expired, a new short-lived Access Token (15 minutes) is generated and returned directly: `{ "accessToken": string }`.
+- The existing Refresh Token remains valid in its `HttpOnly` cookie for the duration of its 7-day lifespan.
+- **Refresh Token Rotation (RTR)** (invalidating the old refresh token and issuing a brand-new one on every refresh request) is planned as a future post-MVP security enhancement to avoid race conditions with concurrent client requests in the initial release.
 
 ---
 
@@ -353,12 +364,13 @@ The authentication strategy influences several architectural components.
 
 The `RefreshToken` entity stores:
 
+- `id`
+- `userId` (User reference)
 - `tokenHash`
-- User reference
-- Expiration timestamp
-- Revocation timestamp
+- `expiresAt` (Expiration timestamp)
+- `createdAt` (Creation timestamp)
 
-The plain Refresh Token is not persisted.
+The plain Refresh Token is not persisted, and revoked tokens are deleted directly from the table.
 
 ---
 

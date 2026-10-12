@@ -105,23 +105,57 @@ npm install
 cp .env.example .env
 ```
 
-## 5. Start the development infrastructure
+## 5. Start the local environment
+
+SprintHub supports two local workflows depending on your objective:
+
+### Workflow A: Fully Containerized Environment (Zero-Setup / Evaluation)
+
+To run the complete application stack (Frontend, Backend, and PostgreSQL) in isolated containers with a single command:
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
-This command starts the containerized development environment and its required services, including the frontend, backend, and PostgreSQL database.
+This starts all containerized services:
 
-Future infrastructure services may be added as the platform evolves.
+- **Frontend (Next.js):** `http://localhost:3000`
+- **Backend (Express API):** `http://localhost:3001`
+- **Database (PostgreSQL):** `localhost:5432`
 
-## 6. Start the application
+This workflow is recommended for evaluators, reviewers, and reproducible testing without requiring local Node.js tooling.
+
+---
+
+### Workflow B: Host Development Mode (Recommended for Daily DX)
+
+For active feature development with instant hot-reloading and native IDE debugging:
+
+1. Start only the PostgreSQL database container:
+
+```bash
+docker compose up -d postgres
+```
+
+2. Generate the Prisma client and apply database migrations:
+
+```bash
+npm run prisma:migrate
+```
+
+3. Start the applications on the host machine:
 
 ```bash
 npm run dev
 ```
 
-After completing these steps, the local development environment is ready.
+Both applications start concurrently:
+
+- **Frontend (Next.js):** `http://localhost:3000`
+- **Backend (Express API):** `http://localhost:3001`
+- **Database (PostgreSQL):** `localhost:5432`
+
+After completing either workflow, your local development environment is ready.
 
 ---
 
@@ -659,9 +693,11 @@ Business logic must remain within the Service layer.
 Cross-cutting infrastructure is organized as follows:
 
 - Application middleware: `src/middleware`
-- Shared validation utilities: `src/shared/validation`
+- Authentication middleware: `src/middleware/auth`
+- Validation middleware: `src/middleware/validation`
 - Shared errors: `src/shared/errors`
 - Shared logging utilities: `src/shared/logger`
+- Shared utilities: `src/shared/utils`
 
 Module-specific validation schemas remain inside their corresponding module under `schema/`.
 
@@ -683,6 +719,21 @@ src/middleware/auth/
 ```
 
 Business authorization rules remain within the Service layer.
+
+### Validation
+
+Request validation is handled using Zod schemas and generic HTTP middleware:
+
+- Request body validation: `validate(schema)`
+- Query parameter validation: `validateQuery(schema)`
+
+Validation middleware is located under:
+
+```text
+src/middleware/validation/
+```
+
+Module-specific validation schemas remain encapsulated inside their corresponding module under `schema/`.
 
 ---
 
@@ -780,6 +831,7 @@ Common development scripts are defined in the root `package.json`.
 | `npm run dev`            | Start the development environment |
 | `npm run build`          | Generate the production build     |
 | `npm run lint`           | Run ESLint                        |
+| `npm run typecheck`      | Validate TypeScript types         |
 | `npm run test`           | Execute automated tests           |
 | `npm run format`         | Format the codebase with Prettier |
 | `npm run prisma:migrate` | Apply Prisma database migrations  |
@@ -832,8 +884,8 @@ Workflows are triggered automatically by:
 The default CI pipeline includes:
 
 1. Install dependencies.
-2. Type checking.
-3. Linting.
+2. Linting.
+3. Type checking.
 4. Automated tests.
 5. Production build validation.
 

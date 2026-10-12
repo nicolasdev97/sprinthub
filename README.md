@@ -21,15 +21,17 @@ The goal of this project is not only to build a functional application, but also
 ### Workspace Management
 
 - Create workspaces
-- Manage members
-- Assign roles
-- Delete projects
+- Update workspaces
+- Delete workspaces
+- View and invite members
+- Manage member roles
 
 ### Project Management
 
 - Create projects
 - Update projects
-- Archive projects
+- Archive and unarchive projects
+- Delete projects
 
 ### Task Management
 
@@ -95,25 +97,87 @@ The goal of this project is not only to build a functional application, but also
 
 ---
 
-## Planned Architecture
+## Repository Structure & Architecture
 
-### Backend
+SprintHub is organized as a **monorepo** powered by npm workspaces, cleanly separating frontend, backend, and documentation:
 
-Controller → Service → Repository → Database
-
-### Frontend
-
+```text
+sprinthub/
+├── apps/
+│   ├── web/          # Next.js frontend application (Feature-based architecture)
+│   └── api/          # Express.js REST API backend (Modular monolith with layered architecture)
+├── docs/             # Technical specifications, architectural blueprints, and ADRs
+├── docker/           # Docker configuration files
+├── .github/          # GitHub Actions CI/CD workflows
+├── docker-compose.yml
+└── package.json
 ```
-src/
-├── app/
-├── features/
-├── components/
-├── hooks/
-├── services/
-├── providers/
-├── types/
-└── utils/
+
+### Backend Architecture (`apps/api`)
+
+Each business module follows a strict layered pattern:
+
+`Controller → Service → Repository → Prisma ORM → PostgreSQL`
+
+Core modules: `auth`, `users`, `workspaces`, `projects`, `tasks`, `notifications`.
+
+### Frontend Architecture (`apps/web`)
+
+Organized around feature domains with clear separation of concerns:
+
+```text
+apps/web/src/
+├── app/              # Next.js App Router (pages and layouts)
+├── features/         # Feature modules (components, hooks, schemas, services, types)
+├── components/       # Reusable UI components (shadcn/ui)
+├── hooks/            # Custom reusable hooks
+├── services/         # HTTP client (Axios) and integration services
+├── providers/        # Context and query client providers
+├── types/            # Global TypeScript types
+└── utils/            # Helper utilities
 ```
+
+---
+
+## Quick Start
+
+### 1. Prerequisites
+
+- **Node.js:** `>= 20.x`
+- **Docker & Docker Compose**
+
+### 2. Setup & Installation
+
+```bash
+git clone https://github.com/nicolasdev97/sprinthub.git
+cd sprinthub
+npm install
+cp .env.example .env
+```
+
+### 3. Start Database Infrastructure
+
+```bash
+docker compose up -d
+```
+
+### 4. Run Migrations
+
+```bash
+npm run prisma:migrate
+```
+
+### 5. Start Development Servers
+
+```bash
+npm run dev
+```
+
+Both applications will start concurrently:
+
+- **Frontend (Next.js):** `http://localhost:3000`
+- **Backend (Express API):** `http://localhost:3001`
+- **Database (PostgreSQL):** `localhost:5432`
 
 ---
 
@@ -122,8 +186,7 @@ src/
 Planned security features:
 
 - JWT Authentication
-- Refresh Token Rotation
-- HttpOnly Cookies
+- Refresh Token Authentication (HttpOnly Cookies)
 - Password Hashing (bcrypt)
 - Request Validation (Zod)
 - Rate Limiting
@@ -158,7 +221,7 @@ Target Coverage: 70%+
 
 ## CI/CD Pipeline
 
-Install → Lint → Test → Build → Docker Build
+Install → Lint → Type Check → Test → Build
 
 ---
 

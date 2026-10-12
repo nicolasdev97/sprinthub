@@ -39,6 +39,16 @@ export class UserService {
       throw new AppError("Confirmation name does not match", 400);
     }
 
+    const ownedWorkspacesCount =
+      await this.userRepository.countOwnedWorkspaces(userId);
+
+    if (ownedWorkspacesCount > 0) {
+      throw new AppError(
+        "Cannot delete user account while owning workspaces",
+        400,
+      );
+    }
+
     await this.userRepository.deleteUser(userId);
   }
 }

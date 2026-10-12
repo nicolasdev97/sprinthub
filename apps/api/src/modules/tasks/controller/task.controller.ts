@@ -77,8 +77,9 @@ export class TaskController {
     res: Response,
   ) {
     const { taskId } = req.params;
+    const userId = req.user.userId;
 
-    const task = await this.taskService.assignTask(taskId, req.body);
+    const task = await this.taskService.assignTask(taskId, userId, req.body);
 
     res.status(200).json(task);
   }
@@ -88,8 +89,13 @@ export class TaskController {
     res: Response,
   ) {
     const { taskId } = req.params;
+    const userId = req.user.userId;
 
-    const task = await this.taskService.updateTaskStatus(taskId, req.body);
+    const task = await this.taskService.updateTaskStatus(
+      taskId,
+      userId,
+      req.body,
+    );
 
     res.status(200).json(task);
   }
@@ -99,8 +105,13 @@ export class TaskController {
     res: Response,
   ) {
     const { taskId } = req.params;
+    const userId = req.user.userId;
 
-    const task = await this.taskService.updateTaskPriority(taskId, req.body);
+    const task = await this.taskService.updateTaskPriority(
+      taskId,
+      userId,
+      req.body,
+    );
 
     res.status(200).json(task);
   }

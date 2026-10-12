@@ -1,8 +1,8 @@
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
 
-import { RegisterDto, LoginDto } from "../dto";
-import { AuthService } from "../service";
-import { AppError } from "../../../shared";
+import { RegisterDto, LoginDto } from '../dto';
+import { AuthService } from '../service';
+import { AppError } from '../../../shared';
 
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -20,10 +20,10 @@ export class AuthController {
 
     const response = await this.authService.login(data);
 
-    res.cookie("refreshToken", response.refreshToken, {
+    res.cookie('refreshToken', response.refreshToken, {
       httpOnly: true,
       secure: true,
-      sameSite: "strict",
+      sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -36,7 +36,7 @@ export class AuthController {
     const refreshToken = req.cookies.refreshToken;
 
     if (!refreshToken) {
-      throw new AppError("Refresh token is required", 401);
+      throw new AppError('Refresh token is required', 401);
     }
 
     const response = await this.authService.refreshAccessToken(refreshToken);
@@ -48,19 +48,17 @@ export class AuthController {
     const refreshToken = req.cookies.refreshToken;
 
     if (!refreshToken) {
-      throw new AppError("Refresh token is required", 401);
+      throw new AppError('Refresh token is required', 401);
     }
 
     await this.authService.logout(refreshToken);
 
-    res.clearCookie("refreshToken", {
+    res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: true,
-      sameSite: "strict",
+      sameSite: 'strict',
     });
 
-    return res.status(200).json({
-      message: "Logout successful",
-    });
+    return res.status(204).send();
   }
 }

@@ -42,8 +42,6 @@ export class ProjectController {
 
     const filters = req.validatedQuery as ProjectFilterParams;
 
-    console.log("FILTERS BEFORE SERVICE:", filters);
-
     const projects = await this.projectService.getProjects(
       workspaceId,
       userId,

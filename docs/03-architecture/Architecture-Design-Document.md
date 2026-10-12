@@ -777,11 +777,18 @@ The API should be:
 
 ## Resource Structure
 
+SprintHub combines hierarchical collection routes (for scoped creation and listing) with shallow single-resource routes (for direct UUID-based operations):
+
 ```text
+/api/health
 /api/auth
+/api/users
 /api/workspaces
-/api/projects
-/api/tasks
+/api/workspaces/{workspaceId}/members
+/api/workspaces/{workspaceId}/projects
+/api/projects/{projectId}
+/api/projects/{projectId}/tasks
+/api/tasks/{taskId}
 /api/notifications
 ```
 
@@ -829,9 +836,13 @@ Search is limited to the primary name field of each resource.
 
 ## Response Standardization
 
-All endpoints follow consistent response conventions for successful and failed operations.
+All endpoints follow consistent REST response conventions:
 
-Error responses are handled centrally by the Global Error Handler to ensure a predictable structure across the API.
+- **Successful queries (`200 OK`)** return the resource object or collection array directly (`[]` when empty), without wrapping payloads in a `success` or `message` envelope.
+- **Resource creations (`201 Created`)** and **updates (`200 OK`)** return the created or updated entity directly.
+- **Deletions (`DELETE`)** and **session logout (`POST /api/auth/logout`)** return `204 No Content` with an empty body.
+- **User-facing success messages** are generated and localized by the Frontend UI layer.
+- **Error responses (`4xx` / `5xx`)** are handled centrally by the Global Error Handler to ensure a predictable `{ "success": false, "message": string }` structure across the API.
 
 Detailed endpoint specifications and response contracts are documented in the **API Design Specification (ADS)**.
 
@@ -995,7 +1006,7 @@ Example:
 
 ```json
 {
-  "status": "error",
+  "success": false,
   "message": "Project not found."
 }
 ```
@@ -1182,11 +1193,11 @@ Docker is used to:
 
 The Docker Compose environment includes:
 
-- Frontend
-- Backend
-- PostgreSQL
+- Frontend (Next.js container)
+- Backend (Express API container)
+- PostgreSQL (Database container on port `5432` with persistent volume `postgres_data`)
 
-These services are intended to run locally during development and testing.
+These services support both running the entire application stack in containers for zero-setup evaluation, and isolating the database container while running applications on the host for active development.
 
 ---
 

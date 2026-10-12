@@ -162,6 +162,7 @@ The Minimum Viable Product includes the essential functionality required for a c
 - Create workspace
 - Update workspace
 - Delete workspace
+- View members
 - Add members
 - Remove members
 - Manage member roles
@@ -316,6 +317,7 @@ The system shall allow users to:
 - Create workspaces.
 - Update workspace information.
 - Delete workspaces.
+- View workspace members.
 - Add members.
 - Remove members.
 - Assign member roles.
@@ -851,22 +853,26 @@ Examples:
 GET    /api/workspaces
 POST   /api/workspaces
 
-GET    /api/projects
-POST   /api/projects
+GET    /api/workspaces/{workspaceId}/projects
+POST   /api/workspaces/{workspaceId}/projects
+GET    /api/projects/{projectId}
+PATCH  /api/projects/{projectId}
+DELETE /api/projects/{projectId}
 
-GET    /api/tasks
-POST   /api/tasks
+GET    /api/projects/{projectId}/tasks
+POST   /api/projects/{projectId}/tasks
+GET    /api/tasks/{taskId}
 PATCH  /api/tasks/{taskId}
 DELETE /api/tasks/{taskId}
 ```
 
 ## Response Format
 
-The API uses standard HTTP status codes and returns the requested resource or collection directly in the response body.
+SprintHub follows standard REST response conventions. Successful operations return the resource or collection directly using appropriate HTTP status codes (`200 OK`, `201 Created`, or `204 No Content` with an empty body), while user-facing success notifications are handled by the frontend UI.
 
 ### Success Response
 
-Successful responses return the resource or collection directly as JSON.
+Successful responses return the resource or collection directly as JSON:
 
 ```json
 {
@@ -878,7 +884,7 @@ Successful responses return the resource or collection directly as JSON.
 
 ### Error Response
 
-Errors are returned using the application's standard error structure.
+Errors are returned using the application's standardized error structure:
 
 ```json
 {
@@ -1055,8 +1061,8 @@ SprintHub uses GitHub Actions to automate quality assurance and deployment proce
 Every Pull Request should automatically execute:
 
 1. Install dependencies
-2. Type checking
-3. Linting
+2. Linting
+3. Type checking
 4. Unit tests
 5. Build verification
 

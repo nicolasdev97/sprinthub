@@ -251,14 +251,12 @@ Represents a collaborative environment where users manage projects.
 
 ### Attributes
 
-### Attributes
-
 | Field       | Type     | Constraints      |
 | ----------- | -------- | ---------------- |
 | id          | UUID     | Primary Key      |
 | ownerId     | UUID     | Foreign Key      |
 | name        | String   | Unique, Required |
-| description | String   | Required         |
+| description | String   | Optional         |
 | createdAt   | DateTime | Required         |
 | updatedAt   | DateTime | Required         |
 
@@ -298,7 +296,7 @@ Represents a project within a workspace.
 | id          | UUID     | Primary Key    |
 | workspaceId | UUID     | Foreign Key    |
 | name        | String   | Required       |
-| description | String   | Required       |
+| description | String   | Optional       |
 | status      | Enum     | Required       |
 | archived    | Boolean  | Default: false |
 | createdAt   | DateTime | Required       |
@@ -416,7 +414,8 @@ Represents a persisted refresh token associated with a user session.
 
 - `tokenHash` stores the hashed refresh token.
 - Each refresh token belongs to exactly one user.
-- Refresh tokens may be removed when the associated user is deleted.
+- Refresh tokens are revoked on logout by deleting the corresponding `RefreshToken` record from the database.
+- Refresh tokens are automatically removed when the associated user is deleted.
 
 ---
 
@@ -549,7 +548,6 @@ The following business-critical attributes cannot be null:
 ### Workspace
 
 - `name`
-- `description`
 - `ownerId`
 
 ### WorkspaceMember
@@ -563,7 +561,6 @@ The following business-critical attributes cannot be null:
 
 - `workspaceId`
 - `name`
-- `description`
 - `status`
 
 ### Task

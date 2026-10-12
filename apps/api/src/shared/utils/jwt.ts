@@ -1,5 +1,7 @@
 import jwt, { JwtPayload as JsonWebTokenPayload } from "jsonwebtoken";
 
+import { AppError } from "../errors";
+
 export interface JwtPayload {
   userId: string;
 }
@@ -23,9 +25,13 @@ export function verifyToken(token: string): JwtPayload {
     throw new Error("JWT_SECRET is not defined");
   }
 
-  const payload = jwt.verify(token, secret) as JsonWebTokenPayload;
+  try {
+    const payload = jwt.verify(token, secret) as JsonWebTokenPayload;
 
-  return {
-    userId: payload.userId as string,
-  };
+    return {
+      userId: payload.userId as string,
+    };
+  } catch {
+    throw new AppError("Invalid or expired access token", 401);
+  }
 }

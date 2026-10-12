@@ -158,7 +158,7 @@ Endpoints represent resources rather than actions.
 ### Good
 
 ```text
-GET /api/projects
+GET /api/workspaces/{workspaceId}/projects
 ```
 
 ### Bad
@@ -179,15 +179,15 @@ Every request contains all information required to process it.
 
 ## DP-03 – Predictable URLs
 
-URLs use nouns instead of verbs.
+URLs use nouns instead of verbs and reflect resource hierarchy for scoped collections.
 
 Examples:
 
 ```text
-/users
-/workspaces
-/projects
-/tasks
+/api/users/me
+/api/workspaces
+/api/workspaces/{workspaceId}/projects
+/api/projects/{projectId}/tasks
 ```
 
 ---
@@ -215,9 +215,9 @@ Resources always use:
 Examples:
 
 ```text
-/workspaces
-/projects
-/refresh-tokens
+/api/workspaces
+/api/workspaces/{workspaceId}/projects
+/api/projects/{projectId}/tasks
 ```
 
 ---
@@ -254,7 +254,7 @@ SprintHub protects private resources using JWT-based authentication together wit
 User
     │
     ▼
-POST /auth/login
+POST /api/auth/login
     │
     ▼
 Access Token
@@ -268,7 +268,7 @@ Authenticated Requests
 Access Token Expires
     │
     ▼
-POST /auth/refresh
+POST /api/auth/refresh
     │
     ▼
 New Access Token
@@ -319,9 +319,9 @@ Authentication middleware validates:
 Examples:
 
 ```text
-POST /auth/register
-POST /auth/login
-POST /auth/refresh
+POST /api/auth/register
+POST /api/auth/login
+POST /api/auth/refresh
 ```
 
 ---
@@ -404,7 +404,7 @@ Example:
 ```json
 {
   "title": "Implement login",
-  "priority": "HIGH",
+  "description": "Implement login for users",
   "dueDate": "2026-06-15"
 }
 ```
@@ -430,31 +430,42 @@ Invalid requests never reach business logic.
 
 # 8. Response Standards
 
-SprintHub returns a standardized response structure.
-
-The `message` field is optional and may be omitted for read-only operations such as GET requests.
+SprintHub follows standard REST response conventions using native HTTP status codes to indicate operation success. Successful responses return the requested resource or collection directly without wrapping payloads in a `success` or `message` envelope. User-facing feedback messages for successful operations are handled by the frontend presentation layer.
 
 ---
 
-## Successful Response
+## Single Resource Response (`200 OK` / `201 Created`)
+
+Endpoints that retrieve, create, or update a single resource return the JSON representation of the resource directly:
 
 ```json
 {
-  "success": true,
-  "message": "Operation completed successfully"
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Platform Redesign",
+  "description": "Core frontend and backend modernization",
+  "status": "ACTIVE",
+  "archived": false,
+  "workspaceId": "3b241101-e2bb-4255-8caf-4136c566a962",
+  "createdAt": "2026-09-20T12:00:00.000Z",
+  "updatedAt": "2026-09-20T12:00:00.000Z"
 }
 ```
 
 ---
 
-## Empty Response
+## Collection Response (`200 OK`)
+
+Endpoints that retrieve a list of resources return a JSON array directly. If no records match the query, an empty array is returned:
 
 ```json
-{
-  "success": true,
-  "message": "No tasks found"
-}
+[]
 ```
+
+---
+
+## No Content Response (`204 No Content`)
+
+Operations that remove a resource (`DELETE`) or terminate a session (`POST /api/auth/logout`) return `HTTP 204 No Content` with an empty response body.
 
 ---
 
@@ -530,21 +541,26 @@ Resources use plural nouns.
 Examples:
 
 ```text
-/users
-/projects
-/tasks
-/workspaces
+/api/users
+/api/workspaces
+/api/projects
+/api/tasks
+/api/notifications
 ```
 
 ---
 
 ## Path Parameters
 
+Collection creation and listing are scoped under their parent resource, while single-resource operations use direct resource identifiers.
+
 Examples:
 
 ```text
-/projects/{projectId}
-/tasks/{taskId}
+/api/workspaces/{workspaceId}/projects
+/api/projects/{projectId}
+/api/projects/{projectId}/tasks
+/api/tasks/{taskId}
 ```
 
 ---
@@ -556,7 +572,7 @@ Query parameters use camelCase.
 Example:
 
 ```text
-/tasks?search=implement&status=TODO
+/api/projects/{projectId}/tasks?search=implement&status=TODO
 ```
 
 ---
@@ -614,7 +630,15 @@ Authenticates a user and returns an Access Token together with a Refresh Token.
 
 ### Description
 
-Generates a new Access Token using a valid Refresh Token.
+Generates a new Access Token using a valid Refresh Token supplied via the `refreshToken` `HttpOnly` cookie.
+
+In the MVP, refresh tokens are reusable across their 7-day lifetime and are not rotated upon each refresh request. The endpoint returns the new access token directly:
+
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
 
 ---
 
@@ -626,7 +650,7 @@ Generates a new Access Token using a valid Refresh Token.
 
 ### Description
 
-Terminates the current authenticated session by invalidating the Refresh Token.
+Terminates the current authenticated session by deleting the persisted `RefreshToken` record from the database, clearing the `refreshToken` `HttpOnly` cookie, and returning `204 No Content`.
 
 ---
 
@@ -646,9 +670,23 @@ The User API manages the authenticated user's account.
 
 ### Delete Account
 
-The `DELETE /api/users/me` endpoint allows an authenticated user to delete their own account.
+The `DELETE /api/users/me` endpoint allows an authenticated user to permanently delete their own account.
 
 A user can only delete their own account through this endpoint.
+
+#### Request Body
+
+```json
+{
+  "confirmationName": "Lionel Messi"
+}
+```
+
+#### Validation & Business Rules
+
+- `confirmationName` is required and must match the authenticated user's full name (`firstName` + `" "` + `lastName`). If it does not match, the API returns `400 Bad Request`.
+- A user cannot delete their account while owning one or more workspaces (`400 Bad Request`). Owned workspaces must be deleted first.
+- On success, the endpoint returns `204 No Content`.
 
 ---
 
@@ -672,11 +710,57 @@ The Workspace API manages collaborative workspaces and their members.
 
 ## Member Management
 
-| Method | Endpoint                                           | Description        |
-| ------ | -------------------------------------------------- | ------------------ |
-| POST   | `/api/workspaces/{workspaceId}/members`            | Invite a member    |
-| PATCH  | `/api/workspaces/{workspaceId}/members/{memberId}` | Update member role |
-| DELETE | `/api/workspaces/{workspaceId}/members/{memberId}` | Remove a member    |
+| Method | Endpoint                                           | Description                |
+| ------ | -------------------------------------------------- | -------------------------- |
+| GET    | `/api/workspaces/{workspaceId}/members`            | Retrieve workspace members |
+| POST   | `/api/workspaces/{workspaceId}/members`            | Invite a member            |
+| PATCH  | `/api/workspaces/{workspaceId}/members/{memberId}` | Update member role         |
+| DELETE | `/api/workspaces/{workspaceId}/members/{memberId}` | Remove a member            |
+
+---
+
+### Invite Member
+
+| Method | Endpoint                                |
+| ------ | --------------------------------------- |
+| POST   | `/api/workspaces/{workspaceId}/members` |
+
+#### Authorization & Rules
+
+- Accessible to workspace `OWNER` and `ADMIN`.
+- The invited user must exist in the system and cannot already be a member of the workspace (`409 Conflict`).
+- The `OWNER` role cannot be assigned (`400 Bad Request`).
+- Returns `201 Created` with the created membership record and triggers an in-app notification to the invited user.
+
+---
+
+### Update Member Role
+
+| Method | Endpoint                                           |
+| ------ | -------------------------------------------------- |
+| PATCH  | `/api/workspaces/{workspaceId}/members/{memberId}` |
+
+#### Authorization & Rules
+
+- Accessible strictly to the workspace `OWNER` (`403 Forbidden` for other roles).
+- The `OWNER` role cannot be assigned via role update (`400 Bad Request`).
+- The workspace owner's membership role cannot be altered (`403 Forbidden`).
+- Returns `200 OK` with the updated membership.
+
+---
+
+### Remove Member
+
+| Method | Endpoint                                           |
+| ------ | -------------------------------------------------- |
+| DELETE | `/api/workspaces/{workspaceId}/members/{memberId}` |
+
+#### Authorization & Rules
+
+- Accessible to workspace `OWNER` and `ADMIN`.
+- The workspace owner cannot be removed (`403 Forbidden`).
+- Administrators cannot remove other administrators (`403 Forbidden`); only the Owner can remove an Administrator.
+- Returns `204 No Content` on successful removal.
 
 ---
 
@@ -740,7 +824,7 @@ The Task API manages project tasks.
 
 ---
 
-## Task Assignment
+## Task Assignment & Unassignment
 
 | Method | Endpoint                     |
 | ------ | ---------------------------- |
@@ -748,7 +832,10 @@ The Task API manages project tasks.
 
 ### Description
 
-Assigns a task to a workspace member.
+Assigns a task to a workspace member or unassigns the current assignee.
+
+- Providing `{ "assigneeId": "<userId>" }` assigns the task to the specified workspace member and generates a task assignment notification.
+- Providing `{ "assigneeId": null }` unassigns the task (clearing the current assignee without generating a notification).
 
 ---
 
@@ -773,6 +860,25 @@ Updates the task status.
 ### Description
 
 Updates the task priority.
+
+---
+
+## Delete Task
+
+| Method | Endpoint              |
+| ------ | --------------------- |
+| DELETE | `/api/tasks/{taskId}` |
+
+### Description
+
+Permanently deletes a task.
+
+### Authorization Rules
+
+- A task can be deleted by the user who created it (`createdById`).
+- Workspace `OWNER` and `ADMIN` users can delete any task within the workspace.
+- If a workspace member attempts to delete a task created by another user, the API returns `403 Forbidden`.
+- Returns `204 No Content` on successful deletion.
 
 ---
 
@@ -828,7 +934,7 @@ Notification recipients depend on the event:
 
 # 18. Health API
 
-The Health API provide an endpoint to verify the operational status of SprintHub services.
+The Health API provides an endpoint to verify the operational status of SprintHub services.
 
 ---
 

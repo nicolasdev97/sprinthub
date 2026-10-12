@@ -234,6 +234,7 @@ The system shall allow users to:
 - Create workspaces.
 - Update workspace information.
 - Delete workspaces.
+- View workspace members.
 - Invite members.
 - Remove members.
 - Assign member roles.
@@ -272,11 +273,13 @@ Workspaces include:
 
 ## Member Management
 
-Workspace administrators can:
+Workspace members can view the list of members belonging to their workspace.
 
-- Add members.
-- Remove members.
-- Manage member roles.
+Workspace administrators and owners can manage workspace members:
+
+- **Invite members:** Accessible to `OWNER` and `ADMIN`.
+- **Remove members:** Accessible to `OWNER` and `ADMIN` (administrators cannot remove other administrators; the workspace owner cannot be removed).
+- **Manage member roles:** Accessible exclusively to the workspace `OWNER`.
 
 Supported roles include:
 
@@ -397,6 +400,8 @@ The following deletion rules apply:
 
 - Deleting a workspace deletes all projects belonging to that workspace.
 - Deleting a project deletes all tasks belonging to that project.
+- A task can be permanently deleted by its creator, or by a workspace Owner or Administrator.
+- Deleting a user account requires explicit confirmation matching the user's full name (`firstName lastName`) and is only permitted if the user does not own any workspaces.
 - Deleting a user removes their workspace memberships, notifications, and refresh tokens according to the configured data integrity rules.
 - If a user is deleted, tasks assigned to that user remain and their assignment is cleared.
 

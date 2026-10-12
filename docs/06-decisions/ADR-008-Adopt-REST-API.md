@@ -211,11 +211,11 @@ Core resources include:
 Examples:
 
 ```text
-GET    /projects
-POST   /projects
-GET    /projects/{id}
-PATCH  /projects/{id}
-DELETE /projects/{id}
+GET    /api/workspaces/{workspaceId}/projects
+POST   /api/workspaces/{workspaceId}/projects
+GET    /api/projects/{projectId}
+PATCH  /api/projects/{projectId}
+DELETE /api/projects/{projectId}
 ```
 
 This approach provides a predictable, standardized API that is easy to consume, document, maintain, and evolve.
@@ -235,13 +235,13 @@ Endpoints represent business resources rather than actions.
 Good:
 
 ```text
-GET /tasks
+GET /api/projects/{projectId}/tasks
 ```
 
 Bad:
 
 ```text
-GET /getTasks
+GET /api/getTasks
 ```
 
 ---
@@ -268,18 +268,19 @@ Authentication uses short-lived JWT Access Tokens, while Refresh Tokens are pers
 
 ## Consistent Responses
 
-API responses follow the response structures defined in the API Design Specification (ADS).
+API responses follow the response structures defined in the API Design Specification (ADS):
 
-Successful responses may include:
+- **Successful operations** return the resource object (`200 OK` / `201 Created`) or resource array (`200 OK`, returning `[]` when empty) directly as JSON without wrapping in a `{ "success": true, "message": "..." }` envelope.
+- **Resource deletions (`DELETE`) and session termination (`POST /api/auth/logout`)** return `204 No Content` with an empty response body.
+- **Health check (`GET /api/health`)** returns `{ "success": true, "message": "SprintHub API is running" }`.
+- **Error responses (`4xx` / `5xx`)** follow a standardized structure across all endpoints:
 
 ```json
 {
-  "success": true,
-  "message": "Operation completed successfully"
+  "success": false,
+  "message": "Descriptive error message"
 }
 ```
-
-Error responses follow the standardized error structure defined in the ADS, including the appropriate HTTP status code and error information.
 
 ---
 
@@ -344,7 +345,7 @@ SprintHub exposes the API under the `/api` base path.
 Example:
 
 ```text
-/api/projects
+/api/workspaces/{workspaceId}/projects
 ```
 
 Explicit API versioning may be introduced in the future if breaking changes require a new API version.

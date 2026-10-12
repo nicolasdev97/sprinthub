@@ -133,6 +133,10 @@ export class TaskService {
       throw new AppError("Project not found", 404);
     }
 
+    if (project.archived) {
+      throw new AppError("Cannot update tasks in an archived project", 400);
+    }
+
     await this.workspaceService.getWorkspaceMemberByUser(
       project.workspaceId,
       userId,
@@ -183,7 +187,7 @@ export class TaskService {
     await this.taskRepository.deleteTask(taskId);
   }
 
-  async assignTask(taskId: string, data: AssignTaskDto) {
+  async assignTask(taskId: string, userId: string, data: AssignTaskDto) {
     const task = await this.taskRepository.getTaskById(taskId);
 
     if (!task) {
@@ -194,6 +198,23 @@ export class TaskService {
 
     if (!project) {
       throw new AppError("Project not found", 404);
+    }
+
+    if (project.archived) {
+      throw new AppError("Cannot assign tasks in an archived project", 400);
+    }
+
+    const workspaceMember =
+      await this.workspaceService.getWorkspaceMemberByUser(
+        project.workspaceId,
+        userId,
+      );
+
+    if (
+      workspaceMember.role !== WorkspaceRole.OWNER &&
+      workspaceMember.role !== WorkspaceRole.ADMIN
+    ) {
+      throw new AppError("Forbidden", 403);
     }
 
     if (data.assigneeId !== null) {
@@ -219,12 +240,34 @@ export class TaskService {
     return updatedTask;
   }
 
-  async updateTaskStatus(taskId: string, data: UpdateTaskStatusDto) {
+  async updateTaskStatus(
+    taskId: string,
+    userId: string,
+    data: UpdateTaskStatusDto,
+  ) {
     const task = await this.taskRepository.getTaskById(taskId);
 
     if (!task) {
       throw new AppError("Task not found", 404);
     }
+
+    const project = await this.projectRepository.getProjectById(task.projectId);
+
+    if (!project) {
+      throw new AppError("Project not found", 404);
+    }
+
+    if (project.archived) {
+      throw new AppError(
+        "Cannot update task status in an archived project",
+        400,
+      );
+    }
+
+    await this.workspaceService.getWorkspaceMemberByUser(
+      project.workspaceId,
+      userId,
+    );
 
     const completedAt = data.status === TaskStatus.DONE ? new Date() : null;
 
@@ -245,12 +288,34 @@ export class TaskService {
     return updatedTask;
   }
 
-  async updateTaskPriority(taskId: string, data: UpdateTaskPriorityDto) {
+  async updateTaskPriority(
+    taskId: string,
+    userId: string,
+    data: UpdateTaskPriorityDto,
+  ) {
     const task = await this.taskRepository.getTaskById(taskId);
 
     if (!task) {
       throw new AppError("Task not found", 404);
     }
+
+    const project = await this.projectRepository.getProjectById(task.projectId);
+
+    if (!project) {
+      throw new AppError("Project not found", 404);
+    }
+
+    if (project.archived) {
+      throw new AppError(
+        "Cannot update task priority in an archived project",
+        400,
+      );
+    }
+
+    await this.workspaceService.getWorkspaceMemberByUser(
+      project.workspaceId,
+      userId,
+    );
 
     const updatedTask = await this.taskRepository.updateTaskPriority(
       taskId,

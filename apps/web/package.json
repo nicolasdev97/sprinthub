@@ -1,13 +1,18 @@
 {
   "name": "web",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "SprintHub web application frontend built with Next.js.",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "format": "prettier --write ."
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"No tests specified for web yet\" && exit 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

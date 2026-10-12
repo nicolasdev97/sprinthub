@@ -232,9 +232,9 @@ The system shall terminate the active user session.
 
 #### Acceptance Criteria
 
-- Refresh Token is invalidated.
-- Authentication cookies are removed.
-- User session is terminated successfully.
+- Refresh Token is invalidated by deleting its persisted record from the database.
+- Authentication cookies (`refreshToken`) are removed.
+- User session is terminated successfully with `204 No Content`.
 
 ---
 
@@ -295,7 +295,22 @@ Only workspace owners may permanently delete a workspace.
 
 ---
 
-### RF-007 – Invite Member
+### RF-007 – Invite and View Members
+
+| Property     | Value                  |
+| ------------ | ---------------------- |
+| **Priority** | High                   |
+| **Actor**    | Owner / Admin / Member |
+
+#### Description
+
+Workspace members shall be able to view the list of members belonging to their workspace.
+
+Workspace owners and administrators shall be able to add users to the workspace.
+
+---
+
+### RF-008 – Manage Roles and Remove Members
 
 | Property     | Value         |
 | ------------ | ------------- |
@@ -304,26 +319,27 @@ Only workspace owners may permanently delete a workspace.
 
 #### Description
 
-Workspace owners and administrators shall be able to invite users via email.
+##### Role Management
 
----
-
-### RF-008 – Manage Roles
-
-| Property     | Value |
-| ------------ | ----- |
-| **Priority** | High  |
-| **Actor**    | Owner |
-
-#### Description
-
-Workspace owners may change member roles.
+Only the Workspace Owner may change member roles.
 
 Supported roles include:
 
 - OWNER
 - ADMIN
 - MEMBER
+
+The `OWNER` role cannot be assigned to another member via role modification, and the workspace owner's role cannot be updated.
+
+##### Member Removal
+
+Workspace Owners and Administrators may remove members from the workspace.
+
+Rules governing member removal:
+
+- The Workspace Owner cannot be removed from the workspace.
+- Administrators cannot remove other administrators; only the Owner can remove an Admin.
+- When a member is removed, their workspace membership record is deleted. Tasks previously assigned to that member remain and their `assigneeId` is set to `null`.
 
 ---
 
@@ -511,14 +527,14 @@ Users may update the following task information:
 
 ### RF-018 – Delete Task
 
-| Property     | Value         |
-| ------------ | ------------- |
-| **Priority** | High          |
-| **Actor**    | Owner / Admin |
+| Property     | Value                                 |
+| ------------ | ------------------------------------- |
+| **Priority** | High                                  |
+| **Actor**    | Owner / Admin / Task Creator (Member) |
 
 #### Description
 
-Authorized users may permanently delete tasks.
+A task may be permanently deleted by the user who created it, or by any workspace Owner or Admin. Workspace members cannot delete tasks created by other users.
 
 ---
 
@@ -531,7 +547,9 @@ Authorized users may permanently delete tasks.
 
 #### Description
 
-Tasks may be assigned to workspace members.
+Authorized users may assign a task to a workspace member through the dedicated task assignment operation (`PATCH /api/tasks/{taskId}/assign`) by providing a valid `assigneeId`.
+
+The `assigneeId` field is not part of the general task update operation.
 
 ---
 
@@ -544,11 +562,9 @@ Tasks may be assigned to workspace members.
 
 #### Description
 
-Authorized users shall be able to remove the user assigned to a task.
+Authorized users shall be able to remove the user assigned to a task through the dedicated task assignment operation (`PATCH /api/tasks/{taskId}/assign`) by setting `assigneeId` to `null`.
 
-After unassignment, the task shall have no assigned user.
-
-The task can be unassigned by setting `assigneeId` to `null`.
+After unassignment, the task shall have no assigned user and no assignment notification is generated.
 
 ---
 
@@ -919,7 +935,7 @@ The data model includes the following relevant entity attributes and constraints
 ### Workspace
 
 - `name` is required and must be unique.
-- `description` is required.
+- `description` is optional.
 - `createdAt` stores the workspace creation timestamp.
 - `updatedAt` stores the last workspace update timestamp.
 - Each workspace has exactly one owner.
@@ -935,7 +951,7 @@ The data model includes the following relevant entity attributes and constraints
 ### Project
 
 - `name` is required and must be unique within its workspace.
-- `description` is required.
+- `description` is optional.
 - `status` represents the current project status.
 - `archived` defaults to `false`.
 - `createdAt` stores the project creation timestamp.
@@ -974,10 +990,11 @@ The data model includes the following relevant entity attributes and constraints
 
 ### Referential Integrity
 
-The database enforces the following deletion behavior:
+The system and database enforce the following deletion behavior:
 
 - Deleting a workspace deletes its workspace memberships and projects.
 - Deleting a project deletes its tasks.
+- Deleting a user account requires providing a `confirmationName` matching the user's full name (`firstName lastName`) and requires that the user does not own any workspaces.
 - Deleting a user deletes their workspace memberships, notifications, and refresh tokens.
 - If a user assigned to a task is deleted, the task remains and its `assigneeId` is set to `null`.
 

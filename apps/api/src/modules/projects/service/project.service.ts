@@ -60,8 +60,6 @@ export class ProjectService {
     userId: string,
     filters?: ProjectFilterParams,
   ) {
-    console.log("FILTERS IN SERVICE:", filters);
-
     await this.workspaceService.getWorkspaceMemberByUser(workspaceId, userId);
 
     return this.projectRepository.getProjects(workspaceId, filters);
@@ -91,6 +89,10 @@ export class ProjectService {
 
     if (!project) {
       throw new AppError("Project not found", 404);
+    }
+
+    if (project.archived) {
+      throw new AppError("Archived projects cannot be updated", 400);
     }
 
     const workspaceMember =
@@ -166,6 +168,10 @@ export class ProjectService {
       throw new AppError("Forbidden", 403);
     }
 
+    if (project.archived) {
+      throw new AppError("Project is already archived", 400);
+    }
+
     return this.projectRepository.archiveProject(projectId);
   }
 
@@ -187,6 +193,10 @@ export class ProjectService {
       workspaceMember.role !== WorkspaceRole.ADMIN
     ) {
       throw new AppError("Forbidden", 403);
+    }
+
+    if (!project.archived) {
+      throw new AppError("Project is not archived", 400);
     }
 
     return this.projectRepository.unarchiveProject(projectId);

@@ -266,10 +266,13 @@ Responsibilities include:
 Developers can start the complete local environment with:
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
-The Docker Compose configuration should remain focused on local development and should not be treated as the definition of the production deployment architecture.
+Docker Compose supports two primary local workflows:
+
+1. **Full Multi-Container Stack:** Running the complete application stack (Frontend, Backend, and PostgreSQL) in isolated containers for zero-setup evaluation and testing.
+2. **Infrastructure Dependency Isolation:** Starting only the database container (`docker compose up -d postgres`) while running applications on the host machine (`npm run dev`) for active feature development and instant hot-reloading.
 
 ---
 

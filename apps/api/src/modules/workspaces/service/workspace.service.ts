@@ -267,6 +267,13 @@ export class WorkspaceService {
       throw new AppError("Cannot remove workspace owner", 403);
     }
 
+    if (
+      workspaceMember.role === WorkspaceRole.ADMIN &&
+      member.role === WorkspaceRole.ADMIN
+    ) {
+      throw new AppError("Admins cannot remove other admins", 403);
+    }
+
     return this.workspaceRepository.deleteWorkspaceMember(memberId);
   }
 }
