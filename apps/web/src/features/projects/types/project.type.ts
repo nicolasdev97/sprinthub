@@ -4,6 +4,7 @@ export interface Project {
   id: string;
   workspaceId: string;
   name: string;
+  description: string | null;
   status: ProjectStatus;
   archived: boolean;
   createdAt: string;
@@ -12,11 +13,13 @@ export interface Project {
 
 export interface CreateProjectRequest {
   name: string;
+  description?: string;
   status: ProjectStatus;
 }
 
 export interface UpdateProjectRequest {
   name?: string;
+  description?: string;
   status?: ProjectStatus;
 }
 

@@ -14,7 +14,7 @@ export class WorkspaceRepository {
         data: {
           ownerId,
           name: data.name,
-          description: "",
+          description: data.description ?? null,
         },
       });
 

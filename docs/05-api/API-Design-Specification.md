@@ -34,18 +34,19 @@
 15. Project API
 16. Task API
 17. Notification API
-18. Health API
-19. Filtering Standards
-20. Sorting Standards
-21. Search Standards
-22. Rate Limiting
-23. API Security
-24. API Versioning Strategy
-25. OpenAPI & Swagger
-26. API Best Practices
-27. Future API Evolution
-28. API Change Management
-29. Conclusion
+18. Dashboard API
+19. Health API
+20. Filtering Standards
+21. Sorting Standards
+22. Search Standards
+23. Rate Limiting
+24. API Security
+25. API Versioning Strategy
+26. OpenAPI & Swagger
+27. API Best Practices
+28. Future API Evolution
+29. API Change Management
+30. Conclusion
 
 ---
 
@@ -686,6 +687,7 @@ A user can only delete their own account through this endpoint.
 
 - `confirmationName` is required and must match the authenticated user's full name (`firstName` + `" "` + `lastName`). If it does not match, the API returns `400 Bad Request`.
 - A user cannot delete their account while owning one or more workspaces (`400 Bad Request`). Owned workspaces must be deleted first.
+- Tasks created by or assigned to the user are preserved within their projects; their corresponding relational foreign keys (`createdById`, `assigneeId`) are set to `null`.
 - On success, the endpoint returns `204 No Content`.
 
 ---
@@ -705,6 +707,28 @@ The Workspace API manages collaborative workspaces and their members.
 | POST   | `/api/workspaces`               | Create a workspace                 |
 | PATCH  | `/api/workspaces/{workspaceId}` | Update a workspace                 |
 | DELETE | `/api/workspaces/{workspaceId}` | Delete a workspace                 |
+
+---
+
+### Create Workspace
+
+| Method | Endpoint          |
+| ------ | ----------------- |
+| POST   | `/api/workspaces` |
+
+#### Request Body
+
+```json
+{
+  "name": "Engineering Team",
+  "description": "Optional workspace description"
+}
+```
+
+- `name` is required (1-100 characters, unique platform-wide).
+- `description` is optional (nullable, max 500 characters).
+- Automatically assigns the authenticated user as `OWNER`.
+- Returns `201 Created` with the workspace object.
 
 ---
 
@@ -782,6 +806,30 @@ The Project API manages projects within workspaces.
 
 ---
 
+### Create Project
+
+| Method | Endpoint                                 |
+| ------ | ---------------------------------------- |
+| POST   | `/api/workspaces/{workspaceId}/projects` |
+
+#### Request Body
+
+```json
+{
+  "name": "SprintHub Core",
+  "description": "Optional project description",
+  "status": "PLANNING"
+}
+```
+
+- `name` is required (unique within workspace).
+- `description` is optional (nullable, max 1000 characters).
+- `status` is required (`PLANNING`, `ACTIVE`, `COMPLETED`).
+- Requires workspace `OWNER` or `ADMIN` role.
+- Returns `201 Created` with the project object.
+
+---
+
 ## Archive Project
 
 | Method | Endpoint                            |
@@ -824,6 +872,41 @@ The Task API manages project tasks.
 
 ---
 
+## Create Task
+
+| Method | Endpoint                          |
+| ------ | --------------------------------- |
+| POST   | `/api/projects/{projectId}/tasks` |
+
+#### Authorization & Validation Rules
+
+- Accessible to workspace `OWNER`, `ADMIN`, and `MEMBER`.
+- Caller must be an active member of the workspace owning the project (`403 Forbidden` if not).
+- Tasks cannot be created within an archived project (`400 Bad Request`).
+- Task `title` must be unique within the project (`409 Conflict`).
+- If `assigneeId` is provided, the designated user must be an active member of the workspace (`403 Forbidden` if not).
+- Initial task status is automatically set to `TODO`.
+- Returns `201 Created` with the task object.
+
+---
+
+## Update Task
+
+| Method | Endpoint              |
+| ------ | --------------------- |
+| PATCH  | `/api/tasks/{taskId}` |
+
+#### Authorization & Validation Rules
+
+- Accessible to workspace `OWNER`, `ADMIN`, and `MEMBER`.
+- Caller must be an active member of the workspace owning the task's project (`403 Forbidden` if not).
+- Tasks in archived projects cannot be updated (`400 Bad Request`).
+- If `title` is updated, it must remain unique within the project (`409 Conflict`).
+- General task update does not modify task status, priority, or assignee (handled by dedicated endpoints).
+- Returns `200 OK` with the updated task object.
+
+---
+
 ## Task Assignment & Unassignment
 
 | Method | Endpoint                     |
@@ -834,8 +917,13 @@ The Task API manages project tasks.
 
 Assigns a task to a workspace member or unassigns the current assignee.
 
-- Providing `{ "assigneeId": "<userId>" }` assigns the task to the specified workspace member and generates a task assignment notification.
+#### Authorization & Validation Rules
+
+- Accessible strictly to workspace `OWNER` and `ADMIN`. Workspace `MEMBER` users receive `403 Forbidden`.
+- Tasks within an archived project cannot be assigned or unassigned (`400 Bad Request`).
+- Providing `{ "assigneeId": "<userId>" }` assigns the task to the specified workspace member (the target user must be an active member of the workspace; otherwise returns `403 Forbidden`) and generates a task assignment notification.
 - Providing `{ "assigneeId": null }` unassigns the task (clearing the current assignee without generating a notification).
+- Returns `200 OK` with the updated task object.
 
 ---
 
@@ -849,6 +937,16 @@ Assigns a task to a workspace member or unassigns the current assignee.
 
 Updates the task status.
 
+#### Authorization & Validation Rules
+
+- Accessible to workspace `OWNER`, `ADMIN`, and `MEMBER`.
+- Caller must be an active member of the workspace owning the task's project (`403 Forbidden` if not).
+- Tasks within an archived project cannot have their status changed (`400 Bad Request`).
+- Valid status values: `BACKLOG`, `TODO`, `IN_PROGRESS`, `REVIEW`, `DONE`.
+- Automatically sets `completedAt` to the current timestamp when transitioned to `DONE`, or resets `completedAt` to `null` when transitioned out of `DONE`.
+- Triggers a notification to the task's assignee if one is assigned.
+- Returns `200 OK` with the updated task object.
+
 ---
 
 ## Task Priority
@@ -860,6 +958,15 @@ Updates the task status.
 ### Description
 
 Updates the task priority.
+
+#### Authorization & Validation Rules
+
+- Accessible to workspace `OWNER`, `ADMIN`, and `MEMBER`.
+- Caller must be an active member of the workspace owning the task's project (`403 Forbidden` if not).
+- Tasks within an archived project cannot have their priority changed (`400 Bad Request`).
+- Valid priority values: `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`.
+- Triggers a notification to the task's assignee if one is assigned.
+- Returns `200 OK` with the updated task object.
 
 ---
 
@@ -932,7 +1039,49 @@ Notification recipients depend on the event:
 
 ---
 
-# 18. Health API
+# 18. Dashboard API
+
+The Dashboard API provides high-level consolidated project and task metrics for a specific workspace.
+
+---
+
+## Get Workspace Dashboard
+
+| Method | Endpoint                                  | Description                   |
+| ------ | ----------------------------------------- | ----------------------------- |
+| GET    | `/api/workspaces/{workspaceId}/dashboard` | Retrieve consolidated metrics |
+
+### Description
+
+Retrieves aggregate project and task counters for the specified workspace. This endpoint prevents the frontend from having to request raw collections of projects and tasks to compute metrics on the client side.
+
+### Authorization & Validation Rules
+
+- Accessible to workspace `OWNER`, `ADMIN`, and `MEMBER`.
+- Caller must be an active member of the specified workspace.
+- If the user is not a member of the workspace (or the workspace does not exist), the API returns `404 Not Found` to prevent workspace enumeration (anti-IDOR).
+
+### Response (`200 OK`)
+
+```json
+{
+  "activeProjects": 3,
+  "pendingTasks": 12,
+  "completedTasks": 25,
+  "overdueTasks": 2
+}
+```
+
+#### Field Specifications
+
+- `activeProjects`: Count of projects in the workspace where `status == "ACTIVE"` and `archived == false`.
+- `pendingTasks`: Count of tasks across the workspace projects whose status is `BACKLOG`, `TODO`, `IN_PROGRESS`, or `REVIEW`.
+- `completedTasks`: Count of tasks across the workspace projects whose status is `DONE`.
+- `overdueTasks`: Count of tasks across the workspace projects that are not completed (`status != "DONE"`) and whose `dueDate` is earlier than the current timestamp.
+
+---
+
+# 19. Health API
 
 The Health API provides an endpoint to verify the operational status of SprintHub services.
 
@@ -969,7 +1118,7 @@ These endpoints are intentionally excluded from the MVP.
 
 ---
 
-# 19. Filtering Standards
+# 20. Filtering Standards
 
 Filtering is supported for resources where filtering criteria are defined by the product requirements.
 
@@ -1009,7 +1158,7 @@ GET /api/projects/{projectId}/tasks?status=IN_PROGRESS&priority=HIGH
 
 ---
 
-# 20. Sorting Standards
+# 21. Sorting Standards
 
 Collection resources support sorting by the fields defined for each resource.
 
@@ -1069,7 +1218,7 @@ GET /api/workspaces?sortBy=name&sortOrder=asc
 
 ---
 
-# 21. Search Standards
+# 22. Search Standards
 
 Search is supported for collection resources using the primary searchable field defined for each resource.
 
@@ -1122,7 +1271,7 @@ Search is restricted to the primary `name` field of workspaces and projects, and
 
 ---
 
-# 22. Rate Limiting
+# 23. Rate Limiting
 
 Rate limiting protects the API from abuse and excessive traffic.
 
@@ -1147,7 +1296,7 @@ HTTP 429 Too Many Requests
 
 ---
 
-# 23. API Security
+# 24. API Security
 
 SprintHub applies multiple security mechanisms across the API.
 
@@ -1182,7 +1331,7 @@ Sensitive information is never exposed through API responses.
 
 ---
 
-# 24. API Versioning Strategy
+# 25. API Versioning Strategy
 
 SprintHub follows a versioned API strategy to support future evolution without breaking existing clients.
 
@@ -1213,7 +1362,7 @@ Non-breaking additions, such as optional fields or new endpoints, may be introdu
 
 ---
 
-# 25. OpenAPI & Swagger
+# 26. OpenAPI & Swagger
 
 SprintHub supports API documentation through the OpenAPI Specification.
 
@@ -1246,7 +1395,7 @@ The ADS serves as the authoritative design reference for the API, while the Open
 
 ---
 
-# 26. API Best Practices
+# 27. API Best Practices
 
 SprintHub follows industry-standard API design practices.
 
@@ -1277,7 +1426,7 @@ Errors should:
 
 ---
 
-# 27. Future API Evolution
+# 28. Future API Evolution
 
 The API has been designed to evolve as new SprintHub capabilities are introduced.
 
@@ -1326,7 +1475,7 @@ These capabilities are intentionally excluded from the MVP and may be introduced
 
 ---
 
-# 28. API Change Management
+# 29. API Change Management
 
 API changes should be introduced in a controlled and backward-compatible manner.
 
@@ -1353,7 +1502,7 @@ Deprecated endpoints should:
 
 ---
 
-# 29. Conclusion
+# 30. Conclusion
 
 The API Design Specification defines the communication contract for SprintHub.
 

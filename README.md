@@ -119,7 +119,7 @@ Each business module follows a strict layered pattern:
 
 `Controller → Service → Repository → Prisma ORM → PostgreSQL`
 
-Core modules: `auth`, `users`, `workspaces`, `projects`, `tasks`, `notifications`.
+Core modules: `auth`, `users`, `workspaces`, `projects`, `tasks`, `notifications`, `dashboard`.
 
 ### Frontend Architecture (`apps/web`)
 

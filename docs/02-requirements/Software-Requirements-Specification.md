@@ -585,11 +585,11 @@ When a task changes from `DONE` to another status, the system shall reset `compl
 
 Supported statuses:
 
-- Backlog
-- To Do
-- In Progress
-- Review
-- Done
+- BACKLOG
+- TODO
+- IN_PROGRESS
+- REVIEW
+- DONE
 
 ---
 
@@ -608,10 +608,11 @@ The `priority` field is not part of the general task update operation.
 
 Supported priorities:
 
-- Low
-- Medium
-- High
-- Critical
+- LOW
+- MEDIUM
+- HIGH
+- CRITICAL
+
 
 ---
 
@@ -832,19 +833,19 @@ A user email address must be unique.
 
 ### BR-002 – Unique Workspace Name
 
-Workspace names must be unique.
+Workspace names must be unique platform-wide. This rule is enforced both through application service validation and a unique database index (`Workspace.name @unique`).
 
 ---
 
 ### BR-003 – Unique Project Name
 
-Project names must be unique within their workspace.
+Project names must be unique within their workspace. This rule is enforced both through application service validation and a composite unique database index (`Project(workspaceId, name)`).
 
 ---
 
 ### BR-004 – Unique Task Title
 
-Task titles must be unique within their project.
+Task titles must be unique within their project. This rule is enforced both through application service validation and a composite unique database index (`Task(projectId, title)`).
 
 ---
 
@@ -996,7 +997,8 @@ The system and database enforce the following deletion behavior:
 - Deleting a project deletes its tasks.
 - Deleting a user account requires providing a `confirmationName` matching the user's full name (`firstName lastName`) and requires that the user does not own any workspaces.
 - Deleting a user deletes their workspace memberships, notifications, and refresh tokens.
-- If a user assigned to a task is deleted, the task remains and its `assigneeId` is set to `null`.
+- Tasks created by the user are preserved; their `createdById` is set to `null` (`onDelete: SetNull`).
+- If a user assigned to a task is deleted, the task remains and its `assigneeId` is set to `null` (`onDelete: SetNull`).
 
 ---
 

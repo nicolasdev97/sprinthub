@@ -7,6 +7,7 @@ import { projectRouter } from "../modules/projects/routes";
 import { taskRouter } from "../modules/tasks/routes";
 import { userRouter } from "../modules/users";
 import { notificationRouter } from "../modules/notifications";
+import { dashboardRouter } from "../modules/dashboard";
 
 const router = Router();
 
@@ -19,6 +20,7 @@ apiRouter.use("/users", userRouter);
 apiRouter.use("/workspaces", workspaceRouter);
 apiRouter.use("/", projectRouter);
 apiRouter.use("/", taskRouter);
+apiRouter.use("/", dashboardRouter);
 apiRouter.use("/notifications", notificationRouter);
 
 router.use("/api", apiRouter);

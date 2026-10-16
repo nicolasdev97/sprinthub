@@ -324,7 +324,7 @@ Represents an individual work item within a project.
 | ----------- | -------- | ---------------------- |
 | id          | UUID     | Primary Key            |
 | projectId   | UUID     | Foreign Key            |
-| createdById | UUID     | Foreign Key            |
+| createdById | UUID     | Foreign Key (Nullable) |
 | assigneeId  | UUID     | Foreign Key (Nullable) |
 | title       | String   | Required               |
 | description | String   | Optional               |
@@ -460,10 +460,9 @@ SprintHub uses explicit foreign key relationships to preserve referential integr
 
 - A User may create multiple Tasks through the `createdById` relationship.
 - A User may be assigned multiple Tasks through the `assigneeId` relationship.
-- Task assignment is optional.
-- A Task must have exactly one creator.
+- A Task must have a creator upon creation; if the creator User is deleted, the Task remains and its `createdById` is set to `null` (`onDelete: SetNull`).
 - A Task may have zero or one assigned User.
-- If the assigned User is deleted, the Task remains and its `assigneeId` is set to `null`.
+- If the assigned User is deleted, the Task remains and its `assigneeId` is set to `null` (`onDelete: SetNull`).
 
 ---
 
@@ -687,8 +686,9 @@ When a user is deleted:
 - Their WorkspaceMember records are deleted.
 - Their Notifications are deleted.
 - Their RefreshTokens are deleted.
-- Tasks assigned to the user are preserved.
-- The `assigneeId` of assigned tasks is set to `null`.
+- Tasks created by the user are preserved; their `createdById` is set to `null` (`onDelete: SetNull`).
+- Tasks assigned to the user are preserved; their `assigneeId` is set to `null` (`onDelete: SetNull`).
+- A user cannot delete their account while owning one or more active workspaces.
 
 ---
 

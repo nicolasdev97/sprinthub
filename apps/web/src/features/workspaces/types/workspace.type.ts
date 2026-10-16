@@ -2,7 +2,7 @@ export interface Workspace {
   id: string;
   ownerId: string;
   name: string;
-  description: string;
+  description: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -19,12 +19,12 @@ export interface WorkspaceMember {
 
 export interface CreateWorkspaceRequest {
   name: string;
-  description: string;
+  description?: string;
 }
 
 export interface UpdateWorkspaceRequest {
-  name: string;
-  description: string;
+  name?: string;
+  description?: string;
 }
 
 export interface AddWorkspaceMemberRequest {

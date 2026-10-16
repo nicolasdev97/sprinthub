@@ -786,6 +786,7 @@ SprintHub combines hierarchical collection routes (for scoped creation and listi
 /api/workspaces
 /api/workspaces/{workspaceId}/members
 /api/workspaces/{workspaceId}/projects
+/api/workspaces/{workspaceId}/dashboard
 /api/projects/{projectId}
 /api/projects/{projectId}/tasks
 /api/tasks/{taskId}
@@ -907,6 +908,18 @@ Supported roles:
 - MEMBER
 
 Authorization rules are enforced within the Service Layer.
+
+### Task Authorization Matrix
+
+| Operation | Allowed Roles / Actors | Authorization & IDOR Policy |
+| :--- | :--- | :--- |
+| **Create Task** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace; project cannot be archived |
+| **Read Tasks / Task Details** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace (prevents cross-tenant IDOR) |
+| **Update Task Details** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace; project cannot be archived |
+| **Delete Task** | Task Creator (`task.createdById === userId`) OR Workspace `OWNER` / `ADMIN` | Members cannot delete tasks created by other users (`403 Forbidden`) |
+| **Assign / Unassign Task** | Workspace `OWNER`, `ADMIN` strictly | Workspace members receive `403 Forbidden`; target assignee must be a workspace member |
+| **Update Task Status** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace; project cannot be archived |
+| **Update Task Priority** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace; project cannot be archived |
 
 ---
 
