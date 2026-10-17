@@ -10,7 +10,7 @@ import {
 } from "../dto";
 import { TaskRepository } from "../repository";
 import { WorkspaceService } from "../../workspaces/service";
-import { ProjectRepository } from "../../projects/repository";
+import { ProjectService } from "../../projects/service";
 
 import { TaskFilterParams } from "../types";
 
@@ -19,7 +19,7 @@ import { NotificationService } from "../../notifications";
 export class TaskService {
   constructor(
     private readonly taskRepository: TaskRepository,
-    private readonly projectRepository: ProjectRepository,
+    private readonly projectService: ProjectService,
     private readonly workspaceService: WorkspaceService,
     private readonly notificationService: NotificationService,
   ) {}
@@ -29,20 +29,17 @@ export class TaskService {
     projectId: string,
     userId: string,
   ) {
-    const project = await this.projectRepository.getProjectById(projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
-
-    if (project.archived) {
-      throw new AppError("Archived projects cannot receive new tasks", 400);
-    }
+    const project = await this.projectService.getProjectEntityById(projectId);
 
     await this.workspaceService.getWorkspaceMemberByUser(
       project.workspaceId,
       userId,
+      403,
     );
+
+    if (project.archived) {
+      throw new AppError("Archived projects cannot receive new tasks", 400);
+    }
 
     const existingTask = await this.taskRepository.getTaskByTitle(
       projectId,
@@ -57,6 +54,7 @@ export class TaskService {
       await this.workspaceService.getWorkspaceMemberByUser(
         project.workspaceId,
         data.assigneeId,
+        403,
       );
     }
 
@@ -85,15 +83,12 @@ export class TaskService {
     userId: string,
     filters?: TaskFilterParams,
   ) {
-    const project = await this.projectRepository.getProjectById(projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
+    const project = await this.projectService.getProjectEntityById(projectId);
 
     await this.workspaceService.getWorkspaceMemberByUser(
       project.workspaceId,
       userId,
+      403,
     );
 
     return this.taskRepository.getTasks(projectId, filters);
@@ -106,15 +101,14 @@ export class TaskService {
       throw new AppError("Task not found", 404);
     }
 
-    const project = await this.projectRepository.getProjectById(task.projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
+    const project = await this.projectService.getProjectEntityById(
+      task.projectId,
+    );
 
     await this.workspaceService.getWorkspaceMemberByUser(
       project.workspaceId,
       userId,
+      403,
     );
 
     return task;
@@ -127,20 +121,19 @@ export class TaskService {
       throw new AppError("Task not found", 404);
     }
 
-    const project = await this.projectRepository.getProjectById(task.projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
-
-    if (project.archived) {
-      throw new AppError("Cannot update tasks in an archived project", 400);
-    }
+    const project = await this.projectService.getProjectEntityById(
+      task.projectId,
+    );
 
     await this.workspaceService.getWorkspaceMemberByUser(
       project.workspaceId,
       userId,
+      403,
     );
+
+    if (project.archived) {
+      throw new AppError("Cannot update tasks in an archived project", 400);
+    }
 
     if (data.title) {
       const existingTask = await this.taskRepository.getTaskByTitle(
@@ -163,16 +156,15 @@ export class TaskService {
       throw new AppError("Task not found", 404);
     }
 
-    const project = await this.projectRepository.getProjectById(task.projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
+    const project = await this.projectService.getProjectEntityById(
+      task.projectId,
+    );
 
     const workspaceMember =
       await this.workspaceService.getWorkspaceMemberByUser(
         project.workspaceId,
         userId,
+        403,
       );
 
     const canDelete =
@@ -182,6 +174,10 @@ export class TaskService {
 
     if (!canDelete) {
       throw new AppError("Forbidden", 403);
+    }
+
+    if (project.archived) {
+      throw new AppError("Cannot delete tasks in an archived project", 400);
     }
 
     await this.taskRepository.deleteTask(taskId);
@@ -194,20 +190,15 @@ export class TaskService {
       throw new AppError("Task not found", 404);
     }
 
-    const project = await this.projectRepository.getProjectById(task.projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
-
-    if (project.archived) {
-      throw new AppError("Cannot assign tasks in an archived project", 400);
-    }
+    const project = await this.projectService.getProjectEntityById(
+      task.projectId,
+    );
 
     const workspaceMember =
       await this.workspaceService.getWorkspaceMemberByUser(
         project.workspaceId,
         userId,
+        403,
       );
 
     if (
@@ -217,10 +208,15 @@ export class TaskService {
       throw new AppError("Forbidden", 403);
     }
 
+    if (project.archived) {
+      throw new AppError("Cannot assign tasks in an archived project", 400);
+    }
+
     if (data.assigneeId !== null) {
       await this.workspaceService.getWorkspaceMemberByUser(
         project.workspaceId,
         data.assigneeId,
+        403,
       );
     }
 
@@ -251,11 +247,15 @@ export class TaskService {
       throw new AppError("Task not found", 404);
     }
 
-    const project = await this.projectRepository.getProjectById(task.projectId);
+    const project = await this.projectService.getProjectEntityById(
+      task.projectId,
+    );
 
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
+    await this.workspaceService.getWorkspaceMemberByUser(
+      project.workspaceId,
+      userId,
+      403,
+    );
 
     if (project.archived) {
       throw new AppError(
@@ -263,11 +263,6 @@ export class TaskService {
         400,
       );
     }
-
-    await this.workspaceService.getWorkspaceMemberByUser(
-      project.workspaceId,
-      userId,
-    );
 
     const completedAt = data.status === TaskStatus.DONE ? new Date() : null;
 
@@ -299,11 +294,15 @@ export class TaskService {
       throw new AppError("Task not found", 404);
     }
 
-    const project = await this.projectRepository.getProjectById(task.projectId);
+    const project = await this.projectService.getProjectEntityById(
+      task.projectId,
+    );
 
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
+    await this.workspaceService.getWorkspaceMemberByUser(
+      project.workspaceId,
+      userId,
+      403,
+    );
 
     if (project.archived) {
       throw new AppError(
@@ -311,11 +310,6 @@ export class TaskService {
         400,
       );
     }
-
-    await this.workspaceService.getWorkspaceMemberByUser(
-      project.workspaceId,
-      userId,
-    );
 
     const updatedTask = await this.taskRepository.updateTaskPriority(
       taskId,

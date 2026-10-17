@@ -16,7 +16,7 @@ export const apiRateLimiter = rateLimit({
     success: false,
     message: "Too many requests, please try again later.",
   },
-  skip: (req: Request) => req.path === "/health",
+  skip: (req: Request) => req.path === "/api/health" || req.path === "/health",
   validate: {
     trustProxy: false,
     xForwardedForHeader: false,

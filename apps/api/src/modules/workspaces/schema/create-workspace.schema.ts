@@ -10,5 +10,6 @@ export const createWorkspaceSchema = z.object({
     .string()
     .trim()
     .max(500, "Workspace description must not exceed 500 characters")
+    .nullable()
     .optional(),
 });

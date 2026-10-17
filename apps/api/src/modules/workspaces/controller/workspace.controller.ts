@@ -34,7 +34,7 @@ export class WorkspaceController {
     res: Response,
   ) {
     const userId = req.user!.userId;
-    const filters = req.query;
+    const filters = req.validatedQuery as WorkspaceFilterParams;
 
     const workspaces = await this.workspaceService.getWorkspaces(
       userId,

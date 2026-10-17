@@ -67,10 +67,7 @@ export class WorkspaceService {
       throw new AppError("Workspace not found", 404);
     }
 
-    if (
-      workspaceMember.role !== WorkspaceRole.OWNER &&
-      workspaceMember.role !== WorkspaceRole.ADMIN
-    ) {
+    if (workspaceMember.role !== WorkspaceRole.OWNER) {
       throw new AppError("Forbidden", 403);
     }
 
@@ -178,7 +175,11 @@ export class WorkspaceService {
     return this.workspaceRepository.getWorkspaceMembers(workspaceId);
   }
 
-  async getWorkspaceMemberByUser(workspaceId: string, userId: string) {
+  async getWorkspaceMemberByUser(
+    workspaceId: string,
+    userId: string,
+    statusCode: 403 | 404 = 404,
+  ) {
     const workspaceMember =
       await this.workspaceRepository.getWorkspaceMemberByUser(
         workspaceId,
@@ -186,7 +187,10 @@ export class WorkspaceService {
       );
 
     if (!workspaceMember) {
-      throw new AppError("User is not a member of this workspace", 404);
+      throw new AppError(
+        "User is not a member of this workspace",
+        statusCode,
+      );
     }
 
     return workspaceMember;
@@ -274,6 +278,10 @@ export class WorkspaceService {
       throw new AppError("Admins cannot remove other admins", 403);
     }
 
-    return this.workspaceRepository.deleteWorkspaceMember(memberId);
+    return this.workspaceRepository.deleteWorkspaceMember(
+      memberId,
+      workspaceId,
+      member.userId,
+    );
   }
 }

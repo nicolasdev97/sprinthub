@@ -3,8 +3,8 @@ import { z } from "zod";
 export const updateTaskSchema = z
   .object({
     title: z.string().trim().min(1, "Task title is required").optional(),
-    description: z.string().optional(),
-    dueDate: z.coerce.date().optional(),
+    description: z.string().nullable().optional(),
+    dueDate: z.coerce.date().nullable().optional(),
   })
   .refine(
     (data) =>

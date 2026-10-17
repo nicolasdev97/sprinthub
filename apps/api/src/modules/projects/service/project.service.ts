@@ -44,13 +44,11 @@ export class ProjectService {
       userId,
     );
 
-    for (const workspaceMember of workspaceMembers) {
-      await this.notificationService.createNotification(
-        workspaceMember.user.id,
-        "Project created",
-        "A new project has been created in your workspace.",
-      );
-    }
+    await this.notificationService.createManyNotifications(
+      workspaceMembers.map((workspaceMember) => workspaceMember.user.id),
+      "Project created",
+      "A new project has been created in your workspace.",
+    );
 
     return project;
   }
@@ -65,12 +63,18 @@ export class ProjectService {
     return this.projectRepository.getProjects(workspaceId, filters);
   }
 
-  async getProjectById(projectId: string, userId: string) {
+  async getProjectEntityById(projectId: string) {
     const project = await this.projectRepository.getProjectById(projectId);
 
     if (!project) {
       throw new AppError("Project not found", 404);
     }
+
+    return project;
+  }
+
+  async getProjectById(projectId: string, userId: string) {
+    const project = await this.getProjectEntityById(projectId);
 
     await this.workspaceService.getWorkspaceMemberByUser(
       project.workspaceId,
@@ -85,15 +89,7 @@ export class ProjectService {
     userId: string,
     data: UpdateProjectDto,
   ) {
-    const project = await this.projectRepository.getProjectById(projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
-
-    if (project.archived) {
-      throw new AppError("Archived projects cannot be updated", 400);
-    }
+    const project = await this.getProjectEntityById(projectId);
 
     const workspaceMember =
       await this.workspaceService.getWorkspaceMemberByUser(
@@ -106,6 +102,10 @@ export class ProjectService {
       workspaceMember.role !== WorkspaceRole.ADMIN
     ) {
       throw new AppError("Forbidden", 403);
+    }
+
+    if (project.archived) {
+      throw new AppError("Archived projects cannot be updated", 400);
     }
 
     if (data.name) {

@@ -44,7 +44,14 @@ export class TaskRepository {
         id,
       },
       include: {
-        assignee: true,
+        assignee: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
       },
     });
   }

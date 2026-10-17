@@ -36,6 +36,10 @@ export const useCreateTask = (projectId: string) => {
       queryClient.invalidateQueries({
         queryKey: ['tasks', projectId],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard'],
+      });
     },
   });
 };
@@ -55,6 +59,10 @@ export const useUpdateTask = (projectId: string) => {
       queryClient.invalidateQueries({
         queryKey: ['tasks', variables.taskId],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard'],
+      });
     },
   });
 };
@@ -72,6 +80,10 @@ export const useDeleteTask = (projectId: string) => {
 
       queryClient.invalidateQueries({
         queryKey: ['tasks', taskId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard'],
       });
     },
   });
@@ -110,6 +122,10 @@ export const useUpdateTaskStatus = (projectId: string) => {
 
       queryClient.invalidateQueries({
         queryKey: ['tasks', variables.taskId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard'],
       });
     },
   });

@@ -1,6 +1,11 @@
 import { Router } from "express";
 
-import { authenticate, validate, validateQuery } from "../../../middleware";
+import {
+  authenticate,
+  validate,
+  validateParams,
+  validateQuery,
+} from "../../../middleware";
 
 import { TaskController } from "../controller";
 import {
@@ -10,12 +15,15 @@ import {
   updateTaskStatusSchema,
   updateTaskPrioritySchema,
   taskFilterSchema,
+  projectTaskParamsSchema,
+  taskParamsSchema,
 } from "../schema";
 import { TaskRepository } from "../repository";
 import { TaskService } from "../service";
 import { WorkspaceService } from "../../workspaces/service";
 import { WorkspaceRepository } from "../../workspaces/repository";
 import { ProjectRepository } from "../../projects/repository";
+import { ProjectService } from "../../projects/service";
 import { CreateTaskDto } from "../dto";
 import { ProjectTaskParams, TaskParams } from "../types";
 
@@ -37,9 +45,15 @@ const workspaceService = new WorkspaceService(
   notificationService,
 );
 
+const projectService = new ProjectService(
+  projectRepository,
+  workspaceService,
+  notificationService,
+);
+
 const taskService = new TaskService(
   taskRepository,
-  projectRepository,
+  projectService,
   workspaceService,
   notificationService,
 );
@@ -53,6 +67,7 @@ taskRouter.post<
 >(
   "/projects/:projectId/tasks",
   authenticate,
+  validateParams(projectTaskParamsSchema),
   validate(createTaskSchema),
   taskController.createTask.bind(taskController),
 );
@@ -60,6 +75,7 @@ taskRouter.post<
 taskRouter.get<ProjectTaskParams>(
   "/projects/:projectId/tasks",
   authenticate,
+  validateParams(projectTaskParamsSchema),
   validateQuery(taskFilterSchema),
   taskController.getTasks.bind(taskController),
 );
@@ -67,12 +83,14 @@ taskRouter.get<ProjectTaskParams>(
 taskRouter.get<TaskParams>(
   "/tasks/:taskId",
   authenticate,
+  validateParams(taskParamsSchema),
   taskController.getTaskById.bind(taskController),
 );
 
 taskRouter.patch<TaskParams>(
   "/tasks/:taskId",
   authenticate,
+  validateParams(taskParamsSchema),
   validate(updateTaskSchema),
   taskController.updateTask.bind(taskController),
 );
@@ -80,12 +98,14 @@ taskRouter.patch<TaskParams>(
 taskRouter.delete<TaskParams>(
   "/tasks/:taskId",
   authenticate,
+  validateParams(taskParamsSchema),
   taskController.deleteTask.bind(taskController),
 );
 
 taskRouter.patch<TaskParams>(
   "/tasks/:taskId/assign",
   authenticate,
+  validateParams(taskParamsSchema),
   validate(assignTaskSchema),
   taskController.assignTask.bind(taskController),
 );
@@ -93,6 +113,7 @@ taskRouter.patch<TaskParams>(
 taskRouter.patch<TaskParams>(
   "/tasks/:taskId/status",
   authenticate,
+  validateParams(taskParamsSchema),
   validate(updateTaskStatusSchema),
   taskController.updateTaskStatus.bind(taskController),
 );
@@ -100,6 +121,7 @@ taskRouter.patch<TaskParams>(
 taskRouter.patch<TaskParams>(
   "/tasks/:taskId/priority",
   authenticate,
+  validateParams(taskParamsSchema),
   validate(updateTaskPrioritySchema),
   taskController.updateTaskPriority.bind(taskController),
 );

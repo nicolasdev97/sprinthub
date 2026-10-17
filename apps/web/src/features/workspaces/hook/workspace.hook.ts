@@ -6,12 +6,13 @@ import {
   CreateWorkspaceRequest,
   UpdateWorkspaceMemberRoleRequest,
   UpdateWorkspaceRequest,
+  WorkspaceQueryParams,
 } from '../types';
 
-export const useWorkspaces = () => {
+export const useWorkspaces = (params?: WorkspaceQueryParams) => {
   return useQuery({
-    queryKey: ['workspaces'],
-    queryFn: () => workspaceService.getWorkspaces(),
+    queryKey: ['workspaces', params],
+    queryFn: () => workspaceService.getWorkspaces(params),
   });
 };
 
@@ -19,6 +20,14 @@ export const useWorkspace = (workspaceId: string) => {
   return useQuery({
     queryKey: ['workspaces', workspaceId],
     queryFn: () => workspaceService.getWorkspace(workspaceId),
+    enabled: Boolean(workspaceId),
+  });
+};
+
+export const useWorkspaceMembers = (workspaceId: string) => {
+  return useQuery({
+    queryKey: ['workspaces', workspaceId, 'members'],
+    queryFn: () => workspaceService.getMembers(workspaceId),
     enabled: Boolean(workspaceId),
   });
 };
@@ -77,6 +86,10 @@ export const useAddWorkspaceMember = () => {
       queryClient.invalidateQueries({
         queryKey: ['workspaces', variables.workspaceId],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ['workspaces', variables.workspaceId, 'members'],
+      });
     },
   });
 };
@@ -98,6 +111,10 @@ export const useUpdateWorkspaceMemberRole = () => {
       queryClient.invalidateQueries({
         queryKey: ['workspaces', variables.workspaceId],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ['workspaces', variables.workspaceId, 'members'],
+      });
     },
   });
 };
@@ -111,6 +128,10 @@ export const useRemoveWorkspaceMember = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['workspaces', variables.workspaceId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['workspaces', variables.workspaceId, 'members'],
       });
     },
   });

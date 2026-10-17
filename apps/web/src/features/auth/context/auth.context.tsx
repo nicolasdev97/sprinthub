@@ -1,8 +1,8 @@
 'use client';
 
-import { createContext, ReactNode, useContext, useState } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
-import { setAccessToken } from '@/services';
+import { setAccessToken, subscribeAccessToken } from '@/services';
 
 import { authService } from '../service';
 import { AuthUser } from '../types';
@@ -24,6 +24,15 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [accessTokenState, setAccessTokenState] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    return subscribeAccessToken((token) => {
+      setAccessTokenState(token);
+      if (token === null) {
+        setUser(null);
+      }
+    });
+  }, []);
 
   const setAuth = (token: string, authUser: AuthUser) => {
     setAccessToken(token);

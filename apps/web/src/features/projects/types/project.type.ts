@@ -13,13 +13,13 @@ export interface Project {
 
 export interface CreateProjectRequest {
   name: string;
-  description?: string;
+  description?: string | null;
   status: ProjectStatus;
 }
 
 export interface UpdateProjectRequest {
   name?: string;
-  description?: string;
+  description?: string | null;
   status?: ProjectStatus;
 }
 

@@ -7,6 +7,7 @@ export const updateWorkspaceSchema = z
       .string()
       .trim()
       .max(500, "Workspace description must not exceed 500 characters")
+      .nullable()
       .optional(),
   })
   .refine((data) => data.name !== undefined || data.description !== undefined, {

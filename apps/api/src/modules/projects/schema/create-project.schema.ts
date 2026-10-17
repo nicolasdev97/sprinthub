@@ -6,6 +6,7 @@ export const createProjectSchema = z.object({
     .string()
     .trim()
     .max(1000, "Project description must not exceed 1000 characters")
+    .nullable()
     .optional(),
   status: z.enum(["PLANNING", "ACTIVE", "COMPLETED"]),
 });

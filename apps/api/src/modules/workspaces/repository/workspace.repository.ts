@@ -161,11 +161,29 @@ export class WorkspaceRepository {
     });
   }
 
-  async deleteWorkspaceMember(memberId: string) {
-    return prisma.workspaceMember.delete({
-      where: {
-        id: memberId,
-      },
+  async deleteWorkspaceMember(
+    memberId: string,
+    workspaceId: string,
+    userId: string,
+  ) {
+    return prisma.$transaction(async (tx) => {
+      await tx.task.updateMany({
+        where: {
+          assigneeId: userId,
+          project: {
+            workspaceId,
+          },
+        },
+        data: {
+          assigneeId: null,
+        },
+      });
+
+      return tx.workspaceMember.delete({
+        where: {
+          id: memberId,
+        },
+      });
     });
   }
 

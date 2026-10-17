@@ -7,11 +7,14 @@ import {
   UpdateWorkspaceRequest,
   Workspace,
   WorkspaceMember,
+  WorkspaceQueryParams,
 } from '../types';
 
 export const workspaceService = {
-  async getWorkspaces(): Promise<Workspace[]> {
-    const response = await httpClient.get<Workspace[]>('/workspaces');
+  async getWorkspaces(params?: WorkspaceQueryParams): Promise<Workspace[]> {
+    const response = await httpClient.get<Workspace[]>('/workspaces', {
+      params,
+    });
 
     return response.data;
   },
@@ -36,6 +39,12 @@ export const workspaceService = {
 
   async deleteWorkspace(workspaceId: string): Promise<void> {
     await httpClient.delete(`/workspaces/${workspaceId}`);
+  },
+
+  async getMembers(workspaceId: string): Promise<WorkspaceMember[]> {
+    const response = await httpClient.get<WorkspaceMember[]>(`/workspaces/${workspaceId}/members`);
+
+    return response.data;
   },
 
   async addMember(workspaceId: string, data: AddWorkspaceMemberRequest): Promise<WorkspaceMember> {

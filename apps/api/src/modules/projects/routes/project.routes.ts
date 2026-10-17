@@ -1,12 +1,19 @@
 import { Router } from "express";
 
-import { authenticate, validate, validateQuery } from "../../../middleware";
+import {
+  authenticate,
+  validate,
+  validateParams,
+  validateQuery,
+} from "../../../middleware";
 
 import { ProjectController } from "../controller";
 import {
   createProjectSchema,
   updateProjectSchema,
   projectFilterSchema,
+  workspaceProjectParamsSchema,
+  projectParamsSchema,
 } from "../schema";
 import { ProjectRepository } from "../repository";
 import { ProjectService } from "../service";
@@ -41,6 +48,7 @@ const projectController = new ProjectController(projectService);
 projectRouter.post<WorkspaceProjectParams>(
   "/workspaces/:workspaceId/projects",
   authenticate,
+  validateParams(workspaceProjectParamsSchema),
   validate(createProjectSchema),
   projectController.createProject.bind(projectController),
 );
@@ -48,6 +56,7 @@ projectRouter.post<WorkspaceProjectParams>(
 projectRouter.get<WorkspaceProjectParams>(
   "/workspaces/:workspaceId/projects",
   authenticate,
+  validateParams(workspaceProjectParamsSchema),
   validateQuery(projectFilterSchema),
   projectController.getProjects.bind(projectController),
 );
@@ -55,12 +64,14 @@ projectRouter.get<WorkspaceProjectParams>(
 projectRouter.get<ProjectParams>(
   "/projects/:projectId",
   authenticate,
+  validateParams(projectParamsSchema),
   projectController.getProjectById.bind(projectController),
 );
 
 projectRouter.patch<ProjectParams>(
   "/projects/:projectId",
   authenticate,
+  validateParams(projectParamsSchema),
   validate(updateProjectSchema),
   projectController.updateProject.bind(projectController),
 );
@@ -68,18 +79,21 @@ projectRouter.patch<ProjectParams>(
 projectRouter.delete<ProjectParams>(
   "/projects/:projectId",
   authenticate,
+  validateParams(projectParamsSchema),
   projectController.deleteProject.bind(projectController),
 );
 
-projectRouter.patch(
+projectRouter.patch<ProjectParams>(
   "/projects/:projectId/archive",
   authenticate,
+  validateParams(projectParamsSchema),
   projectController.archiveProject.bind(projectController),
 );
 
-projectRouter.patch(
+projectRouter.patch<ProjectParams>(
   "/projects/:projectId/unarchive",
   authenticate,
+  validateParams(projectParamsSchema),
   projectController.unarchiveProject.bind(projectController),
 );
 

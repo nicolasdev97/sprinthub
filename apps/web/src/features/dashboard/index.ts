@@ -1,3 +1,3 @@
-export * from './types/dashboard.type';
-export * from './service/dashboard.service';
-
+export * from './types';
+export * from './service';
+export * from './hook';

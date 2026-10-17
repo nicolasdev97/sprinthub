@@ -35,7 +35,7 @@ export class TaskController {
   ) {
     const { projectId } = req.params;
     const userId = req.user.userId;
-    const filters = req.query;
+    const filters = req.validatedQuery as TaskFilterParams;
 
     const tasks = await this.taskService.getTasks(projectId, userId, filters);
 

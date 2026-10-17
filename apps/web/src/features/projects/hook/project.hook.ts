@@ -29,6 +29,10 @@ export const useCreateProject = (workspaceId: string) => {
       queryClient.invalidateQueries({
         queryKey: ['projects', workspaceId],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', workspaceId],
+      });
     },
   });
 };
@@ -48,6 +52,10 @@ export const useUpdateProject = (workspaceId: string) => {
       queryClient.invalidateQueries({
         queryKey: ['projects', variables.projectId],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', workspaceId],
+      });
     },
   });
 };
@@ -65,6 +73,10 @@ export const useDeleteProject = (workspaceId: string) => {
 
       queryClient.invalidateQueries({
         queryKey: ['projects', projectId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', workspaceId],
       });
     },
   });
@@ -84,6 +96,10 @@ export const useArchiveProject = (workspaceId: string) => {
       queryClient.invalidateQueries({
         queryKey: ['projects', projectId],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', workspaceId],
+      });
     },
   });
 };
@@ -101,6 +117,10 @@ export const useUnarchiveProject = (workspaceId: string) => {
 
       queryClient.invalidateQueries({
         queryKey: ['projects', projectId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', workspaceId],
       });
     },
   });

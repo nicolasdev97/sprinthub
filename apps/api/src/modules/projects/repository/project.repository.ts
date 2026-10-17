@@ -10,8 +10,6 @@ export class ProjectRepository {
   }
 
   async getProjects(workspaceId: string, filters?: ProjectFilterParams) {
-    console.log("FILTERS IN REPOSITORY:", filters);
-
     return prisma.project.findMany({
       where: {
         workspaceId,

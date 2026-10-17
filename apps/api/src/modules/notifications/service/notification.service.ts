@@ -15,6 +15,18 @@ export class NotificationService {
     );
   }
 
+  async createManyNotifications(
+    userIds: string[],
+    title: string,
+    message: string,
+  ) {
+    return this.notificationRepository.createManyNotifications(
+      userIds,
+      title,
+      message,
+    );
+  }
+
   async getNotificationsByUser(userId: string) {
     return this.notificationRepository.getNotificationsByUser(userId);
   }

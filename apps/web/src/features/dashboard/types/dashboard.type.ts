@@ -4,4 +4,3 @@ export interface WorkspaceDashboard {
   completedTasks: number;
   overdueTasks: number;
 }
-

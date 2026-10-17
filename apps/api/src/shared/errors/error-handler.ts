@@ -29,6 +29,16 @@ export function errorHandler(
     });
   }
 
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2023"
+  ) {
+    return response.status(400).json({
+      success: false,
+      message: "Invalid identifier format",
+    });
+  }
+
   return response.status(500).json({
     success: false,
     message: "Internal Server Error",
