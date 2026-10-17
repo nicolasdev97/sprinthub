@@ -177,7 +177,7 @@ export class ProjectService {
     }
 
     if (!data.archived && !project.archived) {
-      throw new AppError("Project is not archived", 400);
+      throw new AppError("Project is already unarchived", 400);
     }
 
     return this.projectRepository.archiveProject(projectId, data.archived);
