@@ -1,7 +1,7 @@
 import { WorkspaceRole } from "@prisma/client";
 
 import { AppError } from "../../../shared";
-import { CreateProjectDto, UpdateProjectDto } from "../dto";
+import { ArchiveProjectDto, CreateProjectDto, UpdateProjectDto } from "../dto";
 import { ProjectRepository } from "../repository";
 import { WorkspaceService } from "../../workspaces/service";
 import { ProjectFilterParams } from "../types";
@@ -148,7 +148,11 @@ export class ProjectService {
     await this.projectRepository.deleteProject(projectId);
   }
 
-  async archiveProject(projectId: string, userId: string) {
+  async archiveProject(
+    projectId: string,
+    userId: string,
+    data: ArchiveProjectDto,
+  ) {
     const project = await this.projectRepository.getProjectById(projectId);
 
     if (!project) {
@@ -168,37 +172,14 @@ export class ProjectService {
       throw new AppError("Forbidden", 403);
     }
 
-    if (project.archived) {
+    if (data.archived && project.archived) {
       throw new AppError("Project is already archived", 400);
     }
 
-    return this.projectRepository.archiveProject(projectId);
-  }
-
-  async unarchiveProject(projectId: string, userId: string) {
-    const project = await this.projectRepository.getProjectById(projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
-
-    const workspaceMember =
-      await this.workspaceService.getWorkspaceMemberByUser(
-        project.workspaceId,
-        userId,
-      );
-
-    if (
-      workspaceMember.role !== WorkspaceRole.OWNER &&
-      workspaceMember.role !== WorkspaceRole.ADMIN
-    ) {
-      throw new AppError("Forbidden", 403);
-    }
-
-    if (!project.archived) {
+    if (!data.archived && !project.archived) {
       throw new AppError("Project is not archived", 400);
     }
 
-    return this.projectRepository.unarchiveProject(projectId);
+    return this.projectRepository.archiveProject(projectId, data.archived);
   }
 }

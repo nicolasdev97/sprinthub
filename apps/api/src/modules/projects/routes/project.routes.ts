@@ -11,6 +11,7 @@ import { ProjectController } from "../controller";
 import {
   createProjectSchema,
   updateProjectSchema,
+  archiveProjectSchema,
   projectFilterSchema,
   workspaceProjectParamsSchema,
   projectParamsSchema,
@@ -87,14 +88,8 @@ projectRouter.patch<ProjectParams>(
   "/projects/:projectId/archive",
   authenticate,
   validateParams(projectParamsSchema),
+  validate(archiveProjectSchema),
   projectController.archiveProject.bind(projectController),
-);
-
-projectRouter.patch<ProjectParams>(
-  "/projects/:projectId/unarchive",
-  authenticate,
-  validateParams(projectParamsSchema),
-  projectController.unarchiveProject.bind(projectController),
 );
 
 export default projectRouter;

@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { projectService } from '../service';
-import { CreateProjectRequest, ProjectQueryParams, UpdateProjectRequest } from '../types';
+import {
+  ArchiveProjectRequest,
+  CreateProjectRequest,
+  ProjectQueryParams,
+  UpdateProjectRequest,
+} from '../types';
 
 export const useProjects = (workspaceId: string, params?: ProjectQueryParams) => {
   return useQuery({
@@ -86,37 +91,16 @@ export const useArchiveProject = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (projectId: string) => projectService.archiveProject(projectId),
+    mutationFn: ({ projectId, data }: { projectId: string; data: ArchiveProjectRequest }) =>
+      projectService.archiveProject(projectId, data),
 
-    onSuccess: (_, projectId) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['projects', workspaceId],
       });
 
       queryClient.invalidateQueries({
-        queryKey: ['projects', projectId],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ['dashboard', workspaceId],
-      });
-    },
-  });
-};
-
-export const useUnarchiveProject = (workspaceId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (projectId: string) => projectService.unarchiveProject(projectId),
-
-    onSuccess: (_, projectId) => {
-      queryClient.invalidateQueries({
-        queryKey: ['projects', workspaceId],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ['projects', projectId],
+        queryKey: ['projects', variables.projectId],
       });
 
       queryClient.invalidateQueries({

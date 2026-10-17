@@ -30,3 +30,7 @@ export interface ProjectQueryParams {
   sortBy?: 'name' | 'createdAt';
   sortOrder?: 'asc' | 'desc';
 }
+
+export interface ArchiveProjectRequest {
+  archived: boolean;
+}
