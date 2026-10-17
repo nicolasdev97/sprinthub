@@ -128,13 +128,12 @@ Organized around feature domains with clear separation of concerns:
 ```text
 apps/web/src/
 ├── app/              # Next.js App Router (pages and layouts)
-├── features/         # Feature modules (components, hooks, schemas, services, types)
 ├── components/       # Reusable UI components (shadcn/ui)
-├── hooks/            # Custom reusable hooks
+├── features/         # Feature modules (hooks, services, types, context, components, schemas)
+├── lib/              # Third-party client configurations (e.g., TanStack Query client)
+├── providers/        # Application-level React providers
 ├── services/         # HTTP client (Axios) and integration services
-├── providers/        # Context and query client providers
-├── types/            # Global TypeScript types
-└── utils/            # Helper utilities
+└── shared/           # Shared frontend errors and helper utilities
 ```
 
 ---

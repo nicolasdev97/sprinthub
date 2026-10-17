@@ -188,7 +188,9 @@ export class WorkspaceService {
 
     if (!workspaceMember) {
       throw new AppError(
-        "User is not a member of this workspace",
+        statusCode === 404
+          ? "Workspace not found"
+          : "User is not a member of this workspace",
         statusCode,
       );
     }

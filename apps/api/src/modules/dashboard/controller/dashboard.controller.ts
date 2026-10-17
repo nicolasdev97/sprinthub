@@ -1,11 +1,7 @@
 import { Request, Response } from "express";
-import { ParamsDictionary } from "express-serve-static-core";
 
 import { DashboardService } from "../service";
-
-export interface WorkspaceDashboardParams extends ParamsDictionary {
-  workspaceId: string;
-}
+import { WorkspaceDashboardParams } from "../types";
 
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}

@@ -1,14 +1,13 @@
 import { Router } from "express";
 
 import { authenticate, validateParams } from "../../../middleware";
-import { NotificationRepository } from "../../notifications/repository";
-import { NotificationService } from "../../notifications/service";
-import { WorkspaceRepository } from "../../workspaces/repository";
-import { WorkspaceService } from "../../workspaces/service";
-import { DashboardController, WorkspaceDashboardParams } from "../controller";
+import { NotificationRepository, NotificationService } from "../../notifications";
+import { WorkspaceRepository, WorkspaceService } from "../../workspaces";
+import { DashboardController } from "../controller";
 import { DashboardRepository } from "../repository";
 import { workspaceDashboardParamsSchema } from "../schema";
 import { DashboardService } from "../service";
+import { WorkspaceDashboardParams } from "../types";
 
 export const dashboardRouter = Router();
 

@@ -751,18 +751,12 @@ This rule is enforced by the application layer because it depends on the task st
 
 ## Transaction Consistency
 
-Operations affecting multiple related entities should execute within database transactions whenever required.
+Operations that enforce critical multi-entity domain invariants execute within atomic database transactions (`prisma.$transaction`) or rely on database-level referential actions (`ON DELETE CASCADE` / `ON DELETE SET NULL`):
 
-Examples include:
+- **Workspace creation and owner membership creation**: Executed atomically within a single `prisma.$transaction` so a workspace never exists without its `OWNER` membership record.
+- **Workspace, project, and user deletions**: Enforced atomically by PostgreSQL foreign key constraints (`ON DELETE CASCADE` and `ON DELETE SET NULL`).
 
-- Workspace creation and owner membership creation.
-- Workspace deletion.
-- Project deletion.
-- Project creation and creation of related notifications.
-- Member invitation and notification creation.
-- Task assignment and creation of the related notification when the task has an assignee.
-- Task status change and creation of the related notification when the task has an assignee.
-- Task priority change and creation of the related notification when the task has an assignee.
+In-application notifications (triggered by workspace member addition, project creation, task assignment, task status changes, and task priority changes) are treated as application-level side effects and are persisted sequentially after the primary domain operation succeeds, preserving modular decoupling across repositories.
 
 ---
 

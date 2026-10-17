@@ -9,7 +9,7 @@ export class UserController {
   async getUser(req: Request, res: Response) {
     const userId = req.user.userId;
 
-    const user = await this.userService.getUserById(userId);
+    const user = await this.userService.getUser(userId);
 
     res.status(200).json(user);
   }

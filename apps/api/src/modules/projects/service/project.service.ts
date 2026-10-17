@@ -3,7 +3,7 @@ import { WorkspaceRole } from "@prisma/client";
 import { AppError } from "../../../shared";
 import { ArchiveProjectDto, CreateProjectDto, UpdateProjectDto } from "../dto";
 import { ProjectRepository } from "../repository";
-import { WorkspaceService } from "../../workspaces/service";
+import { WorkspaceService } from "../../workspaces";
 import { ProjectFilterParams } from "../types";
 import { NotificationService } from "../../notifications";
 

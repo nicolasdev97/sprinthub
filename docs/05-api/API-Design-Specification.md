@@ -299,7 +299,7 @@ New Access Token
 
 ## Protected Endpoints
 
-Protected endpoints require authentication.
+Protected endpoints require authentication via the `Authorization` header using the `Bearer` scheme.
 
 Example:
 
@@ -796,13 +796,14 @@ The Project API manages projects within workspaces.
 
 ## Endpoints
 
-| Method | Endpoint                                 | Description        |
-| ------ | ---------------------------------------- | ------------------ |
-| GET    | `/api/workspaces/{workspaceId}/projects` | Retrieve projects  |
-| GET    | `/api/projects/{projectId}`              | Retrieve a project |
-| POST   | `/api/workspaces/{workspaceId}/projects` | Create a project   |
-| PATCH  | `/api/projects/{projectId}`              | Update a project   |
-| DELETE | `/api/projects/{projectId}`              | Delete a project   |
+| Method | Endpoint                                 | Description                    |
+| ------ | ---------------------------------------- | ------------------------------ |
+| GET    | `/api/workspaces/{workspaceId}/projects` | Retrieve projects              |
+| GET    | `/api/projects/{projectId}`              | Retrieve a project             |
+| POST   | `/api/workspaces/{workspaceId}/projects` | Create a project               |
+| PATCH  | `/api/projects/{projectId}`              | Update a project               |
+| PATCH  | `/api/projects/{projectId}/archive`      | Archive or unarchive a project |
+| DELETE | `/api/projects/{projectId}`              | Delete a project               |
 
 ---
 
@@ -838,19 +839,22 @@ The Project API manages projects within workspaces.
 
 ### Description
 
-Archives a project without permanently removing it.
+Archives or unarchives a project without permanently removing it.
 
----
+#### Request Body
 
-## Unarchive Project
+```json
+{
+  "archived": true
+}
+```
 
-| Method | Endpoint                              |
-| ------ | ------------------------------------- |
-| PATCH  | `/api/projects/{projectId}/unarchive` |
+#### Authorization & Validation Rules
 
-### Description
-
-Restores an archived project to an active state.
+- `archived` is required (`boolean`).
+- Requires workspace `OWNER` or `ADMIN` role (`403 Forbidden` otherwise).
+- Returns `400 Bad Request` if attempting to archive an already archived project (`archived: true`) or unarchive an already active project (`archived: false`).
+- Returns `200 OK` with the updated project object.
 
 ---
 

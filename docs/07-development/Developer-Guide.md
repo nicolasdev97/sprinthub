@@ -545,20 +545,20 @@ Each merged Pull Request results in a single commit on the target branch.
 
 ---
 
-# 8. Folder Naming
+# 8. Folder & File Naming
 
 SprintHub follows consistent naming conventions across frontend and backend code.
 
-| Element          | Convention                        | Example                    |
-| ---------------- | --------------------------------- | -------------------------- |
-| Backend folders  | lowercase                         | `repository`, `controller` |
-| Backend modules  | lowercase, plural                 | `workspaces`, `projects`   |
-| Frontend folders | lowercase, kebab-case when needed | `user-profile`             |
-| React Components | PascalCase                        | `TaskCard.tsx`             |
-| Hooks            | camelCase with `use` prefix       | `useProjects.ts`           |
-| Utility Files    | camelCase                         | `formatDate.ts`            |
-| Types            | PascalCase                        | `Task.ts`                  |
-| Constants        | UPPER_SNAKE_CASE                  | `MAX_FILE_SIZE`            |
+| Element                      | Convention                         | Example                                        |
+| ---------------------------- | ---------------------------------- | ---------------------------------------------- |
+| Domain modules / features    | lowercase, plural (or domain noun) | `workspaces`, `projects`, `tasks`, `dashboard` |
+| Single-artifact layer folder | lowercase, singular                | `controller`, `service`, `repository`, `hook`  |
+| Collection layer folder      | lowercase, plural                  | `routes`, `types`, `components`                |
+| React Components             | `PascalCase.tsx`                   | `Button.tsx`, `TaskCard.tsx`                   |
+| Layer / Role Files           | `kebab-case.<role>.ts`             | `project.controller.ts`, `project.hook.ts`     |
+| Type Definition Files        | `kebab-case.type.ts`               | `task.type.ts`, `task-filter.type.ts`          |
+| Utility & Error Files        | `kebab-case.ts`                    | `refresh-token.ts`, `api-error.ts`             |
+| Constants                    | `UPPER_SNAKE_CASE`                 | `MAX_FILE_SIZE`                                |
 
 These conventions apply across both frontend and backend projects where appropriate.
 
@@ -629,23 +629,9 @@ Client Components should be introduced only when required for:
 
 Frontend code is organized by business capability rather than technical file type.
 
-Feature-specific code must remain inside its corresponding feature.
+Feature-specific code must remain inside its corresponding feature, creating internal directories on demand according to the feature's needs (for example: `hook/`, `service/`, `types/`, `context/`, and adding `components/` and `schemas/` as UI views and forms are built).
 
-Example:
-
-```text
-features/
-└── tasks/
-    ├── api/
-    ├── components/
-    ├── hooks/
-    ├── schemas/
-    ├── services/
-    ├── types/
-    └── utils/
-```
-
-Shared directories should contain only functionality that is genuinely reused across multiple features.
+Shared directories (`components/`, `lib/`, `providers/`, `services/`, `shared/`) should contain only functionality that is genuinely reused across multiple features.
 
 ---
 
@@ -707,10 +693,9 @@ Protected backend routes use the shared `authenticate` middleware.
 
 The authentication infrastructure supports:
 
-- JWT Access Tokens.
-- HttpOnly cookies.
-- `Authorization: Bearer` headers.
-- Typed `req.user`.
+- JWT Access Tokens transmitted via `Authorization: Bearer` headers.
+- Refresh Tokens stored in `HttpOnly` cookies (for `/api/auth/refresh` and `/api/auth/logout`).
+- Typed `req.user` populated by `authenticate`.
 
 Authentication-related middleware is located under:
 

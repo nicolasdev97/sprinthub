@@ -19,8 +19,7 @@ import {
 import { WorkspaceRepository } from "../repository";
 import { WorkspaceService } from "../service";
 
-import { NotificationRepository } from "../../notifications/repository";
-import { NotificationService } from "../../notifications/service";
+import { NotificationRepository, NotificationService } from "../../notifications";
 
 export const workspaceRouter = Router();
 

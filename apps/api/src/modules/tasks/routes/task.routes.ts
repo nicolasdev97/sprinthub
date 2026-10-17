@@ -20,15 +20,12 @@ import {
 } from "../schema";
 import { TaskRepository } from "../repository";
 import { TaskService } from "../service";
-import { WorkspaceService } from "../../workspaces/service";
-import { WorkspaceRepository } from "../../workspaces/repository";
-import { ProjectRepository } from "../../projects/repository";
-import { ProjectService } from "../../projects/service";
+import { WorkspaceRepository, WorkspaceService } from "../../workspaces";
+import { ProjectRepository, ProjectService } from "../../projects";
 import { CreateTaskDto } from "../dto";
 import { ProjectTaskParams, TaskParams } from "../types";
 
-import { NotificationRepository } from "../../notifications/repository";
-import { NotificationService } from "../../notifications/service";
+import { NotificationRepository, NotificationService } from "../../notifications";
 
 export const taskRouter = Router();
 

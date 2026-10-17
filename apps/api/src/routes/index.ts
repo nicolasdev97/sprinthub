@@ -2,9 +2,9 @@ import { Router } from "express";
 
 import { healthController } from "./health.controller";
 import { authRouter } from "../modules/auth";
-import { workspaceRouter } from "../modules/workspaces/routes";
-import { projectRouter } from "../modules/projects/routes";
-import { taskRouter } from "../modules/tasks/routes";
+import { workspaceRouter } from "../modules/workspaces";
+import { projectRouter } from "../modules/projects";
+import { taskRouter } from "../modules/tasks";
 import { userRouter } from "../modules/users";
 import { notificationRouter } from "../modules/notifications";
 import { dashboardRouter } from "../modules/dashboard";

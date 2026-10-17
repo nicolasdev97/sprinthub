@@ -9,8 +9,8 @@ import {
   UpdateTaskPriorityDto,
 } from "../dto";
 import { TaskRepository } from "../repository";
-import { WorkspaceService } from "../../workspaces/service";
-import { ProjectService } from "../../projects/service";
+import { WorkspaceService } from "../../workspaces";
+import { ProjectService } from "../../projects";
 
 import { TaskFilterParams } from "../types";
 
@@ -220,12 +220,14 @@ export class TaskService {
       );
     }
 
+    const hasAssigneeChanged = task.assigneeId !== data.assigneeId;
+
     const updatedTask = await this.taskRepository.assignTask(
       taskId,
       data.assigneeId,
     );
 
-    if (data.assigneeId !== null) {
+    if (hasAssigneeChanged && data.assigneeId !== null) {
       await this.notificationService.createNotification(
         data.assigneeId,
         "Task assigned",
@@ -264,7 +266,12 @@ export class TaskService {
       );
     }
 
-    const completedAt = data.status === TaskStatus.DONE ? new Date() : null;
+    const hasStatusChanged = task.status !== data.status;
+    const completedAt = hasStatusChanged
+      ? data.status === TaskStatus.DONE
+        ? new Date()
+        : null
+      : task.completedAt;
 
     const updatedTask = await this.taskRepository.updateTaskStatus(
       taskId,
@@ -272,7 +279,7 @@ export class TaskService {
       completedAt,
     );
 
-    if (task.assigneeId) {
+    if (hasStatusChanged && task.assigneeId) {
       await this.notificationService.createNotification(
         task.assigneeId,
         "Task status changed",
@@ -311,12 +318,14 @@ export class TaskService {
       );
     }
 
+    const hasPriorityChanged = task.priority !== data.priority;
+
     const updatedTask = await this.taskRepository.updateTaskPriority(
       taskId,
       data.priority,
     );
 
-    if (task.assigneeId) {
+    if (hasPriorityChanged && task.assigneeId) {
       await this.notificationService.createNotification(
         task.assigneeId,
         "Task priority changed",

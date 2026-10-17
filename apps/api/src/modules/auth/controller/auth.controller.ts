@@ -19,11 +19,12 @@ export class AuthController {
     const data = req.body as LoginDto;
 
     const response = await this.authService.login(data);
+    const isProduction = process.env.NODE_ENV === 'production';
 
     res.cookie('refreshToken', response.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -52,11 +53,12 @@ export class AuthController {
     }
 
     await this.authService.logout(refreshToken);
+    const isProduction = process.env.NODE_ENV === 'production';
 
     res.clearCookie('refreshToken', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
     });
 
     return res.status(204).send();

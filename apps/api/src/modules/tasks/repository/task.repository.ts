@@ -12,16 +12,47 @@ export class TaskRepository {
   }
 
   async getTasks(projectId: string, filters?: TaskFilterParams) {
+    let dueDateFilter: { gte: Date; lte: Date } | undefined;
+
+    if (filters?.dueDate) {
+      const parsedDate = new Date(filters.dueDate);
+      const startOfDay = new Date(
+        Date.UTC(
+          parsedDate.getUTCFullYear(),
+          parsedDate.getUTCMonth(),
+          parsedDate.getUTCDate(),
+          0,
+          0,
+          0,
+          0,
+        ),
+      );
+      const endOfDay = new Date(
+        Date.UTC(
+          parsedDate.getUTCFullYear(),
+          parsedDate.getUTCMonth(),
+          parsedDate.getUTCDate(),
+          23,
+          59,
+          59,
+          999,
+        ),
+      );
+
+      dueDateFilter = {
+        gte: startOfDay,
+        lte: endOfDay,
+      };
+    }
+
     return prisma.task.findMany({
       where: {
         projectId,
         status: filters?.status,
         priority: filters?.priority,
         assigneeId: filters?.assigneeId,
-        ...(filters?.dueDate && {
-          dueDate: {
-            equals: new Date(filters.dueDate),
-          },
+        ...(dueDateFilter && {
+          dueDate: dueDateFilter,
         }),
         ...(filters?.search && {
           title: {

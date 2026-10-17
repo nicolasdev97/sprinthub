@@ -18,12 +18,10 @@ import {
 } from "../schema";
 import { ProjectRepository } from "../repository";
 import { ProjectService } from "../service";
-import { WorkspaceService } from "../../workspaces/service";
-import { WorkspaceRepository } from "../../workspaces/repository";
+import { WorkspaceRepository, WorkspaceService } from "../../workspaces";
 import { ProjectParams, WorkspaceProjectParams } from "../types";
 
-import { NotificationRepository } from "../../notifications/repository";
-import { NotificationService } from "../../notifications/service";
+import { NotificationRepository, NotificationService } from "../../notifications";
 
 export const projectRouter = Router();
 

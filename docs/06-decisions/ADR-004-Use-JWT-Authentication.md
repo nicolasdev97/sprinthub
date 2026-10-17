@@ -348,9 +348,9 @@ The specific rate limits are defined in the API Design Specification.
 
 Refresh Tokens stored in cookies use:
 
-- HttpOnly
-- Secure
-- SameSite=Strict
+- `HttpOnly`
+- `Secure` (enabled in production over HTTPS)
+- `SameSite=None` in production (to support cross-origin requests between Vercel and Render) and `SameSite=Lax` in local development
 
 ---
 
@@ -378,6 +378,7 @@ The plain Refresh Token is not persisted, and revoked tokens are deleted directl
 
 Authentication middleware is responsible for:
 
+- Extracting the Access Token from the `Authorization: Bearer <access_token>` header.
 - JWT signature validation.
 - Token expiration validation.
 - User identity verification.

@@ -1,4 +1,4 @@
-import { WorkspaceService } from "../../workspaces/service";
+import { WorkspaceService } from "../../workspaces";
 import { DashboardRepository } from "../repository";
 import { WorkspaceDashboardDto } from "../dto";
 

@@ -5,9 +5,7 @@ export const apiRateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute window
   limit: (req: Request) => {
     // 300 req/min for authenticated endpoints, 100 req/min for public endpoints (ADS Section 23)
-    const isAuthenticated = Boolean(
-      req.cookies?.accessToken || req.headers?.authorization,
-    );
+    const isAuthenticated = Boolean(req.headers?.authorization);
     return isAuthenticated ? 300 : 100;
   },
   standardHeaders: "draft-8",

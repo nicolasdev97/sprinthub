@@ -288,13 +288,10 @@ apps/
         ├── app/
         ├── components/
         ├── features/
-        ├── hooks/
         ├── lib/
         ├── providers/
         ├── services/
-        ├── styles/
-        ├── types/
-        └── utils/
+        └── shared/
 ```
 
 This organization promotes modularity, maintainability, and scalability as the application evolves.

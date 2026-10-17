@@ -262,13 +262,10 @@ apps/
         ├── app/
         ├── components/
         ├── features/
-        ├── hooks/
         ├── lib/
         ├── providers/
         ├── services/
-        ├── styles/
-        ├── types/
-        └── utils/
+        └── shared/
 ```
 
 Features are organized by business domain. Internal files and folders are added according to the needs of each feature rather than requiring every feature to follow a fixed internal structure.
@@ -290,14 +287,13 @@ Shared directories are reserved for functionality reused across multiple feature
 
 Examples include:
 
-| Directory     | Purpose                                                                          |
-| ------------- | -------------------------------------------------------------------------------- |
-| `components/` | Reusable UI components (Button, Modal, Input, Dialog).                           |
-| `hooks/`      | Shared hooks (`useDebounce`, `useMediaQuery`, `useLocalStorage`).                |
-| `lib/`        | Application-wide utilities (API client, authentication helpers, date utilities). |
-| `providers/`  | React Context providers (Theme, Query, Authentication).                          |
-| `styles/`     | Global styles.                                                                   |
-| `types/`      | Shared TypeScript definitions.                                                   |
+| Directory     | Purpose                                                                  |
+| ------------- | ------------------------------------------------------------------------ |
+| `components/` | Reusable UI components (Button, Modal, Input, Dialog).                   |
+| `lib/`        | Third-party library configurations (e.g., TanStack Query `queryClient`). |
+| `providers/`  | React Context and application providers (`AppProvider`, `QueryProvider`).|
+| `services/`   | Shared HTTP client (`httpClient`) and interceptors.                      |
+| `shared/`     | Cross-feature utilities (`cn`, error helpers) and custom error classes.  |
 
 Business-specific code should remain inside its corresponding feature.
 

@@ -638,39 +638,20 @@ src/
 ├── app/
 ├── components/
 ├── features/
-├── hooks/
 ├── lib/
 ├── providers/
 ├── services/
-├── styles/
-├── types/
-└── utils/
+└── shared/
 ```
 
-Each feature owns its own:
+Each feature encapsulates the internal directories it requires (created on demand rather than enforcing empty folders):
 
-- Components
+- Context (when feature-scoped state is required, e.g., `auth`)
 - Hooks
 - Services
-- Schemas
 - Types
-- Utilities
-
-Example:
-
-```text
-features/
-
-tasks/
-
-├── api/
-├── components/
-├── hooks/
-├── schemas/
-├── services/
-├── types/
-└── utils/
-```
+- Components (introduced with UI views)
+- Schemas (introduced with client-side form validation)
 
 ## Frontend Principles
 

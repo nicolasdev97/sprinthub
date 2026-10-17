@@ -547,14 +547,14 @@ The frontend is organized around business domains rather than technical layers, 
 
 The frontend follows a Feature-Based Modular Architecture.
 
-Each feature owns its own:
+Each feature encapsulates the internal directories it requires on demand:
 
-- Components
+- Context (when feature-scoped state is required, e.g., `auth`)
 - Hooks
 - Services
-- Schemas
 - Types
-- Utilities
+- Components (introduced with UI views)
+- Schemas (introduced with client-side form validation)
 
 ---
 
@@ -568,13 +568,10 @@ apps/
         ├── app/
         ├── components/
         ├── features/
-        ├── hooks/
         ├── lib/
         ├── providers/
         ├── services/
-        ├── styles/
-        ├── types/
-        └── utils/
+        └── shared/
 ```
 
 ---
@@ -881,7 +878,7 @@ Characteristics:
 
 - JWT
 - Short-lived
-- Sent through the Authorization header
+- Sent through the `Authorization` header (`Bearer` scheme)
 - Used for authenticated API requests
 
 ---
@@ -1416,12 +1413,9 @@ The application records:
 
 ## Health Checks
 
-Health endpoints verify:
+Health endpoints (`GET /api/health` and `GET /health`) provide a lightweight liveness check verifying API availability and service status without querying the database on every probe.
 
-- API availability.
-- Database connectivity.
-
-Future infrastructure components may expose additional health checks as they are introduced.
+Future infrastructure components may expose additional readiness checks as they are introduced.
 
 ---
 
