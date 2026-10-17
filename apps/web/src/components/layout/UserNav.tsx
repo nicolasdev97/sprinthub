@@ -16,12 +16,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui';
 import { useAuth } from '@/features/auth';
+import { useWorkspaceContext } from '@/features/workspaces';
 
 const THEME_STORAGE_KEY = 'sprinthub:theme';
 
 export function UserNav() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { activeWorkspaceId } = useWorkspaceContext();
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window === 'undefined') {
       return false;
@@ -92,7 +94,15 @@ export function UserNav() {
             <UserIcon className="size-4 text-muted-foreground" />
             <span>Profile</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push('/workspaces/settings')}>
+          <DropdownMenuItem
+            onClick={() =>
+              router.push(
+                activeWorkspaceId
+                  ? `/workspaces/${activeWorkspaceId}/settings`
+                  : '/workspaces'
+              )
+            }
+          >
             <Settings className="size-4 text-muted-foreground" />
             <span>Workspace Settings</span>
           </DropdownMenuItem>

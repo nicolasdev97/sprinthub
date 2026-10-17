@@ -55,6 +55,10 @@ export function isNavItemActive(pathname: string, item: NavItem): boolean {
     return pathname === '/' || pathname === '/dashboard' || pathname.startsWith('/dashboard/');
   }
 
+  if (item.href === '/workspaces/settings') {
+    return pathname === '/workspaces' || pathname.startsWith('/workspaces/');
+  }
+
   if (item.matchExact) {
     return pathname === item.href;
   }
@@ -117,11 +121,17 @@ export function AppSidebar({
           {MAIN_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = isNavItemActive(pathname, item);
+            const resolvedHref =
+              item.href === '/workspaces/settings'
+                ? activeWorkspace
+                  ? `/workspaces/${activeWorkspace.id}/settings`
+                  : '/workspaces'
+                : item.href;
 
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={resolvedHref}
                 onClick={onNavigate}
                 title={isCollapsed ? item.label : undefined}
                 aria-current={isActive ? 'page' : undefined}
