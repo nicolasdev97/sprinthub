@@ -40,6 +40,10 @@ export const useCreateTask = (projectId: string) => {
       queryClient.invalidateQueries({
         queryKey: ['dashboard'],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ['notifications'],
+      });
     },
   });
 };
@@ -104,6 +108,10 @@ export const useAssignTask = (projectId: string) => {
       queryClient.invalidateQueries({
         queryKey: ['tasks', variables.taskId],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ['notifications'],
+      });
     },
   });
 };
@@ -127,6 +135,10 @@ export const useUpdateTaskStatus = (projectId: string) => {
       queryClient.invalidateQueries({
         queryKey: ['dashboard'],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ['notifications'],
+      });
     },
   });
 };
@@ -145,6 +157,14 @@ export const useUpdateTaskPriority = (projectId: string) => {
 
       queryClient.invalidateQueries({
         queryKey: ['tasks', variables.taskId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard'],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['notifications'],
       });
     },
   });

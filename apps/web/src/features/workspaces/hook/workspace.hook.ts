@@ -90,6 +90,10 @@ export const useAddWorkspaceMember = () => {
       queryClient.invalidateQueries({
         queryKey: ['workspaces', variables.workspaceId, 'members'],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ['notifications'],
+      });
     },
   });
 };

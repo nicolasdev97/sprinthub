@@ -38,6 +38,10 @@ export const useCreateProject = (workspaceId: string) => {
       queryClient.invalidateQueries({
         queryKey: ['dashboard', workspaceId],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ['notifications'],
+      });
     },
   });
 };
