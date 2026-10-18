@@ -55,8 +55,20 @@ export function isNavItemActive(pathname: string, item: NavItem): boolean {
     return pathname === '/' || pathname === '/dashboard' || pathname.startsWith('/dashboard/');
   }
 
+  if (item.href === '/projects') {
+    return (
+      pathname === '/projects' ||
+      pathname.startsWith('/projects/') ||
+      /^\/workspaces\/[^/]+\/projects(\/|$)/.test(pathname)
+    );
+  }
+
   if (item.href === '/workspaces/settings') {
-    return pathname === '/workspaces' || pathname.startsWith('/workspaces/');
+    return (
+      pathname === '/workspaces' ||
+      pathname === '/workspaces/settings' ||
+      /^\/workspaces\/[^/]+\/settings(\/|$)/.test(pathname)
+    );
   }
 
   if (item.matchExact) {
@@ -122,11 +134,15 @@ export function AppSidebar({
             const Icon = item.icon;
             const isActive = isNavItemActive(pathname, item);
             const resolvedHref =
-              item.href === '/workspaces/settings'
+              item.href === '/projects'
                 ? activeWorkspace
-                  ? `/workspaces/${activeWorkspace.id}/settings`
-                  : '/workspaces'
-                : item.href;
+                  ? `/workspaces/${activeWorkspace.id}/projects`
+                  : '/projects'
+                : item.href === '/workspaces/settings'
+                  ? activeWorkspace
+                    ? `/workspaces/${activeWorkspace.id}/settings`
+                    : '/workspaces'
+                  : item.href;
 
             return (
               <Link
