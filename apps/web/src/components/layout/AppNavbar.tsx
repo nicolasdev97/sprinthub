@@ -16,6 +16,7 @@ import { AppSidebar } from './AppSidebar';
 import { DynamicBreadcrumbs } from './DynamicBreadcrumbs';
 import { UserNav } from './UserNav';
 import { WorkspaceSelector } from './WorkspaceSelector';
+import { NotificationBell } from '@/features/notifications';
 
 interface AppNavbarProps {
   isSidebarCollapsed: boolean;
@@ -80,7 +81,8 @@ export function AppNavbar({ isSidebarCollapsed, onToggleSidebar }: AppNavbarProp
       </div>
 
       {/* Right Actions & User Profile Menu */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
+        <NotificationBell />
         <UserNav />
       </div>
     </header>

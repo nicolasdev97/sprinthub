@@ -52,7 +52,12 @@ interface AppSidebarProps {
 
 export function isNavItemActive(pathname: string, item: NavItem): boolean {
   if (item.href === '/dashboard') {
-    return pathname === '/' || pathname === '/dashboard' || pathname.startsWith('/dashboard/');
+    return (
+      pathname === '/' ||
+      pathname === '/dashboard' ||
+      pathname.startsWith('/dashboard/') ||
+      /^\/workspaces\/[^/]+\/dashboard(\/|$)/.test(pathname)
+    );
   }
 
   if (item.href === '/tasks') {
@@ -115,7 +120,11 @@ export function AppSidebar({
         )}
       >
         <Link
-          href="/dashboard"
+          href={
+            activeWorkspace
+              ? `/workspaces/${activeWorkspace.id}/dashboard`
+              : '/dashboard'
+          }
           onClick={onNavigate}
           className="flex items-center gap-2.5 font-semibold tracking-tight text-sidebar-foreground outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring rounded-md"
         >
@@ -146,15 +155,19 @@ export function AppSidebar({
             const Icon = item.icon;
             const isActive = isNavItemActive(pathname, item);
             const resolvedHref =
-              item.href === '/projects'
+              item.href === '/dashboard'
                 ? activeWorkspace
-                  ? `/workspaces/${activeWorkspace.id}/projects`
-                  : '/projects'
-                : item.href === '/workspaces/settings'
+                  ? `/workspaces/${activeWorkspace.id}/dashboard`
+                  : '/dashboard'
+                : item.href === '/projects'
                   ? activeWorkspace
-                    ? `/workspaces/${activeWorkspace.id}/settings`
-                    : '/workspaces'
-                  : item.href;
+                    ? `/workspaces/${activeWorkspace.id}/projects`
+                    : '/projects'
+                  : item.href === '/workspaces/settings'
+                    ? activeWorkspace
+                      ? `/workspaces/${activeWorkspace.id}/settings`
+                      : '/workspaces'
+                    : item.href;
 
             return (
               <Link

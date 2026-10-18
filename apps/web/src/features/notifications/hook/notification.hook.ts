@@ -22,3 +22,27 @@ export const useMarkNotificationAsRead = () => {
     },
   });
 };
+
+export const useMarkAllNotificationsAsRead = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (notificationIds: string[]) => {
+      if (notificationIds.length === 0) {
+        return;
+      }
+      await Promise.all(
+        notificationIds.map((notificationId) =>
+          notificationService.markAsRead(notificationId)
+        )
+      );
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['notifications'],
+      });
+    },
+  });
+};
+
