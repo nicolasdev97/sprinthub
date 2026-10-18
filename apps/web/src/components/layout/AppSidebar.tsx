@@ -55,7 +55,19 @@ export function isNavItemActive(pathname: string, item: NavItem): boolean {
     return pathname === '/' || pathname === '/dashboard' || pathname.startsWith('/dashboard/');
   }
 
+  if (item.href === '/tasks') {
+    return (
+      pathname === '/tasks' ||
+      pathname.startsWith('/tasks/') ||
+      /^\/workspaces\/[^/]+\/projects\/[^/]+\/tasks(\/|$)/.test(pathname)
+    );
+  }
+
   if (item.href === '/projects') {
+    if (/^\/workspaces\/[^/]+\/projects\/[^/]+\/tasks(\/|$)/.test(pathname)) {
+      return false;
+    }
+
     return (
       pathname === '/projects' ||
       pathname.startsWith('/projects/') ||

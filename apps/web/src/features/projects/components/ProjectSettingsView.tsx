@@ -205,7 +205,7 @@ export function ProjectSettingsView({
           </p>
         </div>
 
-        <Link href={`/tasks?workspaceId=${workspaceId}&projectId=${project.id}`}>
+        <Link href={`/workspaces/${workspaceId}/projects/${project.id}/tasks`}>
           <Button variant="outline" size="sm">
             <FolderKanban className="size-4" />
             <span>Open Project Tasks</span>

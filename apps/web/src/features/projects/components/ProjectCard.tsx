@@ -189,7 +189,7 @@ export function ProjectCard({ project, canManage }: ProjectCardProps) {
                   <DropdownMenuItem
                     onClick={() =>
                       router.push(
-                        `/tasks?workspaceId=${project.workspaceId}&projectId=${project.id}`
+                        `/workspaces/${project.workspaceId}/projects/${project.id}/tasks`
                       )
                     }
                   >
@@ -296,7 +296,7 @@ export function ProjectCard({ project, canManage }: ProjectCardProps) {
 
         <CardFooter className="flex items-center justify-between gap-2 border-t border-border/60 pt-4">
           <Link
-            href={`/tasks?workspaceId=${project.workspaceId}&projectId=${project.id}`}
+            href={`/workspaces/${project.workspaceId}/projects/${project.id}/tasks`}
             className="flex-1"
           >
             <Button variant="default" size="sm" className="w-full">

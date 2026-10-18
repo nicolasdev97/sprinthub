@@ -14,5 +14,6 @@ export * from './Separator';
 export * from './Sheet';
 export * from './Skeleton';
 export * from './Table';
+export * from './Tabs';
 export * from './Textarea';
 export * from './Toast';
