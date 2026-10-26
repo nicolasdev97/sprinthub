@@ -54,8 +54,7 @@ export function isNavItemActive(pathname: string, item: NavItem): boolean {
     return (
       pathname === '/' ||
       pathname === '/dashboard' ||
-      pathname.startsWith('/dashboard/') ||
-      /^\/workspaces\/[^/]+\/dashboard(\/|$)/.test(pathname)
+      pathname.startsWith('/dashboard/')
     );
   }
 
@@ -71,9 +70,6 @@ export function isNavItemActive(pathname: string, item: NavItem): boolean {
   }
 
   if (item.href === '/workspaces') {
-    if (/^\/workspaces\/[^/]+\/dashboard(\/|$)/.test(pathname)) {
-      return false;
-    }
     // When inside a specific project, active item shifts to Projects
     if (isInsideSpecificProject) {
       return false;

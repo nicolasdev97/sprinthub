@@ -212,9 +212,7 @@ export function NotificationBell() {
       return;
     }
 
-    router.push(
-      activeWorkspace ? `/workspaces/${activeWorkspace.id}/dashboard` : '/dashboard'
-    );
+    router.push('/dashboard');
   };
 
   const handleMarkAllAsRead = async () => {

@@ -52,9 +52,7 @@ export function DynamicBreadcrumbs() {
   const projectName = project?.name || 'Project';
 
   const items: BreadcrumbNode[] = [];
-  const homeHref = activeWorkspace
-    ? `/workspaces/${activeWorkspace.id}/dashboard`
-    : '/dashboard';
+  const homeHref = '/dashboard';
 
   // 1. Root Crumb: Always SprintHub
   items.push({
@@ -67,8 +65,7 @@ export function DynamicBreadcrumbs() {
   // 2. Resolve hierarchical crumbs based on pathname
   if (
     segments.length === 0 ||
-    segments[0] === 'dashboard' ||
-    (isWorkspacesRoute && segments[2] === 'dashboard')
+    segments[0] === 'dashboard'
   ) {
     if (workspaceIdFromUrl) {
       items.push({
