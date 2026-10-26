@@ -48,11 +48,14 @@ export function RealtimeEventsProvider({ children }: RealtimeEventsProviderProps
                 break;
               case 'PROJECT_MUTATED':
                 queryClient.invalidateQueries({ queryKey: ['projects'] });
+                queryClient.invalidateQueries({ queryKey: ['tasks'] });
                 queryClient.invalidateQueries({ queryKey: ['dashboard'] });
                 break;
               case 'WORKSPACE_MUTATED':
                 queryClient.invalidateQueries({ queryKey: ['workspaces'] });
                 queryClient.invalidateQueries({ queryKey: ['workspace-members'] });
+                queryClient.invalidateQueries({ queryKey: ['projects'] });
+                queryClient.invalidateQueries({ queryKey: ['tasks'] });
                 queryClient.invalidateQueries({ queryKey: ['dashboard'] });
                 break;
               case 'NOTIFICATION_CREATED':

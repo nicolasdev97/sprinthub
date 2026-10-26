@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { crossTabSync } from '@/shared/utils';
+
 import { workspaceService } from '../service';
 import {
   AddWorkspaceMemberRequest,
@@ -41,6 +43,10 @@ export const useCreateWorkspace = () => {
       queryClient.invalidateQueries({
         queryKey: ['workspaces'],
       });
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['workspaces'], ['dashboard']],
+      });
     },
   });
 };
@@ -59,6 +65,11 @@ export const useUpdateWorkspace = () => {
       queryClient.invalidateQueries({
         queryKey: ['workspaces', variables.workspaceId],
       });
+
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['workspaces'], ['dashboard']],
+      });
     },
   });
 };
@@ -68,9 +79,26 @@ export const useDeleteWorkspace = () => {
 
   return useMutation({
     mutationFn: (workspaceId: string) => workspaceService.deleteWorkspace(workspaceId),
-    onSuccess: () => {
+    onSuccess: (_, workspaceId) => {
       queryClient.invalidateQueries({
         queryKey: ['workspaces'],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['workspaces', workspaceId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['projects'],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['tasks'],
+      });
+
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['workspaces'], ['projects'], ['tasks'], ['dashboard']],
       });
     },
   });
@@ -93,6 +121,11 @@ export const useAddWorkspaceMember = () => {
 
       queryClient.invalidateQueries({
         queryKey: ['notifications'],
+      });
+
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['workspaces'], ['workspace-members']],
       });
     },
   });
@@ -119,6 +152,11 @@ export const useUpdateWorkspaceMemberRole = () => {
       queryClient.invalidateQueries({
         queryKey: ['workspaces', variables.workspaceId, 'members'],
       });
+
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['workspaces'], ['workspace-members']],
+      });
     },
   });
 };
@@ -136,6 +174,11 @@ export const useRemoveWorkspaceMember = () => {
 
       queryClient.invalidateQueries({
         queryKey: ['workspaces', variables.workspaceId, 'members'],
+      });
+
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['workspaces'], ['workspace-members']],
       });
     },
   });
@@ -161,6 +204,11 @@ export const useTransferWorkspaceOwnership = () => {
       });
       queryClient.invalidateQueries({
         queryKey: ['workspaces', variables.workspaceId, 'members'],
+      });
+
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['workspaces'], ['workspace-members']],
       });
     },
   });

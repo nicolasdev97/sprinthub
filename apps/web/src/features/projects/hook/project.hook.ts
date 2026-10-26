@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { crossTabSync } from '@/shared/utils';
+
 import { projectService } from '../service';
 import {
   ArchiveProjectRequest,
@@ -42,6 +44,11 @@ export const useCreateProject = (workspaceId: string) => {
       queryClient.invalidateQueries({
         queryKey: ['notifications'],
       });
+
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['projects'], ['tasks'], ['dashboard']],
+      });
     },
   });
 };
@@ -65,6 +72,11 @@ export const useUpdateProject = (workspaceId: string) => {
       queryClient.invalidateQueries({
         queryKey: ['dashboard', workspaceId],
       });
+
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['projects'], ['tasks'], ['dashboard']],
+      });
     },
   });
 };
@@ -86,6 +98,11 @@ export const useDeleteProject = (workspaceId: string) => {
 
       queryClient.invalidateQueries({
         queryKey: ['dashboard', workspaceId],
+      });
+
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['projects'], ['tasks'], ['dashboard']],
       });
     },
   });
@@ -109,6 +126,11 @@ export const useArchiveProject = (workspaceId: string) => {
 
       queryClient.invalidateQueries({
         queryKey: ['dashboard', workspaceId],
+      });
+
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['projects'], ['tasks'], ['dashboard']],
       });
     },
   });

@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { crossTabSync } from '@/shared/utils';
+
 import { taskService } from '../service';
 import {
   AssignTaskRequest,
@@ -44,6 +46,11 @@ export const useCreateTask = (projectId: string) => {
       queryClient.invalidateQueries({
         queryKey: ['notifications'],
       });
+
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['tasks'], ['dashboard']],
+      });
     },
   });
 };
@@ -67,6 +74,11 @@ export const useUpdateTask = (projectId: string) => {
       queryClient.invalidateQueries({
         queryKey: ['dashboard'],
       });
+
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['tasks'], ['dashboard']],
+      });
     },
   });
 };
@@ -88,6 +100,11 @@ export const useDeleteTask = (projectId: string) => {
 
       queryClient.invalidateQueries({
         queryKey: ['dashboard'],
+      });
+
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['tasks'], ['dashboard']],
       });
     },
   });
@@ -111,6 +128,11 @@ export const useAssignTask = (projectId: string) => {
 
       queryClient.invalidateQueries({
         queryKey: ['notifications'],
+      });
+
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['tasks'], ['dashboard']],
       });
     },
   });
@@ -139,6 +161,11 @@ export const useUpdateTaskStatus = (projectId: string) => {
       queryClient.invalidateQueries({
         queryKey: ['notifications'],
       });
+
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['tasks'], ['dashboard']],
+      });
     },
   });
 };
@@ -165,6 +192,11 @@ export const useUpdateTaskPriority = (projectId: string) => {
 
       queryClient.invalidateQueries({
         queryKey: ['notifications'],
+      });
+
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['tasks'], ['dashboard']],
       });
     },
   });
