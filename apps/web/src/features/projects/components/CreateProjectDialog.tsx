@@ -244,6 +244,7 @@ export function CreateProjectDialog({
                     <Input
                       placeholder="e.g. Mobile App Redesign"
                       disabled={isSubmitting}
+                      autoFocus
                       {...field}
                     />
                   </FormControl>

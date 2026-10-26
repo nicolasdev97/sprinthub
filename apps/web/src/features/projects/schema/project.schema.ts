@@ -29,6 +29,19 @@ export const updateProjectSchema = z.object({
   status: z.enum(['PLANNING', 'ACTIVE', 'COMPLETED']),
 });
 
+export const createDeleteProjectConfirmSchema = (projectName: string) =>
+  z.object({
+    confirmationName: z
+      .string()
+      .trim()
+      .refine((value) => value === projectName, {
+        message: `Please type "${projectName}" to confirm deletion`,
+      }),
+  });
+
 export type CreateProjectFormValues = z.infer<typeof createProjectSchema>;
 export type UpdateProjectFormValues = z.infer<typeof updateProjectSchema>;
+export type DeleteProjectConfirmFormValues = {
+  confirmationName: string;
+};
 
