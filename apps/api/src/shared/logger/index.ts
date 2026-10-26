@@ -1,2 +1,2 @@
 export * from "./logger";
-export * from "./requestLogger";
+export * from "./request-logger";

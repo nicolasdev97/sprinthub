@@ -2,3 +2,6 @@ export * from "./create-workspace.dto";
 export * from "./update-workspace.dto";
 export * from "./add-workspace-member.dto";
 export * from "./update-workspace-member-role.dto";
+export * from "./transfer-workspace-ownership.dto";
+export * from "./transfer-workspace-ownership.dto";
+

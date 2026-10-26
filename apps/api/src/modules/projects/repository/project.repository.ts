@@ -10,8 +10,6 @@ export class ProjectRepository {
   }
 
   async getProjects(workspaceId: string, filters?: ProjectFilterParams) {
-    console.log("FILTERS IN REPOSITORY:", filters);
-
     return prisma.project.findMany({
       where: {
         workspaceId,
@@ -66,24 +64,13 @@ export class ProjectRepository {
     });
   }
 
-  async archiveProject(projectId: string) {
+  async archiveProject(projectId: string, archived: boolean) {
     return prisma.project.update({
       where: {
         id: projectId,
       },
       data: {
-        archived: true,
-      },
-    });
-  }
-
-  async unarchiveProject(projectId: string) {
-    return prisma.project.update({
-      where: {
-        id: projectId,
-      },
-      data: {
-        archived: false,
+        archived,
       },
     });
   }

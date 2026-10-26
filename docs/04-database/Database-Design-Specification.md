@@ -251,14 +251,12 @@ Represents a collaborative environment where users manage projects.
 
 ### Attributes
 
-### Attributes
-
 | Field       | Type     | Constraints      |
 | ----------- | -------- | ---------------- |
 | id          | UUID     | Primary Key      |
 | ownerId     | UUID     | Foreign Key      |
 | name        | String   | Unique, Required |
-| description | String   | Required         |
+| description | String   | Optional         |
 | createdAt   | DateTime | Required         |
 | updatedAt   | DateTime | Required         |
 
@@ -298,7 +296,7 @@ Represents a project within a workspace.
 | id          | UUID     | Primary Key    |
 | workspaceId | UUID     | Foreign Key    |
 | name        | String   | Required       |
-| description | String   | Required       |
+| description | String   | Optional       |
 | status      | Enum     | Required       |
 | archived    | Boolean  | Default: false |
 | createdAt   | DateTime | Required       |
@@ -326,7 +324,7 @@ Represents an individual work item within a project.
 | ----------- | -------- | ---------------------- |
 | id          | UUID     | Primary Key            |
 | projectId   | UUID     | Foreign Key            |
-| createdById | UUID     | Foreign Key            |
+| createdById | UUID     | Foreign Key (Nullable) |
 | assigneeId  | UUID     | Foreign Key (Nullable) |
 | title       | String   | Required               |
 | description | String   | Optional               |
@@ -416,7 +414,8 @@ Represents a persisted refresh token associated with a user session.
 
 - `tokenHash` stores the hashed refresh token.
 - Each refresh token belongs to exactly one user.
-- Refresh tokens may be removed when the associated user is deleted.
+- Refresh tokens are revoked on logout by deleting the corresponding `RefreshToken` record from the database.
+- Refresh tokens are automatically removed when the associated user is deleted.
 
 ---
 
@@ -461,10 +460,9 @@ SprintHub uses explicit foreign key relationships to preserve referential integr
 
 - A User may create multiple Tasks through the `createdById` relationship.
 - A User may be assigned multiple Tasks through the `assigneeId` relationship.
-- Task assignment is optional.
-- A Task must have exactly one creator.
+- A Task must have a creator upon creation; if the creator User is deleted, the Task remains and its `createdById` is set to `null` (`onDelete: SetNull`).
 - A Task may have zero or one assigned User.
-- If the assigned User is deleted, the Task remains and its `assigneeId` is set to `null`.
+- If the assigned User is deleted, the Task remains and its `assigneeId` is set to `null` (`onDelete: SetNull`).
 
 ---
 
@@ -549,7 +547,6 @@ The following business-critical attributes cannot be null:
 ### Workspace
 
 - `name`
-- `description`
 - `ownerId`
 
 ### WorkspaceMember
@@ -563,7 +560,6 @@ The following business-critical attributes cannot be null:
 
 - `workspaceId`
 - `name`
-- `description`
 - `status`
 
 ### Task
@@ -690,8 +686,9 @@ When a user is deleted:
 - Their WorkspaceMember records are deleted.
 - Their Notifications are deleted.
 - Their RefreshTokens are deleted.
-- Tasks assigned to the user are preserved.
-- The `assigneeId` of assigned tasks is set to `null`.
+- Tasks created by the user are preserved; their `createdById` is set to `null` (`onDelete: SetNull`).
+- Tasks assigned to the user are preserved; their `assigneeId` is set to `null` (`onDelete: SetNull`).
+- A user cannot delete their account while owning one or more active workspaces.
 
 ---
 
@@ -754,18 +751,12 @@ This rule is enforced by the application layer because it depends on the task st
 
 ## Transaction Consistency
 
-Operations affecting multiple related entities should execute within database transactions whenever required.
+Operations that enforce critical multi-entity domain invariants execute within atomic database transactions (`prisma.$transaction`) or rely on database-level referential actions (`ON DELETE CASCADE` / `ON DELETE SET NULL`):
 
-Examples include:
+- **Workspace creation and owner membership creation**: Executed atomically within a single `prisma.$transaction` so a workspace never exists without its `OWNER` membership record.
+- **Workspace, project, and user deletions**: Enforced atomically by PostgreSQL foreign key constraints (`ON DELETE CASCADE` and `ON DELETE SET NULL`).
 
-- Workspace creation and owner membership creation.
-- Workspace deletion.
-- Project deletion.
-- Project creation and creation of related notifications.
-- Member invitation and notification creation.
-- Task assignment and creation of the related notification when the task has an assignee.
-- Task status change and creation of the related notification when the task has an assignee.
-- Task priority change and creation of the related notification when the task has an assignee.
+In-application notifications (triggered by workspace member addition, project creation, task assignment, task status changes, and task priority changes) are treated as application-level side effects and are persisted sequentially after the primary domain operation succeeds, preserving modular decoupling across repositories.
 
 ---
 

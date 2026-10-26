@@ -9,17 +9,18 @@ import {
   UpdateTaskPriorityDto,
 } from "../dto";
 import { TaskRepository } from "../repository";
-import { WorkspaceService } from "../../workspaces/service";
-import { ProjectRepository } from "../../projects/repository";
+import { WorkspaceService } from "../../workspaces";
+import { ProjectService } from "../../projects";
 
 import { TaskFilterParams } from "../types";
 
 import { NotificationService } from "../../notifications";
+import { eventsService } from "../../events";
 
 export class TaskService {
   constructor(
     private readonly taskRepository: TaskRepository,
-    private readonly projectRepository: ProjectRepository,
+    private readonly projectService: ProjectService,
     private readonly workspaceService: WorkspaceService,
     private readonly notificationService: NotificationService,
   ) {}
@@ -29,20 +30,17 @@ export class TaskService {
     projectId: string,
     userId: string,
   ) {
-    const project = await this.projectRepository.getProjectById(projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
-
-    if (project.archived) {
-      throw new AppError("Archived projects cannot receive new tasks", 400);
-    }
+    const project = await this.projectService.getProjectEntityById(projectId);
 
     await this.workspaceService.getWorkspaceMemberByUser(
       project.workspaceId,
       userId,
+      403,
     );
+
+    if (project.archived) {
+      throw new AppError("Archived projects cannot receive new tasks", 400);
+    }
 
     const existingTask = await this.taskRepository.getTaskByTitle(
       projectId,
@@ -57,6 +55,7 @@ export class TaskService {
       await this.workspaceService.getWorkspaceMemberByUser(
         project.workspaceId,
         data.assigneeId,
+        403,
       );
     }
 
@@ -69,11 +68,19 @@ export class TaskService {
 
     const task = await this.taskRepository.createTask(taskData);
 
+    eventsService.broadcast({
+      type: "TASK_MUTATED",
+      workspaceId: project.workspaceId,
+      projectId,
+      taskId: task.id,
+      action: "created",
+    });
+
     if (data.assigneeId) {
       await this.notificationService.createNotification(
         data.assigneeId,
         "Task assigned",
-        "You have been assigned a task.",
+        `You have been assigned to task "${task.title}".<!--link:/workspaces/${project.workspaceId}/projects/${projectId}/tasks?taskId=${task.id}-->`,
       );
     }
 
@@ -85,15 +92,12 @@ export class TaskService {
     userId: string,
     filters?: TaskFilterParams,
   ) {
-    const project = await this.projectRepository.getProjectById(projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
+    const project = await this.projectService.getProjectEntityById(projectId);
 
     await this.workspaceService.getWorkspaceMemberByUser(
       project.workspaceId,
       userId,
+      403,
     );
 
     return this.taskRepository.getTasks(projectId, filters);
@@ -106,15 +110,14 @@ export class TaskService {
       throw new AppError("Task not found", 404);
     }
 
-    const project = await this.projectRepository.getProjectById(task.projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
+    const project = await this.projectService.getProjectEntityById(
+      task.projectId,
+    );
 
     await this.workspaceService.getWorkspaceMemberByUser(
       project.workspaceId,
       userId,
+      403,
     );
 
     return task;
@@ -127,16 +130,19 @@ export class TaskService {
       throw new AppError("Task not found", 404);
     }
 
-    const project = await this.projectRepository.getProjectById(task.projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
+    const project = await this.projectService.getProjectEntityById(
+      task.projectId,
+    );
 
     await this.workspaceService.getWorkspaceMemberByUser(
       project.workspaceId,
       userId,
+      403,
     );
+
+    if (project.archived) {
+      throw new AppError("Cannot update tasks in an archived project", 400);
+    }
 
     if (data.title) {
       const existingTask = await this.taskRepository.getTaskByTitle(
@@ -149,7 +155,17 @@ export class TaskService {
       }
     }
 
-    return this.taskRepository.updateTask(taskId, data);
+    const updated = await this.taskRepository.updateTask(taskId, data);
+
+    eventsService.broadcast({
+      type: "TASK_MUTATED",
+      workspaceId: project.workspaceId,
+      projectId: task.projectId,
+      taskId,
+      action: "updated",
+    });
+
+    return updated;
   }
 
   async deleteTask(taskId: string, userId: string) {
@@ -159,16 +175,15 @@ export class TaskService {
       throw new AppError("Task not found", 404);
     }
 
-    const project = await this.projectRepository.getProjectById(task.projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
+    const project = await this.projectService.getProjectEntityById(
+      task.projectId,
+    );
 
     const workspaceMember =
       await this.workspaceService.getWorkspaceMemberByUser(
         project.workspaceId,
         userId,
+        403,
       );
 
     const canDelete =
@@ -180,53 +195,121 @@ export class TaskService {
       throw new AppError("Forbidden", 403);
     }
 
+    if (project.archived) {
+      throw new AppError("Cannot delete tasks in an archived project", 400);
+    }
+
     await this.taskRepository.deleteTask(taskId);
+
+    eventsService.broadcast({
+      type: "TASK_MUTATED",
+      workspaceId: project.workspaceId,
+      projectId: task.projectId,
+      taskId,
+      action: "deleted",
+    });
   }
 
-  async assignTask(taskId: string, data: AssignTaskDto) {
+  async assignTask(taskId: string, userId: string, data: AssignTaskDto) {
     const task = await this.taskRepository.getTaskById(taskId);
 
     if (!task) {
       throw new AppError("Task not found", 404);
     }
 
-    const project = await this.projectRepository.getProjectById(task.projectId);
+    const project = await this.projectService.getProjectEntityById(
+      task.projectId,
+    );
 
-    if (!project) {
-      throw new AppError("Project not found", 404);
+    const workspaceMember =
+      await this.workspaceService.getWorkspaceMemberByUser(
+        project.workspaceId,
+        userId,
+        403,
+      );
+
+    if (
+      workspaceMember.role !== WorkspaceRole.OWNER &&
+      workspaceMember.role !== WorkspaceRole.ADMIN
+    ) {
+      throw new AppError("Forbidden", 403);
+    }
+
+    if (project.archived) {
+      throw new AppError("Cannot assign tasks in an archived project", 400);
     }
 
     if (data.assigneeId !== null) {
       await this.workspaceService.getWorkspaceMemberByUser(
         project.workspaceId,
         data.assigneeId,
+        403,
       );
     }
+
+    const hasAssigneeChanged = task.assigneeId !== data.assigneeId;
 
     const updatedTask = await this.taskRepository.assignTask(
       taskId,
       data.assigneeId,
     );
 
-    if (data.assigneeId !== null) {
+    if (hasAssigneeChanged && data.assigneeId !== null) {
+      const project = await this.projectService.getProjectEntityById(
+        task.projectId,
+      );
       await this.notificationService.createNotification(
         data.assigneeId,
         "Task assigned",
-        "You have been assigned a task.",
+        `You have been assigned to task "${task.title}".<!--link:/workspaces/${project.workspaceId}/projects/${task.projectId}/tasks?taskId=${taskId}-->`,
       );
     }
+
+    eventsService.broadcast({
+      type: "TASK_MUTATED",
+      workspaceId: project.workspaceId,
+      projectId: task.projectId,
+      taskId,
+      action: "updated",
+    });
 
     return updatedTask;
   }
 
-  async updateTaskStatus(taskId: string, data: UpdateTaskStatusDto) {
+  async updateTaskStatus(
+    taskId: string,
+    userId: string,
+    data: UpdateTaskStatusDto,
+  ) {
     const task = await this.taskRepository.getTaskById(taskId);
 
     if (!task) {
       throw new AppError("Task not found", 404);
     }
 
-    const completedAt = data.status === TaskStatus.DONE ? new Date() : null;
+    const project = await this.projectService.getProjectEntityById(
+      task.projectId,
+    );
+
+    await this.workspaceService.getWorkspaceMemberByUser(
+      project.workspaceId,
+      userId,
+      403,
+    );
+
+    if (project.archived) {
+      throw new AppError(
+        "Cannot update task status in an archived project",
+        400,
+      );
+    }
+
+    const hasStatusChanged = task.status !== data.status;
+    const completedAt = hasStatusChanged
+      ? data.status === TaskStatus.DONE
+        ? new Date()
+        : null
+      : task.completedAt;
 
     const updatedTask = await this.taskRepository.updateTaskStatus(
       taskId,
@@ -234,36 +317,75 @@ export class TaskService {
       completedAt,
     );
 
-    if (task.assigneeId) {
+    if (hasStatusChanged && task.assigneeId) {
       await this.notificationService.createNotification(
         task.assigneeId,
         "Task status changed",
-        "The status of your assigned task has changed.",
+        `The status of task "${task.title}" has changed to ${data.status}.<!--link:/workspaces/${project.workspaceId}/projects/${task.projectId}/tasks?taskId=${taskId}-->`,
       );
     }
+
+    eventsService.broadcast({
+      type: "TASK_MUTATED",
+      workspaceId: project.workspaceId,
+      projectId: task.projectId,
+      taskId,
+      action: "updated",
+    });
 
     return updatedTask;
   }
 
-  async updateTaskPriority(taskId: string, data: UpdateTaskPriorityDto) {
+  async updateTaskPriority(
+    taskId: string,
+    userId: string,
+    data: UpdateTaskPriorityDto,
+  ) {
     const task = await this.taskRepository.getTaskById(taskId);
 
     if (!task) {
       throw new AppError("Task not found", 404);
     }
 
+    const project = await this.projectService.getProjectEntityById(
+      task.projectId,
+    );
+
+    await this.workspaceService.getWorkspaceMemberByUser(
+      project.workspaceId,
+      userId,
+      403,
+    );
+
+    if (project.archived) {
+      throw new AppError(
+        "Cannot update task priority in an archived project",
+        400,
+      );
+    }
+
+    const hasPriorityChanged = task.priority !== data.priority;
+
     const updatedTask = await this.taskRepository.updateTaskPriority(
       taskId,
       data.priority,
     );
 
-    if (task.assigneeId) {
+    if (hasPriorityChanged && task.assigneeId) {
       await this.notificationService.createNotification(
         task.assigneeId,
         "Task priority changed",
-        "The priority of your assigned task has changed.",
+        `The priority of task "${task.title}" has changed to ${data.priority}.<!--link:/workspaces/${project.workspaceId}/projects/${task.projectId}/tasks?taskId=${taskId}-->`,
       );
     }
+
+    eventsService.broadcast({
+      type: "TASK_MUTATED",
+      workspaceId: project.workspaceId,
+      projectId: task.projectId,
+      taskId,
+      action: "updated",
+    });
 
     return updatedTask;
   }

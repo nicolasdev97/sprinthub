@@ -383,8 +383,8 @@ The database implementation should follow these conventions:
 - PostgreSQL, using the version defined by the project's development and deployment environment.
 - Prisma ORM for all database access.
 - UUID primary keys.
-- `snake_case` table names.
-- `camelCase` Prisma models.
+- `PascalCase` Prisma models and table names.
+- `camelCase` entity fields and relational properties.
 - Timestamp fields are defined according to the requirements of each entity, including `createdAt` and `updatedAt` where applicable.
 - Database configuration managed through environment variables.
 

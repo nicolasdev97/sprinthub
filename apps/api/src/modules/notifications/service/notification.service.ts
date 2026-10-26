@@ -1,4 +1,5 @@
 import { AppError } from "../../../shared";
+import { eventsService } from "../../events";
 
 import { NotificationRepository } from "../repository";
 
@@ -8,11 +9,41 @@ export class NotificationService {
   ) {}
 
   async createNotification(userId: string, title: string, message: string) {
-    return this.notificationRepository.createNotification(
+    const notification = await this.notificationRepository.createNotification(
       userId,
       title,
       message,
     );
+
+    eventsService.emitToUser(userId, {
+      type: "NOTIFICATION_CREATED",
+      userId,
+      notificationId: notification.id,
+    });
+
+    return notification;
+  }
+
+  async createManyNotifications(
+    userIds: string[],
+    title: string,
+    message: string,
+  ) {
+    const result = await this.notificationRepository.createManyNotifications(
+      userIds,
+      title,
+      message,
+    );
+
+    userIds.forEach((uid) => {
+      eventsService.emitToUser(uid, {
+        type: "NOTIFICATION_CREATED",
+        userId: uid,
+        notificationId: "bulk",
+      });
+    });
+
+    return result;
   }
 
   async getNotificationsByUser(userId: string) {

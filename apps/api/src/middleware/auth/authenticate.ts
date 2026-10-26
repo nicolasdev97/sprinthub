@@ -4,8 +4,8 @@ import { AppError, verifyToken } from "../../shared";
 
 export function authenticate(req: Request, _res: Response, next: NextFunction) {
   const token =
-    req.cookies.accessToken ??
-    req.headers.authorization?.replace("Bearer ", "");
+    req.headers.authorization?.replace("Bearer ", "") ||
+    (typeof req.query.token === "string" ? req.query.token : undefined);
 
   if (!token) {
     throw new AppError("Authentication token not provided", 401);

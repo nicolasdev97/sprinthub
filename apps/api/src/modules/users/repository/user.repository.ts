@@ -1,6 +1,6 @@
-import { prisma } from "../../../database/prisma";
+import { prisma } from '../../../database/prisma';
 
-import { UpdateUserDto } from "../dto";
+import { UpdateUserDto } from '../dto';
 
 export class UserRepository {
   async getUserById(userId: string) {
@@ -40,6 +40,14 @@ export class UserRepository {
     return prisma.user.delete({
       where: {
         id: userId,
+      },
+    });
+  }
+
+  async countOwnedWorkspaces(userId: string) {
+    return prisma.workspace.count({
+      where: {
+        ownerId: userId,
       },
     });
   }

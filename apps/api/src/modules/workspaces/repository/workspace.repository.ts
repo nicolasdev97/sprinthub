@@ -14,7 +14,7 @@ export class WorkspaceRepository {
         data: {
           ownerId,
           name: data.name,
-          description: "",
+          description: data.description ?? null,
         },
       });
 
@@ -67,6 +67,14 @@ export class WorkspaceRepository {
       },
       include: {
         workspace: true,
+      },
+    });
+  }
+
+  async getWorkspaceEntityById(workspaceId: string) {
+    return prisma.workspace.findUnique({
+      where: {
+        id: workspaceId,
       },
     });
   }
@@ -161,11 +169,29 @@ export class WorkspaceRepository {
     });
   }
 
-  async deleteWorkspaceMember(memberId: string) {
-    return prisma.workspaceMember.delete({
-      where: {
-        id: memberId,
-      },
+  async deleteWorkspaceMember(
+    memberId: string,
+    workspaceId: string,
+    userId: string,
+  ) {
+    return prisma.$transaction(async (tx) => {
+      await tx.task.updateMany({
+        where: {
+          assigneeId: userId,
+          project: {
+            workspaceId,
+          },
+        },
+        data: {
+          assigneeId: null,
+        },
+      });
+
+      return tx.workspaceMember.delete({
+        where: {
+          id: memberId,
+        },
+      });
     });
   }
 
@@ -174,6 +200,44 @@ export class WorkspaceRepository {
       where: {
         email,
       },
+    });
+  }
+
+  async transferWorkspaceOwnership(
+    workspaceId: string,
+    currentOwnerUserId: string,
+    newOwnerUserId: string,
+  ) {
+    return prisma.$transaction(async (tx) => {
+      // 1. Update workspace ownerId
+      const updatedWorkspace = await tx.workspace.update({
+        where: { id: workspaceId },
+        data: { ownerId: newOwnerUserId },
+      });
+
+      // 2. Update new owner's member role to OWNER
+      await tx.workspaceMember.update({
+        where: {
+          workspaceId_userId: {
+            workspaceId,
+            userId: newOwnerUserId,
+          },
+        },
+        data: { role: WorkspaceRole.OWNER },
+      });
+
+      // 3. Update previous owner's member role to ADMIN
+      await tx.workspaceMember.update({
+        where: {
+          workspaceId_userId: {
+            workspaceId,
+            userId: currentOwnerUserId,
+          },
+        },
+        data: { role: WorkspaceRole.ADMIN },
+      });
+
+      return updatedWorkspace;
     });
   }
 }

@@ -1,5 +1,5 @@
 export interface UpdateTaskDto {
   title?: string;
-  description?: string;
-  dueDate?: Date;
+  description?: string | null;
+  dueDate?: Date | null;
 }

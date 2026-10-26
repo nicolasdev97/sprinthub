@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { validate } from "../../../middleware";
+import { validate, authRateLimiter } from "../../../middleware";
 
 import { AuthController } from "../controller";
 import { AuthRepository } from "../repository";
@@ -17,14 +17,23 @@ const authController = new AuthController(authService);
 
 authRouter.post(
   "/register",
+  authRateLimiter,
   validate(registerSchema),
   authController.register.bind(authController),
 );
 
 authRouter.post(
   "/login",
+  authRateLimiter,
   validate(loginSchema),
   authController.login.bind(authController),
 );
 
-authRouter.post("/logout", authController.logout);
+authRouter.post(
+  "/refresh",
+  authRateLimiter,
+  authController.refresh.bind(authController),
+);
+
+authRouter.post("/logout", authController.logout.bind(authController));
+

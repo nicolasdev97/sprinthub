@@ -253,10 +253,10 @@ Developer Push / Pull Request
     Install Dependencies
             │
             ▼
-        Type Check
+          Lint
             │
             ▼
-           Lint
+        Type Check
             │
             ▼
           Tests
@@ -304,8 +304,8 @@ The default CI pipeline consists of the following stages:
 | Stage                | Purpose                            |
 | -------------------- | ---------------------------------- |
 | Install Dependencies | Prepare the execution environment  |
-| Type Check           | Validate TypeScript correctness    |
 | Lint                 | Enforce code quality standards     |
+| Type Check           | Validate TypeScript correctness    |
 | Test                 | Execute automated tests            |
 | Build                | Verify production build generation |
 
@@ -460,7 +460,7 @@ These trade-offs are acceptable given SprintHub's engineering and development go
 | Automated validation      | Initial pipeline configuration             |
 | Early error detection     | CI execution time                          |
 | Consistent quality checks | Workflow maintenance                       |
-| Native GitHub integration | ADependency on GitHub                      |
+| Native GitHub integration | Dependency on GitHub                       |
 | Version-controlled CI     | Additional repository configuration        |
 | Future CD foundation      | Separation between CI and deployment setup |
 
@@ -476,8 +476,8 @@ SprintHub follows these Continuous Integration conventions:
 - Pull Requests targeting protected branches are validated automatically.
 - Protected branches require successful CI checks before merge.
 - Direct pushes to protected branches are disabled.
-- Type checking is part of the default pipeline.
 - Linting is part of the default pipeline.
+- Type checking is part of the default pipeline.
 - Automated tests are part of the default pipeline.
 - Build validation is part of the default pipeline.
 - Workflow permissions follow the principle of least privilege.
@@ -492,10 +492,10 @@ The initial workflow will include:
 Install Dependencies
         │
         ▼
-    Type Check
+       Lint
         │
         ▼
-       Lint
+    Type Check
         │
         ▼
       Tests

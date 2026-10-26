@@ -6,7 +6,11 @@ import {
   ProjectFilterParams,
 } from "../types";
 
-import { CreateProjectDto, UpdateProjectDto } from "../dto";
+import {
+  ArchiveProjectDto,
+  CreateProjectDto,
+  UpdateProjectDto,
+} from "../dto";
 import { ProjectService } from "../service";
 
 export class ProjectController {
@@ -41,8 +45,6 @@ export class ProjectController {
     const userId = req.user.userId;
 
     const filters = req.validatedQuery as ProjectFilterParams;
-
-    console.log("FILTERS BEFORE SERVICE:", filters);
 
     const projects = await this.projectService.getProjects(
       workspaceId,
@@ -87,22 +89,17 @@ export class ProjectController {
     res.status(204).send();
   }
 
-  async archiveProject(req: Request<ProjectParams>, res: Response) {
+  async archiveProject(
+    req: Request<ProjectParams, unknown, ArchiveProjectDto>,
+    res: Response,
+  ) {
     const { projectId } = req.params;
     const userId = req.user.userId;
 
-    const project = await this.projectService.archiveProject(projectId, userId);
-
-    res.status(200).json(project);
-  }
-
-  async unarchiveProject(req: Request<ProjectParams>, res: Response) {
-    const { projectId } = req.params;
-    const userId = req.user.userId;
-
-    const project = await this.projectService.unarchiveProject(
+    const project = await this.projectService.archiveProject(
       projectId,
       userId,
+      req.body,
     );
 
     res.status(200).json(project);

@@ -105,23 +105,57 @@ npm install
 cp .env.example .env
 ```
 
-## 5. Start the development infrastructure
+## 5. Start the local environment
+
+SprintHub supports two local workflows depending on your objective:
+
+### Workflow A: Fully Containerized Environment (Zero-Setup / Evaluation)
+
+To run the complete application stack (Frontend, Backend, and PostgreSQL) in isolated containers with a single command:
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
-This command starts the containerized development environment and its required services, including the frontend, backend, and PostgreSQL database.
+This starts all containerized services:
 
-Future infrastructure services may be added as the platform evolves.
+- **Frontend (Next.js):** `http://localhost:3000`
+- **Backend (Express API):** `http://localhost:3001`
+- **Database (PostgreSQL):** `localhost:5432`
 
-## 6. Start the application
+This workflow is recommended for evaluators, reviewers, and reproducible testing without requiring local Node.js tooling.
+
+---
+
+### Workflow B: Host Development Mode (Recommended for Daily DX)
+
+For active feature development with instant hot-reloading and native IDE debugging:
+
+1. Start only the PostgreSQL database container:
+
+```bash
+docker compose up -d postgres
+```
+
+2. Generate the Prisma client and apply database migrations:
+
+```bash
+npm run prisma:migrate
+```
+
+3. Start the applications on the host machine:
 
 ```bash
 npm run dev
 ```
 
-After completing these steps, the local development environment is ready.
+Both applications start concurrently:
+
+- **Frontend (Next.js):** `http://localhost:3000`
+- **Backend (Express API):** `http://localhost:3001`
+- **Database (PostgreSQL):** `localhost:5432`
+
+After completing either workflow, your local development environment is ready.
 
 ---
 
@@ -511,20 +545,20 @@ Each merged Pull Request results in a single commit on the target branch.
 
 ---
 
-# 8. Folder Naming
+# 8. Folder & File Naming
 
 SprintHub follows consistent naming conventions across frontend and backend code.
 
-| Element          | Convention                        | Example                    |
-| ---------------- | --------------------------------- | -------------------------- |
-| Backend folders  | lowercase                         | `repository`, `controller` |
-| Backend modules  | lowercase, plural                 | `workspaces`, `projects`   |
-| Frontend folders | lowercase, kebab-case when needed | `user-profile`             |
-| React Components | PascalCase                        | `TaskCard.tsx`             |
-| Hooks            | camelCase with `use` prefix       | `useProjects.ts`           |
-| Utility Files    | camelCase                         | `formatDate.ts`            |
-| Types            | PascalCase                        | `Task.ts`                  |
-| Constants        | UPPER_SNAKE_CASE                  | `MAX_FILE_SIZE`            |
+| Element                      | Convention                         | Example                                        |
+| ---------------------------- | ---------------------------------- | ---------------------------------------------- |
+| Domain modules / features    | lowercase, plural (or domain noun) | `workspaces`, `projects`, `tasks`, `dashboard` |
+| Single-artifact layer folder | lowercase, singular                | `controller`, `service`, `repository`, `hook`, `schema`, `context` |
+| Collection layer folder      | lowercase, plural                  | `routes`, `types`, `components`                |
+| React Components             | `PascalCase.tsx`                   | `Button.tsx`, `TaskCard.tsx`                   |
+| Layer / Role Files           | `kebab-case.<role>.ts`             | `project.controller.ts`, `project.hook.ts`     |
+| Type Definition Files        | `kebab-case.type.ts`               | `task.type.ts`, `task-filter.type.ts`          |
+| Utility & Error Files        | `kebab-case.ts`                    | `refresh-token.ts`, `api-error.ts`             |
+| Constants                    | `UPPER_SNAKE_CASE`                 | `MAX_FILE_SIZE`                                |
 
 These conventions apply across both frontend and backend projects where appropriate.
 
@@ -572,7 +606,10 @@ Forms are implemented using:
 - React Hook Form
 - Zod validation
 
-Validation rules should remain centralized and reusable.
+Guidelines:
+- Centralize validation schemas in the feature's `schema/` directory.
+- Use `autoFocus` on primary input fields in creation and confirmation dialogs to streamline keyboard workflows.
+- In Danger Zone confirmation dialogs (workspaces and projects), require the user to type the exact entity name to activate the deletion action.
 
 ---
 
@@ -595,23 +632,99 @@ Client Components should be introduced only when required for:
 
 Frontend code is organized by business capability rather than technical file type.
 
-Feature-specific code must remain inside its corresponding feature.
+Feature-specific code must remain inside its corresponding feature, creating internal directories on demand according to the feature's needs (for example: `hook/`, `service/`, `schema/`, `context/`, and adding `components/` and `types/` as UI views and forms are built).
 
-Example:
+---
 
-```text
-features/
-└── tasks/
-    ├── api/
-    ├── components/
-    ├── hooks/
-    ├── schemas/
-    ├── services/
-    ├── types/
-    └── utils/
+## Contextual Navigation & URL State
+
+Frontend navigation preserves the user's mental model and breadcrumb hierarchy:
+
+- **Contextual Back Navigation (`?from=`):** Views reached from hubs or dashboards preserve their origin via query parameters (`?from=dashboard`, `?from=projects`, `?from=tasks`). Back buttons dynamically adapt their destination and label.
+- **Deep-Linked Drawer State (`?taskId=`):** Modal sheets synchronize the active item ID in the URL for shareability. On sheet dismissal, the parameter is removed without full page reloads while preserving origin query parameters.
+- **Resilient Not-Found & Deleted States (`NotFoundState`):** When a resource is missing or removed, views embed `<NotFoundState>` within the standard detail header layout, providing contextual action buttons to return to the parent view or close the drawer.
+
+Shared directories (`components/`, `lib/`, `providers/`, `services/`, `shared/`) should contain only functionality that is genuinely reused across multiple features.
+
+---
+
+# 10. Real-Time & Concurrency Standards
+
+## 3-Layer Synchronization Pattern
+
+All developers working on SprintHub must follow the established 3-layer synchronization architecture when creating or modifying features:
+
+### 1. Backend Mutation Broadcasting
+Whenever a service mutates shared database entities (workspaces, projects, tasks, notifications), it must emit an event through `eventsService`:
+
+```typescript
+import { eventsService } from '../../events';
+
+// Broadcast to all active users:
+eventsService.broadcast({
+  type: 'TASK_MUTATED',
+  taskId: task.id,
+  projectId,
+  action: 'updated',
+});
+
+// Or emit targeted notifications to a specific user:
+eventsService.emitToUser(userId, {
+  type: 'NOTIFICATION_CREATED',
+  notificationId: notification.id,
+});
 ```
 
-Shared directories should contain only functionality that is genuinely reused across multiple features.
+### 2. Frontend Real-Time Invalidation
+Frontend queries must not rely on manual local array splicing or complex cache patching across different views. Instead, the `RealtimeEventsProvider` listens to Server-Sent Events and triggers cascading invalidations matching entity hierarchies:
+
+```typescript
+switch (event.type) {
+  case 'WORKSPACE_MUTATED':
+    queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+    queryClient.invalidateQueries({ queryKey: ['workspace', event.workspaceId] });
+    queryClient.invalidateQueries({ queryKey: ['workspace-members', event.workspaceId] });
+    queryClient.invalidateQueries({ queryKey: ['projects', event.workspaceId] });
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    break;
+
+  case 'PROJECT_MUTATED':
+    queryClient.invalidateQueries({ queryKey: ['projects'] });
+    queryClient.invalidateQueries({ queryKey: ['project', event.projectId] });
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    break;
+
+  case 'TASK_MUTATED':
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['task', event.taskId] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    break;
+
+  case 'NOTIFICATION_CREATED':
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    break;
+}
+```
+
+### 3. Cross-Tab Local Synchronization
+When performing mutations that should instantly reflect across multiple open tabs of the same user, mutation hooks in TanStack Query must dispatch cross-tab invalidation messages:
+
+```typescript
+import { crossTabSync } from '@/shared/utils';
+
+// Example inside mutation onSuccess handler:
+crossTabSync.postMessage({
+  type: 'QUERY_INVALIDATE',
+  queryKeys: [['projects'], ['tasks'], ['dashboard']],
+});
+
+// Synchronize profile updates:
+crossTabSync.notifyUserUpdated(updatedUser);
+```
+
+All workspace, project, and task mutation hooks (`useCreateWorkspace`, `useUpdateWorkspace`, `useDeleteWorkspace`, `useCreateProject`, `useUpdateProject`, `useDeleteProject`, `useCreateTask`, `useUpdateTask`, `useDeleteTask`, `useMoveTask`) implement this pattern, ensuring zero stale UI across sibling tabs without waiting for tab refocus.
 
 ---
 
@@ -659,9 +772,11 @@ Business logic must remain within the Service layer.
 Cross-cutting infrastructure is organized as follows:
 
 - Application middleware: `src/middleware`
-- Shared validation utilities: `src/shared/validation`
+- Authentication middleware: `src/middleware/auth`
+- Validation middleware: `src/middleware/validation`
 - Shared errors: `src/shared/errors`
 - Shared logging utilities: `src/shared/logger`
+- Shared utilities: `src/shared/utils`
 
 Module-specific validation schemas remain inside their corresponding module under `schema/`.
 
@@ -671,10 +786,9 @@ Protected backend routes use the shared `authenticate` middleware.
 
 The authentication infrastructure supports:
 
-- JWT Access Tokens.
-- HttpOnly cookies.
-- `Authorization: Bearer` headers.
-- Typed `req.user`.
+- JWT Access Tokens transmitted via `Authorization: Bearer` headers.
+- Refresh Tokens stored in `HttpOnly` cookies (for `/api/auth/refresh` and `/api/auth/logout`).
+- Typed `req.user` populated by `authenticate`.
 
 Authentication-related middleware is located under:
 
@@ -683,6 +797,21 @@ src/middleware/auth/
 ```
 
 Business authorization rules remain within the Service layer.
+
+### Validation
+
+Request validation is handled using Zod schemas and generic HTTP middleware:
+
+- Request body validation: `validate(schema)`
+- Query parameter validation: `validateQuery(schema)`
+
+Validation middleware is located under:
+
+```text
+src/middleware/validation/
+```
+
+Module-specific validation schemas remain encapsulated inside their corresponding module under `schema/`.
 
 ---
 
@@ -780,6 +909,7 @@ Common development scripts are defined in the root `package.json`.
 | `npm run dev`            | Start the development environment |
 | `npm run build`          | Generate the production build     |
 | `npm run lint`           | Run ESLint                        |
+| `npm run typecheck`      | Validate TypeScript types         |
 | `npm run test`           | Execute automated tests           |
 | `npm run format`         | Format the codebase with Prettier |
 | `npm run prisma:migrate` | Apply Prisma database migrations  |
@@ -832,8 +962,8 @@ Workflows are triggered automatically by:
 The default CI pipeline includes:
 
 1. Install dependencies.
-2. Type checking.
-3. Linting.
+2. Linting.
+3. Type checking.
 4. Automated tests.
 5. Production build validation.
 

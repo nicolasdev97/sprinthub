@@ -1,10 +1,11 @@
 import { Router } from "express";
 
-import { authenticate } from "../../../middleware";
+import { authenticate, validateParams } from "../../../middleware";
 
 import { NotificationController } from "../controller";
 import { NotificationRepository } from "../repository";
 import { NotificationService } from "../service";
+import { notificationParamsSchema } from "../schema";
 import { NotificationParams } from "../types";
 
 export const notificationRouter = Router();
@@ -22,8 +23,9 @@ notificationRouter.get(
 );
 
 notificationRouter.patch<NotificationParams>(
-  "/notifications/:notificationId/read",
+  "/:notificationId/read",
   authenticate,
+  validateParams(notificationParamsSchema),
   notificationController.updateNotificationReadStatus.bind(
     notificationController,
   ),

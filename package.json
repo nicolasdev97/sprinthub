@@ -3,12 +3,35 @@
   "version": "1.0.0",
   "description": "A modern full-stack project management platform inspired by Jira, Trello, and ClickUp.",
   "private": true,
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
-  },
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "concurrently -n \"api,web\" -c \"blue,magenta\" \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "npm run dev --workspace=api",
+    "dev:web": "npm run dev --workspace=web",
+    "build": "npm run build --workspaces --if-present",
+    "build:api": "npm run build --workspace=api",
+    "build:web": "npm run build --workspace=web",
+    "start": "npm run start:web",
+    "start:api": "npm run start --workspace=api",
+    "start:web": "npm run start --workspace=web",
+    "lint": "npm run lint --workspaces --if-present",
+    "lint:api": "npm run lint --workspace=api",
+    "lint:web": "npm run lint --workspace=web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck:api": "npm run typecheck --workspace=api",
+    "typecheck:web": "npm run typecheck --workspace=web",
+    "test": "npm run test --workspaces --if-present",
+    "test:api": "npm run test --workspace=api",
+    "test:web": "npm run test --workspace=web",
+    "format": "npm run format --workspaces --if-present",
+    "format:check": "npm run format:check --workspaces --if-present",
+    "prisma:generate": "npm run prisma:generate --workspace=api",
+    "prisma:migrate": "npm run prisma:migrate --workspace=api",
+    "prisma:migrate:deploy": "npm run prisma:migrate:deploy --workspace=api",
+    "prisma:seed": "npm run prisma:seed --workspace=api",
+    "prisma:studio": "npm run prisma:studio --workspace=api"
   },
   "repository": {
     "type": "git",
@@ -16,10 +39,13 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/nicolasdev97/sprinthub/issues"
   },
-  "homepage": "https://github.com/nicolasdev97/sprinthub#readme"
+  "homepage": "https://github.com/nicolasdev97/sprinthub#readme",
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
 }

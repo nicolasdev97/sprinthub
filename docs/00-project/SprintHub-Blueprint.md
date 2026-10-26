@@ -148,6 +148,18 @@ The project intentionally prioritizes software quality over feature quantity.
 
 The Minimum Viable Product includes the essential functionality required for a complete project management workflow.
 
+## User Management & Profile
+
+- View personal profile information
+- Update first name and last name
+- Secure account deletion with confirmation check (blocking deletion if user owns active workspaces)
+
+## Theme & UI Customization
+
+- Dark mode and light mode switching
+- System color scheme preference auto-detection
+- Persistent theme choice across sessions
+
 ## Authentication
 
 - User registration
@@ -162,9 +174,11 @@ The Minimum Viable Product includes the essential functionality required for a c
 - Create workspace
 - Update workspace
 - Delete workspace
+- View members
 - Add members
 - Remove members
 - Manage member roles
+- Transfer workspace ownership
 
 ### Workspace Search and Sorting
 
@@ -242,6 +256,12 @@ Notification recipients depend on the event:
 - **Task status changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
 - **Task priority changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
 
+## Real-Time & Multi-Tab Synchronization
+
+- Live entity mutation streaming via Server-Sent Events (SSE) for workspaces, projects, tasks, and notifications.
+- Cross-tab session lifecycle synchronization (instant logout propagation, profile sync, and query invalidation).
+- Background notification polling and window-focus cache revalidation.
+
 ## Dashboard
 
 - Workspace overview
@@ -273,8 +293,7 @@ The following features are intentionally excluded from the MVP and may be introd
 ## Notifications
 
 - Email notifications
-- Push notifications
-- Real-time notifications
+- Push notifications (Web/Mobile)
 
 ## Integrations
 
@@ -316,6 +335,7 @@ The system shall allow users to:
 - Create workspaces.
 - Update workspace information.
 - Delete workspaces.
+- View workspace members.
 - Add members.
 - Remove members.
 - Assign member roles.
@@ -636,39 +656,20 @@ src/
 ├── app/
 ├── components/
 ├── features/
-├── hooks/
 ├── lib/
 ├── providers/
 ├── services/
-├── styles/
-├── types/
-└── utils/
+└── shared/
 ```
 
-Each feature owns its own:
+Each feature encapsulates the internal directories it requires (created on demand rather than enforcing empty folders):
 
-- Components
+- Context (when feature-scoped state is required, e.g., `auth`)
 - Hooks
 - Services
-- Schemas
 - Types
-- Utilities
-
-Example:
-
-```text
-features/
-
-tasks/
-
-├── api/
-├── components/
-├── hooks/
-├── schemas/
-├── services/
-├── types/
-└── utils/
-```
+- Components (introduced with UI views)
+- Schemas (introduced with client-side form validation)
 
 ## Frontend Principles
 
@@ -791,8 +792,7 @@ Notifications should be:
 Future versions may include:
 
 - Email notifications
-- Push notifications
-- Real-time notifications
+- Push notifications (Web/Mobile)
 
 ---
 
@@ -851,22 +851,26 @@ Examples:
 GET    /api/workspaces
 POST   /api/workspaces
 
-GET    /api/projects
-POST   /api/projects
+GET    /api/workspaces/{workspaceId}/projects
+POST   /api/workspaces/{workspaceId}/projects
+GET    /api/projects/{projectId}
+PATCH  /api/projects/{projectId}
+DELETE /api/projects/{projectId}
 
-GET    /api/tasks
-POST   /api/tasks
+GET    /api/projects/{projectId}/tasks
+POST   /api/projects/{projectId}/tasks
+GET    /api/tasks/{taskId}
 PATCH  /api/tasks/{taskId}
 DELETE /api/tasks/{taskId}
 ```
 
 ## Response Format
 
-The API uses standard HTTP status codes and returns the requested resource or collection directly in the response body.
+SprintHub follows standard REST response conventions. Successful operations return the resource or collection directly using appropriate HTTP status codes (`200 OK`, `201 Created`, or `204 No Content` with an empty body), while user-facing success notifications are handled by the frontend UI.
 
 ### Success Response
 
-Successful responses return the resource or collection directly as JSON.
+Successful responses return the resource or collection directly as JSON:
 
 ```json
 {
@@ -878,7 +882,7 @@ Successful responses return the resource or collection directly as JSON.
 
 ### Error Response
 
-Errors are returned using the application's standard error structure.
+Errors are returned using the application's standardized error structure:
 
 ```json
 {
@@ -1055,8 +1059,8 @@ SprintHub uses GitHub Actions to automate quality assurance and deployment proce
 Every Pull Request should automatically execute:
 
 1. Install dependencies
-2. Type checking
-3. Linting
+2. Linting
+3. Type checking
 4. Unit tests
 5. Build verification
 

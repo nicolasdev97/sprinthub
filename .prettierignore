@@ -1,0 +1,7 @@
+node_modules
+dist
+.next
+coverage
+apps/**/node_modules
+apps/**/dist
+apps/**/.next

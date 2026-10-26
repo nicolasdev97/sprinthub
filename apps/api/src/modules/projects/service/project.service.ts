@@ -1,11 +1,12 @@
 import { WorkspaceRole } from "@prisma/client";
 
 import { AppError } from "../../../shared";
-import { CreateProjectDto, UpdateProjectDto } from "../dto";
+import { ArchiveProjectDto, CreateProjectDto, UpdateProjectDto } from "../dto";
 import { ProjectRepository } from "../repository";
-import { WorkspaceService } from "../../workspaces/service";
+import { WorkspaceService } from "../../workspaces";
 import { ProjectFilterParams } from "../types";
 import { NotificationService } from "../../notifications";
+import { eventsService } from "../../events";
 
 export class ProjectService {
   constructor(
@@ -44,13 +45,18 @@ export class ProjectService {
       userId,
     );
 
-    for (const workspaceMember of workspaceMembers) {
-      await this.notificationService.createNotification(
-        workspaceMember.user.id,
-        "Project created",
-        "A new project has been created in your workspace.",
-      );
-    }
+    await this.notificationService.createManyNotifications(
+      workspaceMembers.map((workspaceMember) => workspaceMember.user.id),
+      "Project created",
+      `Project "${project.name}" has been created in your workspace.<!--link:/workspaces/${data.workspaceId}/projects/${project.id}/tasks-->`,
+    );
+
+    eventsService.broadcast({
+      type: "PROJECT_MUTATED",
+      workspaceId: data.workspaceId,
+      projectId: project.id,
+      action: "created",
+    });
 
     return project;
   }
@@ -60,19 +66,23 @@ export class ProjectService {
     userId: string,
     filters?: ProjectFilterParams,
   ) {
-    console.log("FILTERS IN SERVICE:", filters);
-
     await this.workspaceService.getWorkspaceMemberByUser(workspaceId, userId);
 
     return this.projectRepository.getProjects(workspaceId, filters);
   }
 
-  async getProjectById(projectId: string, userId: string) {
+  async getProjectEntityById(projectId: string) {
     const project = await this.projectRepository.getProjectById(projectId);
 
     if (!project) {
       throw new AppError("Project not found", 404);
     }
+
+    return project;
+  }
+
+  async getProjectById(projectId: string, userId: string) {
+    const project = await this.getProjectEntityById(projectId);
 
     await this.workspaceService.getWorkspaceMemberByUser(
       project.workspaceId,
@@ -87,11 +97,7 @@ export class ProjectService {
     userId: string,
     data: UpdateProjectDto,
   ) {
-    const project = await this.projectRepository.getProjectById(projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
-    }
+    const project = await this.getProjectEntityById(projectId);
 
     const workspaceMember =
       await this.workspaceService.getWorkspaceMemberByUser(
@@ -104,6 +110,10 @@ export class ProjectService {
       workspaceMember.role !== WorkspaceRole.ADMIN
     ) {
       throw new AppError("Forbidden", 403);
+    }
+
+    if (project.archived) {
+      throw new AppError("Archived projects cannot be updated", 400);
     }
 
     if (data.name) {
@@ -120,7 +130,16 @@ export class ProjectService {
       }
     }
 
-    return this.projectRepository.updateProject(projectId, data);
+    const updated = await this.projectRepository.updateProject(projectId, data);
+
+    eventsService.broadcast({
+      type: "PROJECT_MUTATED",
+      workspaceId: project.workspaceId,
+      projectId,
+      action: "updated",
+    });
+
+    return updated;
   }
 
   async deleteProject(projectId: string, userId: string) {
@@ -144,9 +163,20 @@ export class ProjectService {
     }
 
     await this.projectRepository.deleteProject(projectId);
+
+    eventsService.broadcast({
+      type: "PROJECT_MUTATED",
+      workspaceId: project.workspaceId,
+      projectId,
+      action: "deleted",
+    });
   }
 
-  async archiveProject(projectId: string, userId: string) {
+  async archiveProject(
+    projectId: string,
+    userId: string,
+    data: ArchiveProjectDto,
+  ) {
     const project = await this.projectRepository.getProjectById(projectId);
 
     if (!project) {
@@ -166,29 +196,23 @@ export class ProjectService {
       throw new AppError("Forbidden", 403);
     }
 
-    return this.projectRepository.archiveProject(projectId);
-  }
-
-  async unarchiveProject(projectId: string, userId: string) {
-    const project = await this.projectRepository.getProjectById(projectId);
-
-    if (!project) {
-      throw new AppError("Project not found", 404);
+    if (data.archived && project.archived) {
+      throw new AppError("Project is already archived", 400);
     }
 
-    const workspaceMember =
-      await this.workspaceService.getWorkspaceMemberByUser(
-        project.workspaceId,
-        userId,
-      );
-
-    if (
-      workspaceMember.role !== WorkspaceRole.OWNER &&
-      workspaceMember.role !== WorkspaceRole.ADMIN
-    ) {
-      throw new AppError("Forbidden", 403);
+    if (!data.archived && !project.archived) {
+      throw new AppError("Project is already unarchived", 400);
     }
 
-    return this.projectRepository.unarchiveProject(projectId);
+    const archived = await this.projectRepository.archiveProject(projectId, data.archived);
+
+    eventsService.broadcast({
+      type: "PROJECT_MUTATED",
+      workspaceId: project.workspaceId,
+      projectId,
+      action: "archived",
+    });
+
+    return archived;
   }
 }

@@ -6,7 +6,7 @@ import { UpdateUserDto } from "../dto";
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
-  async getUserById(userId: string) {
+  async getUser(userId: string) {
     const user = await this.userRepository.getUserById(userId);
 
     if (!user) {
@@ -37,6 +37,16 @@ export class UserService {
 
     if (confirmationName !== fullName) {
       throw new AppError("Confirmation name does not match", 400);
+    }
+
+    const ownedWorkspacesCount =
+      await this.userRepository.countOwnedWorkspaces(userId);
+
+    if (ownedWorkspacesCount > 0) {
+      throw new AppError(
+        "Cannot delete user account while owning workspaces",
+        400,
+      );
     }
 
     await this.userRepository.deleteUser(userId);

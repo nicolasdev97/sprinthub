@@ -4,9 +4,9 @@ export interface CreateTaskDto {
   projectId: string;
   createdById: string;
   title: string;
-  description?: string;
-  assigneeId?: string;
-  dueDate?: Date;
+  description?: string | null;
+  assigneeId?: string | null;
+  dueDate?: Date | null;
   status: TaskStatus;
   priority: TaskPriority;
 }

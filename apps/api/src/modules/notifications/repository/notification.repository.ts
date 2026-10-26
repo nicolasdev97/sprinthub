@@ -11,6 +11,24 @@ export class NotificationRepository {
     });
   }
 
+  async createManyNotifications(
+    userIds: string[],
+    title: string,
+    message: string,
+  ) {
+    if (userIds.length === 0) {
+      return { count: 0 };
+    }
+
+    return prisma.notification.createMany({
+      data: userIds.map((userId) => ({
+        userId,
+        title,
+        message,
+      })),
+    });
+  }
+
   async getNotificationById(id: string) {
     return prisma.notification.findUnique({
       where: {
@@ -27,6 +45,7 @@ export class NotificationRepository {
       orderBy: {
         createdAt: "desc",
       },
+      take: 50,
     });
   }
 

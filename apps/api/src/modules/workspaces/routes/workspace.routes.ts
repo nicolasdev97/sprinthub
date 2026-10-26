@@ -1,6 +1,11 @@
 import { Router } from "express";
 
-import { authenticate, validate, validateQuery } from "../../../middleware";
+import {
+  authenticate,
+  validate,
+  validateParams,
+  validateQuery,
+} from "../../../middleware";
 import { WorkspaceController } from "../controller";
 import {
   createWorkspaceSchema,
@@ -8,12 +13,14 @@ import {
   addWorkspaceMemberSchema,
   updateWorkspaceMemberRoleSchema,
   workspaceFilterSchema,
+  workspaceParamsSchema,
+  workspaceMemberParamsSchema,
+  transferWorkspaceOwnershipSchema,
 } from "../schema";
 import { WorkspaceRepository } from "../repository";
 import { WorkspaceService } from "../service";
 
-import { NotificationRepository } from "../../notifications/repository";
-import { NotificationService } from "../../notifications/service";
+import { NotificationRepository, NotificationService } from "../../notifications";
 
 export const workspaceRouter = Router();
 
@@ -46,12 +53,14 @@ workspaceRouter.get(
 workspaceRouter.get(
   "/:workspaceId",
   authenticate,
+  validateParams(workspaceParamsSchema),
   workspaceController.getWorkspaceById.bind(workspaceController),
 );
 
 workspaceRouter.patch(
   "/:workspaceId",
   authenticate,
+  validateParams(workspaceParamsSchema),
   validate(updateWorkspaceSchema),
   workspaceController.updateWorkspace.bind(workspaceController),
 );
@@ -59,12 +68,22 @@ workspaceRouter.patch(
 workspaceRouter.delete(
   "/:workspaceId",
   authenticate,
+  validateParams(workspaceParamsSchema),
   workspaceController.deleteWorkspace.bind(workspaceController),
+);
+
+workspaceRouter.post(
+  "/:workspaceId/transfer-ownership",
+  authenticate,
+  validateParams(workspaceParamsSchema),
+  validate(transferWorkspaceOwnershipSchema),
+  workspaceController.transferWorkspaceOwnership.bind(workspaceController),
 );
 
 workspaceRouter.post(
   "/:workspaceId/members",
   authenticate,
+  validateParams(workspaceParamsSchema),
   validate(addWorkspaceMemberSchema),
   workspaceController.addWorkspaceMember.bind(workspaceController),
 );
@@ -72,12 +91,14 @@ workspaceRouter.post(
 workspaceRouter.get(
   "/:workspaceId/members",
   authenticate,
+  validateParams(workspaceParamsSchema),
   workspaceController.getWorkspaceMembers.bind(workspaceController),
 );
 
 workspaceRouter.patch(
   "/:workspaceId/members/:memberId",
   authenticate,
+  validateParams(workspaceMemberParamsSchema),
   validate(updateWorkspaceMemberRoleSchema),
   workspaceController.updateWorkspaceMemberRole.bind(workspaceController),
 );
@@ -85,6 +106,7 @@ workspaceRouter.patch(
 workspaceRouter.delete(
   "/:workspaceId/members/:memberId",
   authenticate,
+  validateParams(workspaceMemberParamsSchema),
   workspaceController.removeWorkspaceMember.bind(workspaceController),
 );
 

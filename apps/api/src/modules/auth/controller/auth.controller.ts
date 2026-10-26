@@ -1,7 +1,8 @@
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
 
-import { RegisterDto, LoginDto } from "../dto";
-import { AuthService } from "../service";
+import { RegisterDto, LoginDto } from '../dto';
+import { AuthService } from '../service';
+import { AppError } from '../../../shared';
 
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -18,23 +19,48 @@ export class AuthController {
     const data = req.body as LoginDto;
 
     const response = await this.authService.login(data);
+    const isProduction = process.env.NODE_ENV === 'production';
 
-    res.cookie("accessToken", response.accessToken, {
+    res.cookie('refreshToken', response.refreshToken, {
       httpOnly: true,
-      sameSite: "lax",
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+
+    const { refreshToken: _, ...responseWithoutRefreshToken } = response;
+
+    return res.status(200).json(responseWithoutRefreshToken);
+  }
+
+  async refresh(req: Request, res: Response) {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      throw new AppError('Refresh token is required', 401);
+    }
+
+    const response = await this.authService.refreshAccessToken(refreshToken);
 
     return res.status(200).json(response);
   }
 
-  async logout(_req: Request, res: Response) {
-    res.clearCookie("accessToken", {
+  async logout(req: Request, res: Response) {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      throw new AppError('Refresh token is required', 401);
+    }
+
+    await this.authService.logout(refreshToken);
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    res.clearCookie('refreshToken', {
       httpOnly: true,
-      sameSite: "lax",
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
     });
 
-    return res.status(200).json({
-      message: "Logout successful",
-    });
+    return res.status(204).send();
   }
 }

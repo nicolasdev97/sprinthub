@@ -6,7 +6,8 @@ export const updateProjectSchema = z
     description: z
       .string()
       .trim()
-      .min(1, "Project description is required")
+      .max(1000, "Project description must not exceed 1000 characters")
+      .nullable()
       .optional(),
     status: z.enum(["PLANNING", "ACTIVE", "COMPLETED"]).optional(),
   })
