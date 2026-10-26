@@ -1,23 +1,38 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { JetBrains_Mono, Plus_Jakarta_Sans } from 'next/font/google';
 
 import './globals.css';
 import { Providers } from '@/providers';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: '--font-jakarta-sans',
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  display: 'swap',
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const jetBrainsMono = JetBrains_Mono({
+  variable: '--font-jetbrains-mono',
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
   title: 'SprintHub',
-  description: 'SprintHub',
+  description: 'SprintHub — Workspace & Project Management OS',
 };
+
+const THEME_INIT_SCRIPT = `
+(function() {
+  try {
+    var saved = window.localStorage.getItem('sprinthub:theme');
+    var isDark = saved === 'dark';
+    document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+  } catch (e) {}
+})();
+`;
 
 interface RootLayoutProps {
   children: React.ReactNode;
@@ -25,8 +40,15 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${plusJakartaSans.variable} ${jetBrainsMono.variable}`}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
+      <body className="font-sans antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

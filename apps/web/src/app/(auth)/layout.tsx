@@ -1,9 +1,9 @@
 'use client';
 
 import { ReactNode, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Layers } from 'lucide-react';
 
 import { Skeleton } from '@/components/ui';
 import { useAuth } from '@/features/auth';
@@ -30,9 +30,14 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
           href="/"
           className="flex items-center gap-2.5 rounded-lg p-1 font-semibold tracking-tight outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
-            <Layers className="size-5" />
-          </div>
+          <Image
+            src="/logo.png"
+            alt="SprintHub Logo"
+            width={36}
+            height={36}
+            className="size-9 shrink-0 rounded-lg object-contain"
+            priority
+          />
           <div className="flex flex-col leading-none">
             <span className="text-lg font-bold tracking-tight">SprintHub</span>
             <span className="text-[11px] font-normal text-muted-foreground">
@@ -78,4 +83,3 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
     </div>
   );
 }
-
