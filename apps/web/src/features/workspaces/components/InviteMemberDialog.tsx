@@ -38,11 +38,13 @@ import { AddWorkspaceMemberFormValues, addWorkspaceMemberSchema } from '../schem
 interface InviteMemberDialogProps {
   workspaceId: string;
   workspaceName: string;
+  trigger?: React.ReactElement;
 }
 
 export function InviteMemberDialog({
   workspaceId,
   workspaceName,
+  trigger,
 }: InviteMemberDialogProps) {
   const { toast } = useToast();
   const addMemberMutation = useAddWorkspaceMember();
@@ -109,10 +111,16 @@ export function InviteMemberDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button size="sm" />}>
-        <UserPlus className="size-4" />
-        <span>Invite Member</span>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          trigger ?? (
+            <Button size="sm">
+              <UserPlus className="size-4" />
+              <span>Invite Member</span>
+            </Button>
+          )
+        }
+      />
 
       <DialogContent>
         <DialogHeader>

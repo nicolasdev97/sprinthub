@@ -70,6 +70,7 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       }
     }
 
+    // Default to first workspace if none saved or if saved workspace no longer exists
     return workspaces[0] ?? null;
   }, [workspaces, selectedWorkspaceId]);
 

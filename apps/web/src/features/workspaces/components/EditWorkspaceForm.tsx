@@ -105,7 +105,7 @@ export function EditWorkspaceForm({ workspace, canEdit }: EditWorkspaceFormProps
       <CardHeader>
         <div className="flex items-center justify-between gap-2">
           <div>
-            <CardTitle>General Information</CardTitle>
+            <CardTitle>Workspace Details</CardTitle>
             <CardDescription>
               Update your workspace name and description visible to all members.
             </CardDescription>
