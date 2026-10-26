@@ -10,6 +10,7 @@ export * from './DropdownMenu';
 export * from './Form';
 export * from './Input';
 export * from './Label';
+export * from './NotFoundState';
 export * from './Popover';
 export * from './Progress';
 export * from './ScrollArea';

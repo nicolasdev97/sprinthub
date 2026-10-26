@@ -28,6 +28,7 @@ import {
   Badge,
   Button,
   Input,
+  NotFoundState,
   Select,
   SelectOption,
   Skeleton,
@@ -79,8 +80,18 @@ export function ProjectTasksView({
   const currentUserId = user?.id;
   const { activeWorkspaceId, setActiveWorkspaceId } = useWorkspaceContext();
 
-  const { data: workspace } = useWorkspace(workspaceId);
-  const { data: project, isLoading: isProjectLoading } = useProject(projectId);
+  const {
+    data: workspace,
+    isLoading: isWorkspaceLoading,
+    isError: isWorkspaceError,
+    error: workspaceError,
+  } = useWorkspace(workspaceId);
+  const {
+    data: project,
+    isLoading: isProjectLoading,
+    isError: isProjectError,
+    error: projectError,
+  } = useProject(projectId);
   const { data: members = [] } = useWorkspaceMembers(workspaceId);
 
   const [activeView, setActiveView] = useState<'board' | 'list'>('board');
@@ -256,6 +267,64 @@ export function ProjectTasksView({
     totalTasksCount > 0
       ? Math.round((completedTasksCount / totalTasksCount) * 100)
       : 0;
+
+  if (isProjectError || (!isProjectLoading && !project)) {
+    const apiError = projectError ? normalizeApiError(projectError) : null;
+    const isNotFound =
+      !apiError ||
+      apiError.statusCode === 404 ||
+      apiError.message.toLowerCase().includes('not found');
+
+    if (isNotFound) {
+      return (
+        <div className="space-y-6">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Project Details</h1>
+            <p className="text-sm text-muted-foreground">
+              This project has been deleted or cannot be found.
+            </p>
+          </div>
+
+          <NotFoundState
+            title="Project not found or deleted"
+            description="This project may have been removed or you no longer have access to it."
+            actionText="Go to Workspace Projects"
+            actionIcon={<ArrowLeft className="mr-2 size-4" />}
+            actionHref={`/workspaces/${workspaceId}/projects`}
+          />
+        </div>
+      );
+    }
+  }
+
+  if (isWorkspaceError || (!isWorkspaceLoading && !workspace)) {
+    const apiError = workspaceError ? normalizeApiError(workspaceError) : null;
+    const isNotFound =
+      !apiError ||
+      apiError.statusCode === 404 ||
+      apiError.message.toLowerCase().includes('not found');
+
+    if (isNotFound) {
+      return (
+        <div className="space-y-6">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Workspace Details</h1>
+            <p className="text-sm text-muted-foreground">
+              This workspace has been deleted or cannot be found.
+            </p>
+          </div>
+
+          <NotFoundState
+            title="Workspace not found or deleted"
+            description="This workspace may have been removed or you no longer have access to it."
+            actionText="Go to Workspaces"
+            actionIcon={<ArrowLeft className="mr-2 size-4" />}
+            actionHref="/workspaces"
+          />
+        </div>
+      );
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -550,23 +619,34 @@ export function ProjectTasksView({
 
         {/* 2. Error State */}
         {isError && !isTasksLoading && (
-          <Alert variant="destructive">
-            <AlertCircle className="size-4" />
-            <AlertTitle>Unable to load tasks</AlertTitle>
-            <AlertDescription className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <span>{normalizeApiError(error).message}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  void refetch();
-                }}
-              >
-                <RefreshCw className="size-3.5" />
-                <span>Retry</span>
-              </Button>
-            </AlertDescription>
-          </Alert>
+          normalizeApiError(error).statusCode === 404 ||
+          normalizeApiError(error).message.toLowerCase().includes('not found') ? (
+            <NotFoundState
+              title="Project not found or deleted"
+              description="This project may have been removed or you no longer have access to it."
+              actionText="Go to Workspace Projects"
+              actionIcon={<ArrowLeft className="mr-2 size-4" />}
+              onAction={() => router.push(`/workspaces/${workspaceId}/projects`)}
+            />
+          ) : (
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertTitle>Unable to load tasks</AlertTitle>
+              <AlertDescription className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <span>{normalizeApiError(error).message}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    void refetch();
+                  }}
+                >
+                  <RefreshCw className="size-3.5" />
+                  <span>Retry</span>
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )
         )}
 
         {/* 3. Empty State */}

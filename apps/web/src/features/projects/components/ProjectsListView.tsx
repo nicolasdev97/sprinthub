@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   AlertCircle,
   AlertTriangle,
@@ -28,6 +28,7 @@ import {
   AlertTitle,
   Button,
   Input,
+  NotFoundState,
   Select,
   SelectOption,
   Skeleton,
@@ -56,12 +57,18 @@ type ArchiveFilterValue = 'ALL' | 'ACTIVE' | 'ARCHIVED';
 type StatusFilterValue = 'ALL' | ProjectStatus;
 
 export function ProjectsListView({ workspaceId }: ProjectsListViewProps) {
+  const router = useRouter();
   const { user } = useAuth();
   const { activeWorkspaceId, setActiveWorkspaceId } = useWorkspaceContext();
   const searchParams = useSearchParams();
   const fromParam = searchParams.get('from');
 
-  const { data: workspace } = useWorkspace(workspaceId);
+  const {
+    data: workspace,
+    isLoading: isWorkspaceLoading,
+    isError: isWorkspaceError,
+    error: workspaceError,
+  } = useWorkspace(workspaceId);
   const { data: members } = useWorkspaceMembers(workspaceId);
 
   const isFromDashboard = fromParam === 'dashboard';
@@ -159,6 +166,35 @@ export function ProjectsListView({ workspaceId }: ProjectsListViewProps) {
     setSortBy('createdAt');
     setSortOrder('desc');
   };
+
+  if (isWorkspaceError || (!isWorkspaceLoading && !workspace)) {
+    const apiError = workspaceError ? normalizeApiError(workspaceError) : null;
+    const isNotFound =
+      !apiError ||
+      apiError.statusCode === 404 ||
+      apiError.message.toLowerCase().includes('not found');
+
+    if (isNotFound) {
+      return (
+        <div className="space-y-6">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Workspace Details</h1>
+            <p className="text-sm text-muted-foreground">
+              This workspace has been deleted or cannot be found.
+            </p>
+          </div>
+
+          <NotFoundState
+            title="Workspace not found or deleted"
+            description="This workspace may have been removed or you no longer have access to it."
+            actionText="Go to Workspaces"
+            actionIcon={<ArrowLeft className="mr-2 size-4" />}
+            actionHref="/workspaces"
+          />
+        </div>
+      );
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -404,23 +440,34 @@ export function ProjectsListView({ workspaceId }: ProjectsListViewProps) {
 
       {/* 2. Error State */}
       {isError && !isLoading && (
-        <Alert variant="destructive">
-          <AlertCircle className="size-4" />
-          <AlertTitle>Unable to load projects</AlertTitle>
-          <AlertDescription className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <span>{normalizeApiError(error).message}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                void refetch();
-              }}
-            >
-              <RefreshCw className="size-3.5" />
-              <span>Retry</span>
-            </Button>
-          </AlertDescription>
-        </Alert>
+        normalizeApiError(error).statusCode === 404 ||
+        normalizeApiError(error).message.toLowerCase().includes('not found') ? (
+          <NotFoundState
+            title="Workspace not found or deleted"
+            description="This workspace may have been removed or you no longer have access to it."
+            actionText="Go to Workspaces"
+            actionIcon={<ArrowLeft className="mr-2 size-4" />}
+            onAction={() => router.push('/workspaces')}
+          />
+        ) : (
+          <Alert variant="destructive">
+            <AlertCircle className="size-4" />
+            <AlertTitle>Unable to load projects</AlertTitle>
+            <AlertDescription className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <span>{normalizeApiError(error).message}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  void refetch();
+                }}
+              >
+                <RefreshCw className="size-3.5" />
+                <span>Retry</span>
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )
       )}
 
       {/* 3. Empty State */}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Loader2, Trash2 } from 'lucide-react';
 
 import {
@@ -36,6 +37,7 @@ export function DeleteTaskDialog({
   onDeleted,
 }: DeleteTaskDialogProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const deleteTaskMutation = useDeleteTask(task.projectId);
   const [internalOpen, setInternalOpen] = useState(false);
 
@@ -44,15 +46,16 @@ export function DeleteTaskDialog({
 
   const handleDelete = async () => {
     try {
+      setIsOpen(false);
+      onDeleted?.();
       await deleteTaskMutation.mutateAsync(task.id);
+      queryClient.removeQueries({ queryKey: ['tasks', task.id] });
 
       toast({
         title: 'Task deleted',
         description: `"${task.title}" has been permanently removed.`,
         variant: 'success',
       });
-      setIsOpen(false);
-      onDeleted?.();
     } catch (error) {
       const apiError = normalizeApiError(error);
       toast({

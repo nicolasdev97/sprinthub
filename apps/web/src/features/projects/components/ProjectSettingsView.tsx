@@ -26,6 +26,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  NotFoundState,
   Skeleton,
   useToast,
 } from '@/components/ui';
@@ -53,7 +54,12 @@ export function ProjectSettingsView({ workspaceId, projectId }: ProjectSettingsV
 
   const { data: project, isLoading, isError, error, refetch } = useProject(projectId);
 
-  const { data: workspace } = useWorkspace(workspaceId);
+  const {
+    data: workspace,
+    isLoading: isWorkspaceLoading,
+    isError: isWorkspaceError,
+    error: workspaceError,
+  } = useWorkspace(workspaceId);
   const { data: members } = useWorkspaceMembers(workspaceId);
   const archiveMutation = useArchiveProject(workspaceId);
 
@@ -121,6 +127,27 @@ export function ProjectSettingsView({ workspaceId, projectId }: ProjectSettingsV
   if (isError) {
     const apiError = normalizeApiError(error);
 
+    if (apiError.statusCode === 404 || apiError.message.toLowerCase().includes('not found')) {
+      return (
+        <div className="space-y-6">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Project Details</h1>
+            <p className="text-sm text-muted-foreground">
+              This project has been deleted or cannot be found.
+            </p>
+          </div>
+
+          <NotFoundState
+            title="Project not found or deleted"
+            description="This project may have been removed or you no longer have access to it."
+            actionText="Go to Workspace Projects"
+            actionIcon={<ArrowLeft className="mr-2 size-4" />}
+            actionHref={`/workspaces/${workspaceId}/projects`}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-4">
         <Link href={backHref}>
@@ -154,23 +181,52 @@ export function ProjectSettingsView({ workspaceId, projectId }: ProjectSettingsV
   // 3. Empty / Not Found Fallback
   if (!project) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Project Not Found</CardTitle>
-          <CardDescription>
-            The requested project could not be found or you do not have access to it.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Link href={`/workspaces/${workspaceId}/projects`}>
-            <Button variant="outline">
-              <ArrowLeft className="size-4" />
-              <span>Return to Projects</span>
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Project Details</h1>
+          <p className="text-sm text-muted-foreground">
+            This project has been deleted or cannot be found.
+          </p>
+        </div>
+
+        <NotFoundState
+          title="Project not found or deleted"
+          description="The requested project could not be found or you do not have access to it."
+          actionText="Go to Workspace Projects"
+          actionIcon={<ArrowLeft className="mr-2 size-4" />}
+          actionHref={`/workspaces/${workspaceId}/projects`}
+        />
+      </div>
     );
+  }
+
+  if (isWorkspaceError || (!isWorkspaceLoading && !workspace)) {
+    const apiError = workspaceError ? normalizeApiError(workspaceError) : null;
+    const isNotFound =
+      !apiError ||
+      apiError.statusCode === 404 ||
+      apiError.message.toLowerCase().includes('not found');
+
+    if (isNotFound) {
+      return (
+        <div className="space-y-6">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Workspace Details</h1>
+            <p className="text-sm text-muted-foreground">
+              This workspace has been deleted or cannot be found.
+            </p>
+          </div>
+
+          <NotFoundState
+            title="Workspace not found or deleted"
+            description="This workspace may have been removed or you no longer have access to it."
+            actionText="Go to Workspaces"
+            actionIcon={<ArrowLeft className="mr-2 size-4" />}
+            actionHref="/workspaces"
+          />
+        </div>
+      );
+    }
   }
 
   const handleToggleArchive = async () => {

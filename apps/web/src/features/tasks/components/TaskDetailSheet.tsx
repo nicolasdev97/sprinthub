@@ -8,9 +8,9 @@ import {
   Calendar,
   CheckCircle2,
   Loader2,
-  RefreshCw,
   Save,
   User as UserIcon,
+  X,
 } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
 
@@ -28,6 +28,7 @@ import {
   FormMessage,
   Input,
   Label,
+  NotFoundState,
   Select,
   SelectOption,
   Separator,
@@ -492,7 +493,6 @@ export function TaskDetailSheet({
     isLoading,
     isError,
     error,
-    refetch,
   } = useTask(open && taskId ? taskId : '');
 
   const canDelete = Boolean(
@@ -539,27 +539,41 @@ export function TaskDetailSheet({
             <SheetHeader className="border-b border-border px-6 py-4">
               <SheetTitle className="text-left text-base">Task Details</SheetTitle>
               <SheetDescription className="text-left text-xs">
-                Unable to load task details.
+                {normalizeApiError(error).statusCode === 404 ||
+                normalizeApiError(error).message.toLowerCase().includes('not found')
+                  ? 'This task has been deleted or cannot be found.'
+                  : 'Unable to load task details.'}
               </SheetDescription>
             </SheetHeader>
             <div className="p-6">
-              <Alert variant="destructive">
-                <AlertCircle className="size-4" />
-                <AlertTitle>Unable to load task details</AlertTitle>
-                <AlertDescription className="mt-2 flex items-center justify-between gap-2">
-                  <span>{normalizeApiError(error).message}</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      void refetch();
-                    }}
-                  >
-                    <RefreshCw className="size-3.5" />
-                    <span>Retry</span>
-                  </Button>
-                </AlertDescription>
-              </Alert>
+              {normalizeApiError(error).statusCode === 404 ||
+              normalizeApiError(error).message.toLowerCase().includes('not found') ? (
+                <NotFoundState
+                  title="Task not found or deleted"
+                  description="This task may have been removed or no longer exists."
+                  actionText="Close"
+                  actionIcon={<X className="mr-2 size-4" />}
+                  actionVariant="default"
+                  onAction={() => onOpenChange(false)}
+                  className="py-12"
+                />
+              ) : (
+                <Alert variant="destructive">
+                  <AlertCircle className="size-4" />
+                  <AlertTitle>Unable to load task details</AlertTitle>
+                  <AlertDescription className="mt-2 flex items-center justify-between gap-2">
+                    <span>{normalizeApiError(error).message}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onOpenChange(false)}
+                    >
+                      <X className="size-3.5" />
+                      <span>Close</span>
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           </>
         )}

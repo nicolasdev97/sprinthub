@@ -22,6 +22,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  NotFoundState,
   Skeleton,
   useToast,
 } from '@/components/ui';
@@ -106,6 +107,28 @@ export function WorkspaceSettingsView({ workspaceId }: WorkspaceSettingsViewProp
   // 2. Error State
   if (isError) {
     const apiError = normalizeApiError(error);
+    const isNotFound = apiError.statusCode === 404 || apiError.message.toLowerCase().includes('not found');
+
+    if (isNotFound) {
+      return (
+        <div className="space-y-6">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Workspace Details</h1>
+            <p className="text-sm text-muted-foreground">
+              This workspace has been deleted or cannot be found.
+            </p>
+          </div>
+
+          <NotFoundState
+            title="Workspace not found or deleted"
+            description="This workspace may have been removed or you no longer have access to it."
+            actionText="Go to Workspaces"
+            actionIcon={<ArrowLeft className="mr-2 size-4" />}
+            actionHref="/workspaces"
+          />
+        </div>
+      );
+    }
 
     return (
       <div className="space-y-4">
@@ -140,22 +163,22 @@ export function WorkspaceSettingsView({ workspaceId }: WorkspaceSettingsViewProp
   // 3. Empty / Not Found Fallback
   if (!workspace) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Workspace Not Found</CardTitle>
-          <CardDescription>
-            The requested workspace could not be found or you no longer have access to it.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Link href={backHref}>
-            <Button variant="outline">
-              <ArrowLeft className="size-4" />
-              <span>{backLabel}</span>
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Workspace Details</h1>
+          <p className="text-sm text-muted-foreground">
+            This workspace has been deleted or cannot be found.
+          </p>
+        </div>
+
+        <NotFoundState
+          title="Workspace not found or deleted"
+          description="The requested workspace could not be found or you no longer have access to it."
+          actionText="Go to Workspaces"
+          actionIcon={<ArrowLeft className="mr-2 size-4" />}
+          actionHref="/workspaces"
+        />
+      </div>
     );
   }
 
