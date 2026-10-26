@@ -11,6 +11,7 @@ import {
 } from "../dto";
 import { WorkspaceRepository } from "../repository";
 import { NotificationService } from "../../notifications";
+import { eventsService } from "../../events";
 
 export class WorkspaceService {
   constructor(
@@ -27,7 +28,13 @@ export class WorkspaceService {
       throw new AppError("Workspace name already exists", 409);
     }
 
-    return this.workspaceRepository.createWorkspace(data, ownerId);
+    const workspace = await this.workspaceRepository.createWorkspace(data, ownerId);
+    eventsService.broadcast({
+      type: "WORKSPACE_MUTATED",
+      workspaceId: workspace.id,
+      action: "updated",
+    });
+    return workspace;
   }
 
   async getWorkspaces(userId: string, filters?: WorkspaceFilterParams) {
@@ -80,7 +87,13 @@ export class WorkspaceService {
       }
     }
 
-    return this.workspaceRepository.updateWorkspace(workspaceId, data);
+    const updated = await this.workspaceRepository.updateWorkspace(workspaceId, data);
+    eventsService.broadcast({
+      type: "WORKSPACE_MUTATED",
+      workspaceId,
+      action: "updated",
+    });
+    return updated;
   }
 
   async deleteWorkspace(workspaceId: string, userId: string) {
@@ -99,6 +112,11 @@ export class WorkspaceService {
     }
 
     await this.workspaceRepository.deleteWorkspace(workspaceId);
+    eventsService.broadcast({
+      type: "WORKSPACE_MUTATED",
+      workspaceId,
+      action: "deleted",
+    });
   }
 
   async addWorkspaceMember(
@@ -152,11 +170,21 @@ export class WorkspaceService {
         data.role,
       );
 
+    const workspace =
+      await this.workspaceRepository.getWorkspaceEntityById(workspaceId);
+    const workspaceName = workspace?.name ?? "a workspace";
+
     await this.notificationService.createNotification(
       memberUser.id,
       "Added to workspace",
-      "You have been added to a workspace.",
+      `You have been added to workspace "${workspaceName}".<!--link:/workspaces/${workspaceId}/projects-->`,
     );
+
+    eventsService.broadcast({
+      type: "WORKSPACE_MUTATED",
+      workspaceId,
+      action: "member_added",
+    });
 
     return workspaceMemberCreated;
   }
@@ -235,7 +263,13 @@ export class WorkspaceService {
       throw new AppError("Cannot update workspace owner", 403);
     }
 
-    return this.workspaceRepository.updateWorkspaceMemberRole(memberId, role);
+    const result = await this.workspaceRepository.updateWorkspaceMemberRole(memberId, role);
+    eventsService.broadcast({
+      type: "WORKSPACE_MUTATED",
+      workspaceId,
+      action: "role_updated",
+    });
+    return result;
   }
 
   async removeWorkspaceMember(
@@ -280,10 +314,60 @@ export class WorkspaceService {
       throw new AppError("Admins cannot remove other admins", 403);
     }
 
-    return this.workspaceRepository.deleteWorkspaceMember(
+    const result = await this.workspaceRepository.deleteWorkspaceMember(
       memberId,
       workspaceId,
       member.userId,
     );
+    eventsService.broadcast({
+      type: "WORKSPACE_MUTATED",
+      workspaceId,
+      action: "member_removed",
+    });
+    return result;
+  }
+
+  async transferWorkspaceOwnership(
+    workspaceId: string,
+    currentUserId: string,
+    newOwnerId: string,
+  ) {
+    const workspace = await this.workspaceRepository.getWorkspaceEntityById(workspaceId);
+
+    if (!workspace) {
+      throw new AppError("Workspace not found", 404);
+    }
+
+    if (workspace.ownerId !== currentUserId) {
+      throw new AppError("Only the workspace owner can transfer ownership", 403);
+    }
+
+    if (newOwnerId === currentUserId) {
+      throw new AppError("Cannot transfer ownership to yourself", 400);
+    }
+
+    const targetMember = await this.workspaceRepository.getWorkspaceMemberByUser(
+      workspaceId,
+      newOwnerId,
+    );
+
+    if (!targetMember) {
+      throw new AppError(
+        "The target user must be a member of the workspace to receive ownership",
+        400,
+      );
+    }
+
+    const result = await this.workspaceRepository.transferWorkspaceOwnership(
+      workspaceId,
+      currentUserId,
+      newOwnerId,
+    );
+    eventsService.broadcast({
+      type: "WORKSPACE_MUTATED",
+      workspaceId,
+      action: "ownership_transferred",
+    });
+    return result;
   }
 }

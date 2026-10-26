@@ -6,6 +6,7 @@ import { ProjectRepository } from "../repository";
 import { WorkspaceService } from "../../workspaces";
 import { ProjectFilterParams } from "../types";
 import { NotificationService } from "../../notifications";
+import { eventsService } from "../../events";
 
 export class ProjectService {
   constructor(
@@ -47,8 +48,15 @@ export class ProjectService {
     await this.notificationService.createManyNotifications(
       workspaceMembers.map((workspaceMember) => workspaceMember.user.id),
       "Project created",
-      "A new project has been created in your workspace.",
+      `Project "${project.name}" has been created in your workspace.<!--link:/workspaces/${data.workspaceId}/projects/${project.id}/tasks-->`,
     );
+
+    eventsService.broadcast({
+      type: "PROJECT_MUTATED",
+      workspaceId: data.workspaceId,
+      projectId: project.id,
+      action: "created",
+    });
 
     return project;
   }
@@ -122,7 +130,16 @@ export class ProjectService {
       }
     }
 
-    return this.projectRepository.updateProject(projectId, data);
+    const updated = await this.projectRepository.updateProject(projectId, data);
+
+    eventsService.broadcast({
+      type: "PROJECT_MUTATED",
+      workspaceId: project.workspaceId,
+      projectId,
+      action: "updated",
+    });
+
+    return updated;
   }
 
   async deleteProject(projectId: string, userId: string) {
@@ -146,6 +163,13 @@ export class ProjectService {
     }
 
     await this.projectRepository.deleteProject(projectId);
+
+    eventsService.broadcast({
+      type: "PROJECT_MUTATED",
+      workspaceId: project.workspaceId,
+      projectId,
+      action: "deleted",
+    });
   }
 
   async archiveProject(
@@ -180,6 +204,15 @@ export class ProjectService {
       throw new AppError("Project is already unarchived", 400);
     }
 
-    return this.projectRepository.archiveProject(projectId, data.archived);
+    const archived = await this.projectRepository.archiveProject(projectId, data.archived);
+
+    eventsService.broadcast({
+      type: "PROJECT_MUTATED",
+      workspaceId: project.workspaceId,
+      projectId,
+      action: "archived",
+    });
+
+    return archived;
   }
 }

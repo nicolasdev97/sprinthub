@@ -7,16 +7,23 @@ import { ToastProvider } from '@/components/ui';
 import { AuthProvider } from '@/features/auth';
 import { queryClient } from '@/lib';
 
+import { ThemeProvider } from './ThemeProvider';
+import { RealtimeEventsProvider } from './RealtimeEventsProvider';
+
 interface ProvidersProps {
   children: ReactNode;
 }
 
 export function Providers({ children }: ProvidersProps) {
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClient}>
-        <ToastProvider>{children}</ToastProvider>
-      </QueryClientProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <RealtimeEventsProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </RealtimeEventsProvider>
+        </QueryClientProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

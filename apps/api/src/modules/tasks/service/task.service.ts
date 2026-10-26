@@ -15,6 +15,7 @@ import { ProjectService } from "../../projects";
 import { TaskFilterParams } from "../types";
 
 import { NotificationService } from "../../notifications";
+import { eventsService } from "../../events";
 
 export class TaskService {
   constructor(
@@ -67,11 +68,19 @@ export class TaskService {
 
     const task = await this.taskRepository.createTask(taskData);
 
+    eventsService.broadcast({
+      type: "TASK_MUTATED",
+      workspaceId: project.workspaceId,
+      projectId,
+      taskId: task.id,
+      action: "created",
+    });
+
     if (data.assigneeId) {
       await this.notificationService.createNotification(
         data.assigneeId,
         "Task assigned",
-        "You have been assigned a task.",
+        `You have been assigned to task "${task.title}".<!--link:/workspaces/${project.workspaceId}/projects/${projectId}/tasks?taskId=${task.id}-->`,
       );
     }
 
@@ -146,7 +155,17 @@ export class TaskService {
       }
     }
 
-    return this.taskRepository.updateTask(taskId, data);
+    const updated = await this.taskRepository.updateTask(taskId, data);
+
+    eventsService.broadcast({
+      type: "TASK_MUTATED",
+      workspaceId: project.workspaceId,
+      projectId: task.projectId,
+      taskId,
+      action: "updated",
+    });
+
+    return updated;
   }
 
   async deleteTask(taskId: string, userId: string) {
@@ -181,6 +200,14 @@ export class TaskService {
     }
 
     await this.taskRepository.deleteTask(taskId);
+
+    eventsService.broadcast({
+      type: "TASK_MUTATED",
+      workspaceId: project.workspaceId,
+      projectId: task.projectId,
+      taskId,
+      action: "deleted",
+    });
   }
 
   async assignTask(taskId: string, userId: string, data: AssignTaskDto) {
@@ -228,12 +255,23 @@ export class TaskService {
     );
 
     if (hasAssigneeChanged && data.assigneeId !== null) {
+      const project = await this.projectService.getProjectEntityById(
+        task.projectId,
+      );
       await this.notificationService.createNotification(
         data.assigneeId,
         "Task assigned",
-        "You have been assigned a task.",
+        `You have been assigned to task "${task.title}".<!--link:/workspaces/${project.workspaceId}/projects/${task.projectId}/tasks?taskId=${taskId}-->`,
       );
     }
+
+    eventsService.broadcast({
+      type: "TASK_MUTATED",
+      workspaceId: project.workspaceId,
+      projectId: task.projectId,
+      taskId,
+      action: "updated",
+    });
 
     return updatedTask;
   }
@@ -283,9 +321,17 @@ export class TaskService {
       await this.notificationService.createNotification(
         task.assigneeId,
         "Task status changed",
-        "The status of your assigned task has changed.",
+        `The status of task "${task.title}" has changed to ${data.status}.<!--link:/workspaces/${project.workspaceId}/projects/${task.projectId}/tasks?taskId=${taskId}-->`,
       );
     }
+
+    eventsService.broadcast({
+      type: "TASK_MUTATED",
+      workspaceId: project.workspaceId,
+      projectId: task.projectId,
+      taskId,
+      action: "updated",
+    });
 
     return updatedTask;
   }
@@ -329,9 +375,17 @@ export class TaskService {
       await this.notificationService.createNotification(
         task.assigneeId,
         "Task priority changed",
-        "The priority of your assigned task has changed.",
+        `The priority of task "${task.title}" has changed to ${data.priority}.<!--link:/workspaces/${project.workspaceId}/projects/${task.projectId}/tasks?taskId=${taskId}-->`,
       );
     }
+
+    eventsService.broadcast({
+      type: "TASK_MUTATED",
+      workspaceId: project.workspaceId,
+      projectId: task.projectId,
+      taskId,
+      action: "updated",
+    });
 
     return updatedTask;
   }

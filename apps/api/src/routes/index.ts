@@ -8,6 +8,7 @@ import { taskRouter } from "../modules/tasks";
 import { userRouter } from "../modules/users";
 import { notificationRouter } from "../modules/notifications";
 import { dashboardRouter } from "../modules/dashboard";
+import { eventsRouter } from "../modules/events";
 
 const router = Router();
 
@@ -22,6 +23,7 @@ apiRouter.use("/", projectRouter);
 apiRouter.use("/", taskRouter);
 apiRouter.use("/", dashboardRouter);
 apiRouter.use("/notifications", notificationRouter);
+apiRouter.use("/events", eventsRouter);
 
 router.use("/api", apiRouter);
 

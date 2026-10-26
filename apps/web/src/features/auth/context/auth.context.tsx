@@ -5,6 +5,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useState 
 import { queryClient } from '@/lib';
 import { setAccessToken, subscribeAccessToken } from '@/services';
 import { userService } from '@/features/users';
+import { crossTabSync } from '@/shared/utils';
 
 import { authService } from '../service';
 import { AuthUser } from '../types';
@@ -41,6 +42,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setAccessTokenState(null);
     setUser(null);
     queryClient.clear();
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.removeItem('sprinthub:active-workspace-id');
+      } catch {
+        // Ignore storage errors in restricted environments
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -52,6 +60,30 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     });
   }, []);
+
+  // Listen to cross-tab broadcast events for instant multi-tab sync
+  useEffect(() => {
+    return crossTabSync.subscribe((event) => {
+      if (event.type === 'AUTH_LOGOUT') {
+        clearAuth();
+        if (
+          typeof window !== 'undefined' &&
+          !window.location.pathname.startsWith('/login') &&
+          !window.location.pathname.startsWith('/register') &&
+          window.location.pathname !== '/'
+        ) {
+          window.location.href = '/login';
+        }
+      } else if (event.type === 'AUTH_USER_UPDATED') {
+        setUser(event.user);
+        queryClient.invalidateQueries({ queryKey: ['user'] });
+      } else if (event.type === 'QUERY_INVALIDATE') {
+        event.queryKeys.forEach((key) => {
+          queryClient.invalidateQueries({ queryKey: key });
+        });
+      }
+    });
+  }, [clearAuth]);
 
   useEffect(() => {
     let isMounted = true;
@@ -92,6 +124,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       await authService.logout();
     } finally {
       clearAuth();
+      crossTabSync.postMessage({ type: 'AUTH_LOGOUT' });
     }
   };
 
