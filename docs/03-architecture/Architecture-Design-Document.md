@@ -1,1492 +1,1573 @@
-# SprintHub – Architecture Design Document (ADD)
-
-> Software architecture specification defining the architectural decisions, design principles, and technical structure of SprintHub.
-
----
-
-| Property         | Value                              |
-| ---------------- | ---------------------------------- |
-| **Document**     | Architecture Design Document (ADD) |
-| **Project**      | SprintHub                          |
-| **Version**      | 1.1                                |
-| **Status**       | Approved                           |
-| **Owner**        | Nicolás Palacio                    |
-| **Last Updated** | September 2026                     |
-
----
-
-# Table of Contents
-
-1. Introduction
-2. Architectural Objectives
-3. Architectural Drivers
-4. Quality Attributes
-5. Architectural Principles
-6. System Context
-7. High-Level Architecture
-8. Frontend Architecture
-9. Backend Architecture
-10. Data Architecture
-11. API Architecture
-12. Authentication & Authorization Architecture
-13. Security Architecture
-14. Global Error Handling Architecture
-15. Notification Architecture
-16. External Integrations
-17. Architectural Decisions
-18. Infrastructure Architecture
-19. Docker Strategy
-20. CI/CD Architecture
-21. Deployment Architecture
-22. Performance Strategy
-23. Scalability Strategy
-24. Observability
-25. Risks and Trade-offs
-26. Architecture Decision Summary
-27. Future Evolution
-28. Conclusion
-
----
-
-# 1. Introduction
-
-## Purpose
-
-This Architecture Design Document (ADD) describes the software architecture of SprintHub, a Software-as-a-Service (SaaS) project management and team collaboration platform.
-
-The purpose of this document is to define the architectural decisions, technical structure, design principles, and technology choices that guide the implementation of the application.
-
-This document complements the Blueprint, Product Requirements Document (PRD), and Software Requirements Specification (SRS), serving as the primary architectural reference for developers, architects, reviewers, and future contributors.
-
----
-
-## Scope
-
-This document covers the architecture of the SprintHub MVP, including:
-
-- Overall system architecture
-- Frontend architecture
-- Backend architecture
-- Data architecture
-- Security architecture
-- Authentication and authorization
-- Infrastructure
-- Deployment strategy
-- Scalability considerations
-- Technology decisions
-
-Detailed implementation and source code are intentionally excluded from this document.
-
----
-
-## Intended Audience
-
-This document is intended for:
-
-- Software Engineers
-- Technical Leads
-- Software Architects
-- QA Engineers
-- DevOps Engineers
-- Technical Reviewers
-- Recruiters evaluating engineering practices
-
----
-
-# 2. Architectural Objectives
-
-SprintHub is designed to demonstrate production-ready software engineering practices while remaining simple enough to be developed and maintained by a single engineer.
-
-The architecture has been designed to satisfy the following objectives.
-
----
-
-## AO-01 – Maintainability
-
-The codebase should be easy to understand, modify, and extend.
-
-Changes within one module should have minimal impact on the rest of the application.
-
----
-
-## AO-02 – Scalability
-
-The architecture should support future growth without requiring major structural changes.
-
-New features should be introduced as independent modules whenever possible.
-
----
-
-## AO-03 – Modularity
-
-Business domains should remain isolated from one another.
-
-Each module should encapsulate its own responsibilities and expose well-defined interfaces.
-
----
-
-## AO-04 – Security
-
-Security is treated as a first-class architectural concern.
-
-Authentication, authorization, validation, and secure communication are considered from the beginning of the project rather than added later.
-
----
-
-## AO-05 – Testability
-
-The architecture should facilitate automated testing through loose coupling and clear separation of responsibilities.
-
-Business logic should remain testable independently of HTTP, databases, or external services.
-
----
-
-## AO-06 – Developer Experience
-
-SprintHub aims to provide an efficient and enjoyable development experience through:
-
-- Consistent architecture
-- Strong typing
-- Clear folder organization
-- Automated tooling
-- Predictable conventions
-
----
-
-# 3. Architectural Drivers
-
-Architectural drivers represent the primary factors that influenced the design of SprintHub.
-
----
-
-## AD-01 – Portfolio Quality
-
-SprintHub is intended to serve as a flagship portfolio project demonstrating professional software engineering practices.
-
-The architecture showcases:
-
-- Clean Architecture concepts
-- Layered backend architecture
-- Feature-based frontend architecture
-- Security best practices
-- DevOps practices
-- Testing strategy
-
----
-
-## AD-02 – Realistic Product Design
-
-Although SprintHub is a portfolio project, it is intentionally designed as a realistic SaaS application.
-
-Architectural decisions prioritize production readiness over implementation shortcuts.
-
----
-
-## AD-03 – Long-Term Evolution
-
-The architecture supports incremental growth through modular expansion.
-
-Future modules may include:
-
-- Comments
-- Mentions
-- Activity Timeline
-- File Attachments
-- Labels
-- Custom Fields
-- Time Tracking
-- Sprint Planning
-- Task Dependencies
-- Advanced Reporting
-- Team Analytics
-- Real-Time Collaboration
-
-These additions should not require significant architectural redesign.
-
----
-
-## AD-04 – Separation of Concerns
-
-Each architectural layer has a single responsibility.
-
-Responsibilities must remain clearly separated between layers.
-
----
-
-## AD-05 – Simplicity
-
-Whenever multiple valid architectural solutions exist, the simplest solution that satisfies current requirements should be preferred.
-
-SprintHub intentionally avoids unnecessary complexity while maintaining professional engineering standards.
-
----
-
-# 4. Quality Attributes
-
-The following quality attributes have been prioritized during the architectural design of SprintHub.
-
----
-
-## QA-01 – Performance
-
-The application should provide fast response times under normal operating conditions.
-
-Design strategies include:
-
-- Database indexing
-- Query optimization
-- Lazy loading
-- Code splitting
-
-Future infrastructure improvements may include distributed caching to further optimize application performance.
-
----
-
-## QA-02 – Reliability
-
-Unexpected failures should not compromise overall system stability.
-
-Strategies include:
-
-- Centralized error handling
-- Input validation
-- Graceful failure responses
-- Transaction management
-
----
-
-## QA-03 – Security
-
-Security mechanisms include:
-
-- JWT Authentication
-- Refresh Tokens
-- Password Hashing
-- HttpOnly Cookies
-- Role-Based Access Control (RBAC)
-- Rate Limiting
-- Helmet
-- CORS
-- Input Validation
-
----
-
-## QA-04 – Scalability
-
-SprintHub has been designed to scale as new features and infrastructure requirements emerge.
-
-The architecture supports:
-
-- Modular business features
-- Independent modules
-- Future distributed caching
-- Additional infrastructure components
-
----
-
-## QA-05 – Maintainability
-
-Maintainability is achieved through:
-
-- Layered Backend Architecture
-- Feature-Based Frontend Architecture
-- Consistent naming conventions
-- Shared utilities
-- Reusable components
-
----
-
-## QA-06 – Testability
-
-Business logic remains independent from infrastructure, enabling:
-
-- Unit Tests
-- Integration Tests
-- End-to-End (E2E) Tests
-
-without excessive mocking.
-
----
-
-# 5. Architectural Principles
-
-SprintHub follows a set of architectural principles that guide all implementation decisions.
-
----
-
-## AP-01 – Separation of Concerns
-
-Each architectural component has a single responsibility.
-
-Examples:
-
-- Controllers handle HTTP requests.
-- Services implement business logic.
-- Repositories access the database.
-
----
-
-## AP-02 – Single Responsibility
-
-Every module should have one reason to change.
-
-Each feature remains cohesive and independent.
-
----
-
-## AP-03 – High Cohesion
-
-Related functionality should remain together.
-
-For example, the **Tasks** module contains all logic related to task management.
-
----
-
-## AP-04 – Low Coupling
-
-Modules should depend on abstractions rather than concrete implementations whenever possible.
-
-Changes inside one module should not affect unrelated modules.
-
----
-
-## AP-05 – Reusability
-
-Reusable functionality should be extracted into shared:
-
-- Utilities
-- Hooks
-- Middleware
-- Services
-
----
-
-## AP-06 – Convention over Configuration
-
-SprintHub follows consistent naming conventions and folder structures to reduce cognitive load and improve developer productivity.
-
----
-
-## AP-07 – Security by Design
-
-Security is integrated into every architectural layer rather than being treated as an afterthought.
-
----
-
-## AP-08 – API First
-
-The backend exposes well-defined REST APIs that act as the communication contract between the frontend and backend.
-
-This separation enables the frontend and backend to evolve independently and provides a foundation for future integrations with mobile applications and third-party clients.
-
----
-
-# 6. System Context
-
-SprintHub follows a traditional client-server architecture.
-
-Users interact with the application through a web browser.
-
-The frontend communicates exclusively with the backend through RESTful APIs.
-
-The backend processes business rules, validates requests, and interacts with the database.
-
-External services are incorporated only when required.
-
----
-
-## External Actors
-
-- End Users
-- Workspace Owners
-- Workspace Administrators
-- Workspace Members
-
----
-
-## External Systems
-
-Current MVP infrastructure includes:
-
-- PostgreSQL
-- GitHub Actions
-- Vercel
-- Render
-
-Future integrations may include:
-
-- Email Providers
-- Cloud Storage
-- Analytics Platforms
-- Distributed Caching Infrastructure
-
----
-
-# 7. High-Level Architecture
-
-SprintHub adopts a modular client-server architecture.
-
-The frontend and backend are deployed as independent applications.
-
-The backend is responsible for business logic and persistence.
-
-The frontend is responsible for presentation and user interaction.
-
----
-
-## High-Level Component Diagram
+# SprintHub – Architecture Design Document (ADD)
+
+> Software architecture specification defining the architectural decisions, design principles, and technical structure of SprintHub.
+
+---
+
+| Property         | Value                              |
+| ---------------- | ---------------------------------- |
+| **Document**     | Architecture Design Document (ADD) |
+| **Project**      | SprintHub                          |
+| **Version**      | 1.1                                |
+| **Status**       | Approved                           |
+| **Owner**        | Nicolás Palacio                    |
+| **Last Updated** | September 2026                     |
+
+---
+
+# Table of Contents
+
+1. Introduction
+2. Architectural Objectives
+3. Architectural Drivers
+4. Quality Attributes
+5. Architectural Principles
+6. System Context
+7. High-Level Architecture
+8. Frontend Architecture
+9. Backend Architecture
+10. Data Architecture
+11. API Architecture
+12. Authentication & Authorization Architecture
+13. Security Architecture
+14. Global Error Handling Architecture
+15. Notification Architecture
+16. External Integrations
+17. Architectural Decisions
+18. Infrastructure Architecture
+19. Docker Strategy
+20. CI/CD Architecture
+21. Deployment Architecture
+22. Performance Strategy
+23. Scalability Strategy
+24. Observability
+25. Risks and Trade-offs
+26. Architecture Decision Summary
+27. Future Evolution
+28. Conclusion
+
+---
+
+# 1. Introduction
+
+## Purpose
+
+This Architecture Design Document (ADD) describes the software architecture of SprintHub, a Software-as-a-Service (SaaS) project management and team collaboration platform.
+
+The purpose of this document is to define the architectural decisions, technical structure, design principles, and technology choices that guide the implementation of the application.
+
+This document complements the Blueprint, Product Requirements Document (PRD), and Software Requirements Specification (SRS), serving as the primary architectural reference for developers, architects, reviewers, and future contributors.
+
+---
+
+## Scope
+
+This document covers the architecture of the SprintHub MVP, including:
+
+- Overall system architecture
+- Frontend architecture
+- Backend architecture
+- Data architecture
+- Security architecture
+- Authentication and authorization
+- Infrastructure
+- Deployment strategy
+- Scalability considerations
+- Technology decisions
+
+Detailed implementation and source code are intentionally excluded from this document.
+
+---
+
+## Intended Audience
+
+This document is intended for:
+
+- Software Engineers
+- Technical Leads
+- Software Architects
+- QA Engineers
+- DevOps Engineers
+- Technical Reviewers
+- Recruiters evaluating engineering practices
+
+---
+
+# 2. Architectural Objectives
+
+SprintHub is designed to demonstrate production-ready software engineering practices while remaining simple enough to be developed and maintained by a single engineer.
+
+The architecture has been designed to satisfy the following objectives.
+
+---
+
+## AO-01 – Maintainability
+
+The codebase should be easy to understand, modify, and extend.
+
+Changes within one module should have minimal impact on the rest of the application.
+
+---
+
+## AO-02 – Scalability
+
+The architecture should support future growth without requiring major structural changes.
+
+New features should be introduced as independent modules whenever possible.
+
+---
+
+## AO-03 – Modularity
+
+Business domains should remain isolated from one another.
+
+Each module should encapsulate its own responsibilities and expose well-defined interfaces.
+
+---
+
+## AO-04 – Security
+
+Security is treated as a first-class architectural concern.
+
+Authentication, authorization, validation, and secure communication are considered from the beginning of the project rather than added later.
+
+---
+
+## AO-05 – Testability
+
+The architecture should facilitate automated testing through loose coupling and clear separation of responsibilities.
+
+Business logic should remain testable independently of HTTP, databases, or external services.
+
+---
+
+## AO-06 – Developer Experience
+
+SprintHub aims to provide an efficient and enjoyable development experience through:
+
+- Consistent architecture
+- Strong typing
+- Clear folder organization
+- Automated tooling
+- Predictable conventions
+
+---
+
+# 3. Architectural Drivers
+
+Architectural drivers represent the primary factors that influenced the design of SprintHub.
+
+---
+
+## AD-01 – Portfolio Quality
+
+SprintHub is intended to serve as a flagship portfolio project demonstrating professional software engineering practices.
+
+The architecture showcases:
+
+- Clean Architecture concepts
+- Layered backend architecture
+- Feature-based frontend architecture
+- Security best practices
+- DevOps practices
+- Testing strategy
+
+---
+
+## AD-02 – Realistic Product Design
+
+Although SprintHub is a portfolio project, it is intentionally designed as a realistic SaaS application.
+
+Architectural decisions prioritize production readiness over implementation shortcuts.
+
+---
+
+## AD-03 – Long-Term Evolution
+
+The architecture supports incremental growth through modular expansion.
+
+Future modules may include:
+
+- Comments
+- Mentions
+- Activity Timeline
+- File Attachments
+- Labels
+- Custom Fields
+- Time Tracking
+- Sprint Planning
+- Task Dependencies
+- Advanced Reporting
+- Team Analytics
+- Real-Time Collaboration
+
+These additions should not require significant architectural redesign.
+
+---
+
+## AD-04 – Separation of Concerns
+
+Each architectural layer has a single responsibility.
+
+Responsibilities must remain clearly separated between layers.
+
+---
+
+## AD-05 – Simplicity
+
+Whenever multiple valid architectural solutions exist, the simplest solution that satisfies current requirements should be preferred.
+
+SprintHub intentionally avoids unnecessary complexity while maintaining professional engineering standards.
+
+---
+
+# 4. Quality Attributes
+
+The following quality attributes have been prioritized during the architectural design of SprintHub.
+
+---
+
+## QA-01 – Performance
+
+The application should provide fast response times under normal operating conditions.
+
+Design strategies include:
+
+- Database indexing
+- Query optimization
+- Lazy loading
+- Code splitting
+
+Future infrastructure improvements may include distributed caching to further optimize application performance.
+
+---
+
+## QA-02 – Reliability
+
+Unexpected failures should not compromise overall system stability.
+
+Strategies include:
+
+- Centralized error handling
+- Input validation
+- Graceful failure responses
+- Transaction management
+
+---
+
+## QA-03 – Security
+
+Security mechanisms include:
+
+- JWT Authentication
+- Refresh Tokens
+- Password Hashing
+- HttpOnly Cookies
+- Role-Based Access Control (RBAC)
+- Rate Limiting
+- Helmet
+- CORS
+- Input Validation
+
+---
+
+## QA-04 – Scalability
+
+SprintHub has been designed to scale as new features and infrastructure requirements emerge.
+
+The architecture supports:
+
+- Modular business features
+- Independent modules
+- Future distributed caching
+- Additional infrastructure components
+
+---
+
+## QA-05 – Maintainability
+
+Maintainability is achieved through:
+
+- Layered Backend Architecture
+- Feature-Based Frontend Architecture
+- Consistent naming conventions
+- Shared utilities
+- Reusable components
+
+---
+
+## QA-06 – Testability
+
+Business logic remains independent from infrastructure, enabling:
+
+- Unit Tests
+- Integration Tests
+- End-to-End (E2E) Tests
+
+without excessive mocking.
+
+---
+
+# 5. Architectural Principles
+
+SprintHub follows a set of architectural principles that guide all implementation decisions.
+
+---
+
+## AP-01 – Separation of Concerns
+
+Each architectural component has a single responsibility.
+
+Examples:
+
+- Controllers handle HTTP requests.
+- Services implement business logic.
+- Repositories access the database.
+
+---
+
+## AP-02 – Single Responsibility
+
+Every module should have one reason to change.
+
+Each feature remains cohesive and independent.
+
+---
+
+## AP-03 – High Cohesion
+
+Related functionality should remain together.
+
+For example, the **Tasks** module contains all logic related to task management.
+
+---
+
+## AP-04 – Low Coupling
+
+Modules should depend on abstractions rather than concrete implementations whenever possible.
+
+Changes inside one module should not affect unrelated modules.
+
+---
+
+## AP-05 – Reusability
+
+Reusable functionality should be extracted into shared:
+
+- Utilities
+- Hooks
+- Middleware
+- Services
+
+---
+
+## AP-06 – Convention over Configuration
+
+SprintHub follows consistent naming conventions and folder structures to reduce cognitive load and improve developer productivity.
+
+---
+
+## AP-07 – Security by Design
+
+Security is integrated into every architectural layer rather than being treated as an afterthought.
+
+---
+
+## AP-08 – API First
+
+The backend exposes well-defined REST APIs that act as the communication contract between the frontend and backend.
+
+This separation enables the frontend and backend to evolve independently and provides a foundation for future integrations with mobile applications and third-party clients.
+
+---
+
+# 6. System Context
+
+SprintHub follows a traditional client-server architecture.
+
+Users interact with the application through a web browser.
+
+The frontend communicates exclusively with the backend through RESTful APIs.
+
+The backend processes business rules, validates requests, and interacts with the database.
+
+External services are incorporated only when required.
+
+---
+
+## External Actors
+
+- End Users
+- Workspace Owners
+- Workspace Administrators
+- Workspace Members
+
+---
+
+## External Systems
+
+Current MVP infrastructure includes:
+
+- PostgreSQL
+- GitHub Actions
+- Vercel
+- Render
+
+Future integrations may include:
+
+- Email Providers
+- Cloud Storage
+- Analytics Platforms
+- Distributed Caching Infrastructure
+
+---
+
+# 7. High-Level Architecture
+
+SprintHub adopts a modular client-server architecture.
+
+The frontend and backend are deployed as independent applications.
+
+The backend is responsible for business logic and persistence.
+
+The frontend is responsible for presentation and user interaction.
+
+---
+
+## High-Level Component Diagram
+
+```text
++----------------------+
+|      End User        |
++----------+-----------+
+           |
+      HTTPS Requests
+           |
+           ▼
++----------------------+
+|   Next.js Frontend   |
++----------+-----------+
+           |
+      REST API Calls
+           |
+           ▼
++----------------------+
+|   Express Backend    |
++----------+-----------+
+           |
+           ▼
++----------------------+
+|     PostgreSQL       |
++----------------------+
+```
+
+---
+
+## Architectural Layers
+
+### Presentation Layer
+
+Responsible for:
+
+- User Interface
+- Navigation
+- Client-side validation
+- State management
+
+Implemented using:
+
+- Next.js
+- React
+- TypeScript
+
+---
+
+### Application Layer
+
+Responsible for:
+
+- Request handling
+- Authentication
+- Authorization
+- Business workflows
+
+Implemented using:
+
+- Express
+- Controllers
+- Services
+
+---
+
+### Persistence Layer
+
+Responsible for:
+
+- Data persistence
+- Database queries
+- Transactions
+
+Implemented using:
+
+- Prisma ORM
+- PostgreSQL
+
+---
+
+### Infrastructure Layer
+
+Responsible for:
+
+- Deployment
+- Containerization
+- CI/CD
+- Logging
+- Environment configuration
+
+Implemented using:
+
+- Docker
+- GitHub Actions
+- Vercel
+- Render
+
+Future infrastructure enhancements may incorporate distributed caching and additional scalability services as application requirements evolve.
+
+---
+
+# 8. Frontend Architecture
+
+SprintHub adopts a **Feature-Based Architecture** built on top of the Next.js App Router.
+
+The frontend is organized around business domains rather than technical layers, improving scalability, maintainability, and developer experience.
+
+---
+
+## Architectural Style
+
+The frontend follows a Feature-Based Modular Architecture adhering strictly to ADR-006 and the Developer Guide naming conventions:
+
+- **Single-artifact layer folders (singular):** hook/, service/, schema/, context/
+- **Collection layer folders (plural):** components/, 	ypes/
+- **File naming standards:** <kebab-case>.<role>.ts (e.g., project.hook.ts, 	ask.service.ts, create-task.schema.ts, project.type.ts)
+- **React Components:** PascalCase.tsx
+
+Each feature encapsulates only the internal layers it requires on demand:
+
+- context/ (feature-scoped state, e.g., uth, workspaces)
+- hook/ (custom React hooks integrating TanStack Query)
+- service/ (API client abstraction)
+- schema/ (client-side Zod validation schemas)
+- 	ypes/ (TypeScript domain definitions and DTO mappings)
+- components/ (view-level and modular presentational UI components)
+
+---
+
+## High-Level Structure
+
+`	ext
+apps/
+└── web/
+    └── src/
+        ├── app/             # Next.js App Router (pages, layouts, and route groups)
+        ├── components/      # Shared presentation UI (shadcn/ui primitives, layout wrappers)
+        ├── features/        # Business feature modules (auth, dashboard, workspaces, projects, tasks, notifications)
+        ├── lib/             # Third-party utility client instances (TanStack Query client)
+        ├── providers/       # Top-level React Context providers (Query, Auth, Theme, Workspace)
+        ├── services/        # Base HTTP client with Axios interceptors and token refresh
+        └── shared/          # Cross-cutting error normalization, formatters, and utility functions
+`
+
+---
+
+## Application Route Map
+
+The application routes are organized under Next.js Route Groups:
+
+| Route Path | Route Type | Purpose |
+| :--- | :--- | :--- |
+| / | Static | Marketing landing page with dynamic session-aware CTA |
+| /(auth)/login | Dynamic | User authentication and session establishment |
+| /(auth)/register | Dynamic | New account registration |
+| /(app)/dashboard | Static | Centralized Personal Dashboard (cross-workspace metrics & tasks) |
+| /(app)/workspaces | Dynamic | Workspaces Hub (workspace management and cards) |
+| /(app)/workspaces/[workspaceId]/projects | Dynamic | Workspace Projects Overview and workspace metrics |
+| /(app)/workspaces/[workspaceId]/projects/[projectId]/tasks | Dynamic | Interactive Sprint Board (Kanban & Table Views, deep-link drawer) |
+| /(app)/workspaces/[workspaceId]/projects/[projectId]/settings | Dynamic | Project settings, lifecycle management, and danger zone |
+| /(app)/workspaces/[workspaceId]/settings | Dynamic | Workspace members, invitation management, and danger zone |
+| /(app)/projects | Static | Global Projects Hub (cross-workspace project search & filters) |
+| /(app)/tasks | Static | Global Tasks Hub (cross-workspace task search & cascading filters) |
+| /(app)/profile | Static | User profile management and active workspace memberships |
+
+---
+
+## Contextual Navigation & State Deep-Linking
+
+SprintHub enforces predictable spatial hierarchy and zero dead-ends through URL-driven contracts:
+
+1. **Contextual Back Navigation (?from=):**
+   - When navigating from /dashboard, /projects, or /tasks into workspace boards or settings, the originating route is forwarded via query parameters (e.g. ?from=dashboard or ?from=projects).
+   - The destination view dynamically adapts its back button (Back to Dashboard, Back to Projects Hub, Back to Tasks Hub, Back to <Workspace>) ensuring the user returns to their exact starting point.
+
+2. **Task Drawer Deep-Linking (?taskId=):**
+   - Task selection triggers URL synchronization (?taskId=<id>) without page reloads.
+   - Closing the drawer cleanses the query string while preserving origin parameters (rom=).
+   - Enables direct sharing and bookmarking of specific task modals across team members.
+
+---
+
+## Design Principles
+
+The frontend follows these principles:
+
+- Feature-Based Organization
+- Component Reusability
+- Composition over Inheritance
+- Accessibility First
+- Responsive Design
+- Type Safety
+- Separation of Server and Client State
+
+---
+
+# 9. Backend Architecture
+
+SprintHub follows a **Layered Modular Architecture**.
+
+Business logic is isolated from transport and persistence concerns through clearly defined architectural layers.
+
+---
+
+## Backend Layers
+
+```text
+HTTP Request
+      │
+      ▼
+Controller
+      │
+      ▼
+Service
+      │
+      ▼
+Repository
+      │
+      ▼
+Prisma ORM
+      │
+      ▼
+PostgreSQL
+```
+
+---
+
+## Layer Responsibilities
+
+### Controller Layer
+
+Responsible for:
+
+- Receiving HTTP requests.
+- Passing validated request data to application services.
+- Calling application services.
+- Returning HTTP responses.
+
+### Validation
+
+Request validation is handled through dedicated validation middleware using Zod schemas before requests reach the application services.
+
+---
+
+### Service Layer
+
+Responsible for:
+
+- Business rules.
+- Authorization.
+- Workflow orchestration.
+- Transaction coordination.
+
+The Service Layer is also responsible for enforcing domain-specific business rules, including task lifecycle rules.
+
+For example, when a task changes from `DONE` to another status, its `completedAt` value must be reset to `null`.
+
+---
+
+### Repository Layer
+
+Responsible for:
+
+- Data access.
+- Query abstraction.
+- Persistence operations.
+
+---
+
+### Persistence Layer
+
+Responsible for:
+
+- Entity persistence.
+- Database relationships.
+- Migrations.
+- Referential integrity.
+
+---
+
+# 10. Data Architecture
+
+SprintHub uses a relational database model implemented with PostgreSQL and Prisma ORM.
+
+The data architecture prioritizes:
+
+- Consistency
+- Referential integrity
+- Type safety
+- Maintainability
+
+---
+
+## Core Entities
+
+The MVP includes the following primary entities:
+
+- User
+- Workspace
+- WorkspaceMember
+- Project
+- Task
+- Notification
+- RefreshToken
+
+Detailed entity definitions, relationships, constraints, and indexes are documented in the **Database Design Specification (DDS)**.
+
+---
+
+## Data Integrity
+
+The data model enforces:
+
+- Primary keys.
+- Foreign keys.
+- Unique constraints.
+- Referential integrity rules.
+- Cascade deletion rules.
+- Nullable relationships where required.
+- Database indexes for frequently queried foreign keys.
+
+The database also enforces uniqueness rules for workspace membership relationships and entity names according to the application requirements.
+
+### Referential Integrity
+
+The database enforces the following deletion behavior:
+
+- Deleting a workspace deletes its workspace memberships and projects.
+- Deleting a project deletes its tasks.
+- Deleting a user deletes their workspace memberships, notifications, and refresh tokens.
+- If a user assigned to a task is deleted, the task remains and its `assigneeId` is set to `null`.
+
+### Default Values
+
+The database defines the following default values:
+
+- `WorkspaceMember.role` defaults to `MEMBER`.
+- `Notification.isRead` defaults to `false`.
+- `Project.archived` defaults to `false`.
+- UUID primary keys are generated automatically.
+- `createdAt` timestamps are generated automatically.
+- `updatedAt` timestamps are automatically updated when records change.
+
+### Database Indexes
+
+Indexes are defined for frequently queried foreign key fields:
+
+- `Workspace.ownerId`
+- `WorkspaceMember.userId`
+- `Project.workspaceId`
+- `Task.projectId`
+- `Notification.userId`
+- `RefreshToken.userId`
+
+These indexes support common lookup and relationship queries while maintaining the relational integrity of the database.
+
+---
+
+# 11. API Architecture
+
+SprintHub exposes functionality through a RESTful API.
+
+The API acts as the communication contract between the frontend and backend.
+
+---
+
+## Design Principles
+
+The API should be:
+
+- Predictable
+- Stateless
+- Versionable
+- Consistent
+- Secure
+
+---
+
+## Resource Structure
+
+SprintHub combines hierarchical collection routes (for scoped creation and listing) with shallow single-resource routes (for direct UUID-based operations):
+
+```text
+/api/health
+/api/auth
+/api/users
+/api/workspaces
+/api/workspaces/{workspaceId}/members
+/api/workspaces/{workspaceId}/projects
+/api/workspaces/{workspaceId}/dashboard
+/api/projects/{projectId}
+/api/projects/{projectId}/tasks
+/api/tasks/{taskId}
+/api/notifications
+```
+
+---
+
+## Search, Filtering and Sorting
+
+The API supports query-based search, filtering, and sorting for collection resources.
+
+### Workspaces
+
+Workspaces support:
+
+- Search by `name`.
+- Sorting by `name` or `createdAt`.
+- Sort order: `asc` or `desc`.
+
+Workspace filtering is not supported.
+
+### Projects
+
+Projects support:
+
+- Search by `name`.
+- Filtering by `status`.
+- Filtering by `archived`.
+- Sorting by `name` or `createdAt`.
+- Sort order: `asc` or `desc`.
+
+### Tasks
+
+Tasks support:
+
+- Search by `title`.
+- Filtering by `status`.
+- Filtering by `priority`.
+- Filtering by `assigneeId`.
+- Filtering by `dueDate`.
+- Sorting by `createdAt`, `dueDate`, or `priority`.
+- Sort order: `asc` or `desc`.
+
+Search is limited to the primary name field of each resource.
+
+---
+
+## Response Standardization
+
+All endpoints follow consistent REST response conventions:
+
+- **Successful queries (`200 OK`)** return the resource object or collection array directly (`[]` when empty), without wrapping payloads in a `success` or `message` envelope.
+- **Resource creations (`201 Created`)** and **updates (`200 OK`)** return the created or updated entity directly.
+- **Deletions (`DELETE`)** and **session logout (`POST /api/auth/logout`)** return `204 No Content` with an empty body.
+- **User-facing success messages** are generated and localized by the Frontend UI layer.
+- **Error responses (`4xx` / `5xx`)** are handled centrally by the Global Error Handler to ensure a predictable `{ "success": false, "message": string }` structure across the API.
+
+Detailed endpoint specifications and response contracts are documented in the **API Design Specification (ADS)**.
+
+---
+
+# 12. Authentication & Authorization Architecture
+
+SprintHub implements authentication using JWT together with Refresh Tokens.
+
+---
+
+## Authentication Flow
+
+```text
+User Login
+      │
+      ▼
+Credentials Validation
+      │
+      ▼
+Access Token Issued
+      │
+      ▼
+Refresh Token Issued
+      │
+      ▼
+Authenticated Session
+```
+
+---
+
+## Access Token
+
+Characteristics:
+
+- JWT
+- Short-lived
+- Sent through the `Authorization` header (`Bearer` scheme)
+- Used for authenticated API requests
+
+---
+
+## Refresh Token
+
+Characteristics:
+
+- Long-lived
+- Stored as an HttpOnly cookie
+- Persisted as a cryptographic hash in the database
+- Used to obtain new Access Tokens
+
+---
+
+## Authorization
+
+SprintHub implements Role-Based Access Control (RBAC).
+
+Supported roles:
+
+- OWNER
+- ADMIN
+- MEMBER
+
+Authorization rules are enforced within the Service Layer.
+
+### Task Authorization Matrix
+
+| Operation | Allowed Roles / Actors | Authorization & IDOR Policy |
+| :--- | :--- | :--- |
+| **Create Task** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace; project cannot be archived |
+| **Read Tasks / Task Details** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace (prevents cross-tenant IDOR) |
+| **Update Task Details** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace; project cannot be archived |
+| **Delete Task** | Task Creator (`task.createdById === userId`) OR Workspace `OWNER` / `ADMIN` | Members cannot delete tasks created by other users (`403 Forbidden`) |
+| **Assign / Unassign Task** | Workspace `OWNER`, `ADMIN` strictly | Workspace members receive `403 Forbidden`; target assignee must be a workspace member |
+| **Update Task Status** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace; project cannot be archived |
+| **Update Task Priority** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace; project cannot be archived |
+
+---
+
+# 13. Security Architecture
+
+Security is integrated across every architectural layer.
+
+---
+
+## Security Mechanisms
+
+SprintHub implements:
+
+- JWT Authentication
+- Refresh Token Authentication
+- Password Hashing
+- Role-Based Access Control (RBAC)
+- Input Validation
+- Secure HTTP Cookies
+- Helmet
+- CORS
+- Rate Limiting
+
+---
+
+## Security Principles
+
+The architecture follows these principles:
+
+- Least Privilege
+- Defense in Depth
+- Secure by Default
+- Fail Securely
+- Principle of Separation of Duties
+
+---
+
+## Sensitive Data
+
+Sensitive information must never be stored in plain text.
+
+Examples include:
+
+- Passwords
+- Refresh Tokens
+- Secrets
+- API Keys
+
+Secrets are managed exclusively through environment variables.
+
+---
+
+# 14. Global Error Handling Architecture
+
+SprintHub centralizes error handling to ensure consistent API responses and simplify maintenance.
+
+---
+
+## Error Flow
+
+```text
+HTTP Request
+      │
+      ▼
+Controller
+      │
+      ▼
+Service
+      │
+      ▼
+Exception
+      │
+      ▼
+Global Error Handler
+      │
+      ▼
+Standardized HTTP Response
+```
+
+---
+
+## Responsibilities
+
+The Global Error Handler is responsible for:
+
+- Capturing unexpected exceptions.
+- Mapping errors to HTTP status codes.
+- Returning standardized error responses.
+- Logging server-side errors.
+- Preventing sensitive information leakage.
+
+---
+
+## Error Response Format
+
+Example:
+
+```json
+{
+  "success": false,
+  "message": "Project not found."
+}
+```
+
+---
+
+# 15. Notification Architecture
+
+SprintHub provides a centralized notification mechanism for user-facing events.
+
+---
+
+## MVP Notifications
+
+The MVP supports in-application notifications for the following events:
+
+- Workspace invitations.
+- Project creation within a workspace.
+- Task assignments.
+- Task status changes.
+- Task priority changes.
+
+Notification recipients depend on the type of event:
+
+- **Workspace invitations:** The invited user receives the notification.
+- **Project creation:** All members of the workspace receive the notification.
+- **Task assignment:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
+- **Task status changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
+- **Task priority changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
+
+---
+
+## Notification Flow
+
+```text
+Business Event
+      │
+      ▼
+Application Service
+      │
+      ▼
+Notification Service
+      │
+      ▼
+Notification Entity
+      │
+      ▼
+User Interface
+```
+
+---
+
+## Real-Time Synchronization Architecture (3-Layer Model)
+
+SprintHub implements a defense-in-depth 3-layer synchronization architecture ensuring zero stale states across browser tabs and concurrent users:
 
 ```text
-+----------------------+
-|      End User        |
-+----------+-----------+
-           |
-      HTTPS Requests
-           |
-           ▼
-+----------------------+
-|   Next.js Frontend   |
-+----------+-----------+
-           |
-      REST API Calls
-           |
-           ▼
-+----------------------+
-|   Express Backend    |
-+----------+-----------+
-           |
-           ▼
-+----------------------+
-|     PostgreSQL       |
-+----------------------+
+[ Client Layer 1: Cross-Tab Channel ]
+  BroadcastChannel API + localStorage fallback
+  (Instant Tab-to-Tab Logout, Profile Sync, Query Invalidation)
+              |
+[ Client Layer 2: Reactive TanStack Query Hygiene ]
+  refetchOnWindowFocus: true
+  staleTime: 5s
+  Silent background polling (15s for Notifications)
+              |
+[ Server & Client Layer 3: Server-Sent Events (SSE) ]
+  GET /api/events (SSE Stream)
+  EventsService (Pub/Sub Client Registry + 25s Keepalive)
+  Mutation Broadcasts: TASK_MUTATED, PROJECT_MUTATED, WORKSPACE_MUTATED, NOTIFICATION_CREATED
+  RealtimeEventsProvider -> Automatic Query Cache Invalidation
 ```
 
----
+### Layer 1: Client Cross-Tab Broadcast Channel
+- **Mechanism:** Standard `BroadcastChannel('sprinthub_cross_tab_sync')` with `window.addEventListener('storage')` fallback for legacy or isolated contexts.
+- **Event Types:** `AUTH_LOGOUT`, `AUTH_LOGIN`, `AUTH_USER_UPDATED`, `QUERY_INVALIDATE`.
+- **Purpose:** Solves the stateless JWT vulnerability where logging out or updating user data in Tab A left stale credentials and states in Tab B.
 
-## Architectural Layers
+### Layer 2: Reactive Data Hygiene
+- **Window Focus Refetch:** Automatically revalidates active queries when the user returns to the tab.
+- **Controlled Stale Time:** Set to 5 seconds to eliminate unnecessary query churn while preventing stale screens.
+- **Background Notification Polling:** 15-second background interval that pauses when window is inactive.
 
-### Presentation Layer
-
-Responsible for:
-
-- User Interface
-- Navigation
-- Client-side validation
-- State management
-
-Implemented using:
-
-- Next.js
-- React
-- TypeScript
+### Layer 3: Server-Sent Events (SSE) Engine
+- **Endpoint:** `GET /api/events?token=<accessToken>` with `text/event-stream`, `no-cache`, and `X-Accel-Buffering: no`.
+- **Event Registry:** In-memory client connection pool managing active Response streams by `userId`.
+- **Heartbeat:** 25-second keepalive timer preventing proxy/NAT idle disconnects.
+- **Event Payloads:** Lightweight JSON envelopes containing entity identifiers and action types. The client uses TanStack Query key invalidation rather than complex client-side entity reconciliation, guaranteeing that the local state matches the database authority.
 
 ---
 
-### Application Layer
-
-Responsible for:
-
-- Request handling
-- Authentication
-- Authorization
-- Business workflows
-
-Implemented using:
-
-- Express
-- Controllers
-- Services
-
----
-
-### Persistence Layer
-
-Responsible for:
-
-- Data persistence
-- Database queries
-- Transactions
-
-Implemented using:
-
-- Prisma ORM
-- PostgreSQL
-
----
-
-### Infrastructure Layer
-
-Responsible for:
-
-- Deployment
-- Containerization
-- CI/CD
-- Logging
-- Environment configuration
-
-Implemented using:
-
-- Docker
-- GitHub Actions
-- Vercel
-- Render
-
-Future infrastructure enhancements may incorporate distributed caching and additional scalability services as application requirements evolve.
-
----
-
-# 8. Frontend Architecture
-
-SprintHub adopts a **Feature-Based Architecture** built on top of the Next.js App Router.
-
-The frontend is organized around business domains rather than technical layers, improving scalability, maintainability, and developer experience.
-
----
-
-## Architectural Style
-
-The frontend follows a Feature-Based Modular Architecture.
-
-Each feature encapsulates the internal directories it requires on demand:
-
-- Context (when feature-scoped state is required, e.g., `auth`)
-- Hooks
-- Services
-- Types
-- Components (introduced with UI views)
-- Schemas (introduced with client-side form validation)
-
----
-
-## High-Level Structure
-
-```text
-apps/
-
-└── web/
-    └── src/
-        ├── app/
-        ├── components/
-        ├── features/
-        ├── lib/
-        ├── providers/
-        ├── services/
-        └── shared/
-```
-
----
-
-## Design Principles
-
-The frontend follows these principles:
-
-- Feature-Based Organization
-- Component Reusability
-- Composition over Inheritance
-- Accessibility First
-- Responsive Design
-- Type Safety
-- Separation of Server and Client State
-
----
-
-# 9. Backend Architecture
-
-SprintHub follows a **Layered Modular Architecture**.
-
-Business logic is isolated from transport and persistence concerns through clearly defined architectural layers.
-
----
-
-## Backend Layers
-
-```text
-HTTP Request
-      │
-      ▼
-Controller
-      │
-      ▼
-Service
-      │
-      ▼
-Repository
-      │
-      ▼
-Prisma ORM
-      │
-      ▼
-PostgreSQL
-```
-
----
-
-## Layer Responsibilities
-
-### Controller Layer
-
-Responsible for:
-
-- Receiving HTTP requests.
-- Passing validated request data to application services.
-- Calling application services.
-- Returning HTTP responses.
-
-### Validation
-
-Request validation is handled through dedicated validation middleware using Zod schemas before requests reach the application services.
-
----
-
-### Service Layer
-
-Responsible for:
-
-- Business rules.
-- Authorization.
-- Workflow orchestration.
-- Transaction coordination.
-
-The Service Layer is also responsible for enforcing domain-specific business rules, including task lifecycle rules.
-
-For example, when a task changes from `DONE` to another status, its `completedAt` value must be reset to `null`.
-
----
-
-### Repository Layer
-
-Responsible for:
-
-- Data access.
-- Query abstraction.
-- Persistence operations.
-
----
-
-### Persistence Layer
-
-Responsible for:
-
-- Entity persistence.
-- Database relationships.
-- Migrations.
-- Referential integrity.
-
----
-
-# 10. Data Architecture
-
-SprintHub uses a relational database model implemented with PostgreSQL and Prisma ORM.
-
-The data architecture prioritizes:
-
-- Consistency
-- Referential integrity
-- Type safety
-- Maintainability
-
----
-
-## Core Entities
-
-The MVP includes the following primary entities:
-
-- User
-- Workspace
-- WorkspaceMember
-- Project
-- Task
-- Notification
-- RefreshToken
-
-Detailed entity definitions, relationships, constraints, and indexes are documented in the **Database Design Specification (DDS)**.
-
----
-
-## Data Integrity
-
-The data model enforces:
-
-- Primary keys.
-- Foreign keys.
-- Unique constraints.
-- Referential integrity rules.
-- Cascade deletion rules.
-- Nullable relationships where required.
-- Database indexes for frequently queried foreign keys.
-
-The database also enforces uniqueness rules for workspace membership relationships and entity names according to the application requirements.
-
-### Referential Integrity
-
-The database enforces the following deletion behavior:
-
-- Deleting a workspace deletes its workspace memberships and projects.
-- Deleting a project deletes its tasks.
-- Deleting a user deletes their workspace memberships, notifications, and refresh tokens.
-- If a user assigned to a task is deleted, the task remains and its `assigneeId` is set to `null`.
-
-### Default Values
-
-The database defines the following default values:
-
-- `WorkspaceMember.role` defaults to `MEMBER`.
-- `Notification.isRead` defaults to `false`.
-- `Project.archived` defaults to `false`.
-- UUID primary keys are generated automatically.
-- `createdAt` timestamps are generated automatically.
-- `updatedAt` timestamps are automatically updated when records change.
-
-### Database Indexes
-
-Indexes are defined for frequently queried foreign key fields:
-
-- `Workspace.ownerId`
-- `WorkspaceMember.userId`
-- `Project.workspaceId`
-- `Task.projectId`
-- `Notification.userId`
-- `RefreshToken.userId`
-
-These indexes support common lookup and relationship queries while maintaining the relational integrity of the database.
-
----
-
-# 11. API Architecture
-
-SprintHub exposes functionality through a RESTful API.
-
-The API acts as the communication contract between the frontend and backend.
-
----
-
-## Design Principles
-
-The API should be:
-
-- Predictable
-- Stateless
-- Versionable
-- Consistent
-- Secure
-
----
-
-## Resource Structure
-
-SprintHub combines hierarchical collection routes (for scoped creation and listing) with shallow single-resource routes (for direct UUID-based operations):
-
-```text
-/api/health
-/api/auth
-/api/users
-/api/workspaces
-/api/workspaces/{workspaceId}/members
-/api/workspaces/{workspaceId}/projects
-/api/workspaces/{workspaceId}/dashboard
-/api/projects/{projectId}
-/api/projects/{projectId}/tasks
-/api/tasks/{taskId}
-/api/notifications
-```
-
----
-
-## Search, Filtering and Sorting
-
-The API supports query-based search, filtering, and sorting for collection resources.
-
-### Workspaces
-
-Workspaces support:
-
-- Search by `name`.
-- Sorting by `name` or `createdAt`.
-- Sort order: `asc` or `desc`.
-
-Workspace filtering is not supported.
-
-### Projects
-
-Projects support:
-
-- Search by `name`.
-- Filtering by `status`.
-- Filtering by `archived`.
-- Sorting by `name` or `createdAt`.
-- Sort order: `asc` or `desc`.
-
-### Tasks
-
-Tasks support:
-
-- Search by `title`.
-- Filtering by `status`.
-- Filtering by `priority`.
-- Filtering by `assigneeId`.
-- Filtering by `dueDate`.
-- Sorting by `createdAt`, `dueDate`, or `priority`.
-- Sort order: `asc` or `desc`.
-
-Search is limited to the primary name field of each resource.
-
----
-
-## Response Standardization
-
-All endpoints follow consistent REST response conventions:
-
-- **Successful queries (`200 OK`)** return the resource object or collection array directly (`[]` when empty), without wrapping payloads in a `success` or `message` envelope.
-- **Resource creations (`201 Created`)** and **updates (`200 OK`)** return the created or updated entity directly.
-- **Deletions (`DELETE`)** and **session logout (`POST /api/auth/logout`)** return `204 No Content` with an empty body.
-- **User-facing success messages** are generated and localized by the Frontend UI layer.
-- **Error responses (`4xx` / `5xx`)** are handled centrally by the Global Error Handler to ensure a predictable `{ "success": false, "message": string }` structure across the API.
-
-Detailed endpoint specifications and response contracts are documented in the **API Design Specification (ADS)**.
-
----
-
-# 12. Authentication & Authorization Architecture
-
-SprintHub implements authentication using JWT together with Refresh Tokens.
-
----
-
-## Authentication Flow
-
-```text
-User Login
-      │
-      ▼
-Credentials Validation
-      │
-      ▼
-Access Token Issued
-      │
-      ▼
-Refresh Token Issued
-      │
-      ▼
-Authenticated Session
-```
-
----
-
-## Access Token
-
-Characteristics:
-
-- JWT
-- Short-lived
-- Sent through the `Authorization` header (`Bearer` scheme)
-- Used for authenticated API requests
-
----
-
-## Refresh Token
-
-Characteristics:
-
-- Long-lived
-- Stored as an HttpOnly cookie
-- Persisted as a cryptographic hash in the database
-- Used to obtain new Access Tokens
-
----
-
-## Authorization
-
-SprintHub implements Role-Based Access Control (RBAC).
-
-Supported roles:
-
-- OWNER
-- ADMIN
-- MEMBER
-
-Authorization rules are enforced within the Service Layer.
-
-### Task Authorization Matrix
-
-| Operation | Allowed Roles / Actors | Authorization & IDOR Policy |
-| :--- | :--- | :--- |
-| **Create Task** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace; project cannot be archived |
-| **Read Tasks / Task Details** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace (prevents cross-tenant IDOR) |
-| **Update Task Details** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace; project cannot be archived |
-| **Delete Task** | Task Creator (`task.createdById === userId`) OR Workspace `OWNER` / `ADMIN` | Members cannot delete tasks created by other users (`403 Forbidden`) |
-| **Assign / Unassign Task** | Workspace `OWNER`, `ADMIN` strictly | Workspace members receive `403 Forbidden`; target assignee must be a workspace member |
-| **Update Task Status** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace; project cannot be archived |
-| **Update Task Priority** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace; project cannot be archived |
-
----
-
-# 13. Security Architecture
-
-Security is integrated across every architectural layer.
-
----
-
-## Security Mechanisms
-
-SprintHub implements:
-
-- JWT Authentication
-- Refresh Token Authentication
-- Password Hashing
-- Role-Based Access Control (RBAC)
-- Input Validation
-- Secure HTTP Cookies
-- Helmet
-- CORS
-- Rate Limiting
-
----
-
-## Security Principles
-
-The architecture follows these principles:
-
-- Least Privilege
-- Defense in Depth
-- Secure by Default
-- Fail Securely
-- Principle of Separation of Duties
-
----
-
-## Sensitive Data
-
-Sensitive information must never be stored in plain text.
-
-Examples include:
-
-- Passwords
-- Refresh Tokens
-- Secrets
-- API Keys
-
-Secrets are managed exclusively through environment variables.
-
----
-
-# 14. Global Error Handling Architecture
-
-SprintHub centralizes error handling to ensure consistent API responses and simplify maintenance.
-
----
-
-## Error Flow
-
-```text
-HTTP Request
-      │
-      ▼
-Controller
-      │
-      ▼
-Service
-      │
-      ▼
-Exception
-      │
-      ▼
-Global Error Handler
-      │
-      ▼
-Standardized HTTP Response
-```
-
----
-
-## Responsibilities
-
-The Global Error Handler is responsible for:
-
-- Capturing unexpected exceptions.
-- Mapping errors to HTTP status codes.
-- Returning standardized error responses.
-- Logging server-side errors.
-- Preventing sensitive information leakage.
-
----
-
-## Error Response Format
-
-Example:
-
-```json
-{
-  "success": false,
-  "message": "Project not found."
-}
-```
-
----
-
-# 15. Notification Architecture
-
-SprintHub provides a centralized notification mechanism for user-facing events.
-
----
-
-## MVP Notifications
-
-The MVP supports in-application notifications for the following events:
-
-- Workspace invitations.
-- Project creation within a workspace.
-- Task assignments.
-- Task status changes.
-- Task priority changes.
-
-Notification recipients depend on the type of event:
-
-- **Workspace invitations:** The invited user receives the notification.
-- **Project creation:** All members of the workspace receive the notification.
-- **Task assignment:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
-- **Task status changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
-- **Task priority changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
-
----
-
-## Notification Flow
-
-```text
-Business Event
-      │
-      ▼
-Application Service
-      │
-      ▼
-Notification Service
-      │
-      ▼
-Notification Entity
-      │
-      ▼
-User Interface
-```
-
----
-
-## Future Enhancements
-
+## Future Enhancements
+
 Future releases may introduce:
 
 - Email notifications.
-- Push notifications.
-- Real-time notifications.
 
-These capabilities are intentionally excluded from the MVP.
-
----
-
-# 16. External Integrations
-
-SprintHub has been designed to support external integrations while keeping the MVP implementation intentionally simple.
-
----
-
-## Current Integrations
-
-The MVP currently integrates with the following external platforms and services:
-
-- Vercel for frontend deployment.
-- Render for backend deployment.
-- GitHub Actions for CI/CD automation.
-
-PostgreSQL is used as the primary database and Docker is used for local development and testing. These are infrastructure components rather than external product integrations.
-
----
-
-## Planned Integrations
-
-Future versions may integrate with:
-
-- Google Calendar
-- GitHub
-- Slack
-- Microsoft Teams
-- Cloud Storage Providers
-- Email Delivery Services
-
----
-
-# 17. Architectural Decisions
-
-The following high-level decisions define the architectural foundation of SprintHub.
-
-| Decision               | Rationale                                                               |
-| ---------------------- | ----------------------------------------------------------------------- |
-| Modular Monolith       | Simplifies development while remaining scalable.                        |
-| Feature-Based Frontend | Improves modularity and maintainability.                                |
-| Layered Backend        | Separates business logic from infrastructure concerns.                  |
-| PostgreSQL             | Reliable relational database with strong consistency.                   |
-| Prisma ORM             | Type-safe database access and migrations.                               |
-| JWT Authentication     | Stateless authentication for REST APIs.                                 |
-| RBAC                   | Flexible authorization model for workspace permissions.                 |
-| Docker                 | Consistent and reproducible local development and testing environments. |
-
-Detailed architectural decisions are documented individually in the project's Architecture Decision Records (ADRs).
-
----
-
-# 18. Infrastructure Architecture
-
-The MVP infrastructure focuses on the components required to operate the application reliably.
-
----
-
-## Infrastructure Components
-
-```text
-Users
-   │
-   ▼
-Frontend (Next.js)
-   │
-   ▼
-Backend (Express)
-   │
-   ▼
-PostgreSQL
-```
-
----
-
-## Supporting Services
-
-The MVP development and delivery infrastructure includes:
-
-- Docker
-- Docker Compose
-- GitHub Actions
-
-Docker and Docker Compose are used for local development and testing, while GitHub Actions is used for continuous integration and deployment automation.
-
----
-
-## Future Infrastructure
-
-As SprintHub evolves, additional infrastructure components may be introduced, including:
-
-- Distributed caching
-- Background job processing
-- Queue-based processing
-- WebSocket services
-
-These components are reserved for future scalability improvements and are not part of the MVP implementation.
-
----
-
-# 19. Docker Strategy
-
-SprintHub uses Docker to provide a consistent and reproducible local development and testing environment.
-
-Docker is not used as the production deployment platform. Production deployments are handled by Vercel for the frontend and Render for the backend.
-
----
-
-## Containerization Goals
-
-Docker is used to:
-
-- Standardize local development environments.
-- Simplify onboarding.
-- Ensure consistent local dependencies.
-- Provide reproducible development and testing environments.
-- Reduce environment-specific issues.
-
----
-
-## MVP Services
-
-The Docker Compose environment includes:
-
-- Frontend (Next.js container)
-- Backend (Express API container)
-- PostgreSQL (Database container on port `5432` with persistent volume `postgres_data`)
-
-These services support both running the entire application stack in containers for zero-setup evaluation, and isolating the database container while running applications on the host for active development.
-
----
-
-## Production Deployment
-
-Docker is not the production deployment platform for the MVP.
-
-Production services are deployed independently:
-
-- Frontend → Vercel
-- Backend → Render
-- Database → PostgreSQL
-
----
-
-# 20. CI/CD Architecture
-
-SprintHub uses GitHub Actions to automate code quality verification and deployment workflows.
-
----
-
-## Continuous Integration
-
-Every Pull Request triggers an automated pipeline that performs:
-
-1. Dependency installation.
-2. Linting.
-3. Type checking.
-4. Unit tests.
-5. Build verification.
-
-```text
-Install
-    │
-    ▼
-Lint
-    │
-    ▼
-Type Check
-    │
-    ▼
-Tests
-    │
-    ▼
-Build
-```
-
----
-
-## Continuous Deployment
-
-Production deployments occur only after:
-
-- Successful CI execution.
-- Pull Request approval.
-- Merge into the `main` branch.
-
-Deployment targets include:
-
-- Vercel (Frontend)
-- Render (Backend)
-
----
-
-# 21. Deployment Architecture
-
-SprintHub is deployed as independent frontend and backend applications.
-
----
-
-## Deployment Overview
-
-```text
-Users
-   │
-   ▼
-Frontend (Vercel)
-   │
-   │ REST API
-   ▼
-Backend (Render)
-   │
-   │ Prisma
-   ▼
-PostgreSQL
-```
-
----
-
-## Deployment Principles
-
-The deployment strategy follows these principles:
-
-- Independent deployments.
-- Environment isolation.
-- Immutable builds.
-- Environment-based configuration.
-
----
-
-## Environment Variables
-
-Sensitive configuration is managed using environment variables.
-
-Examples include:
-
-- Database connection strings.
-- JWT secrets.
-- API keys.
-
-No secrets are stored in the source code repository.
-
----
-
-# 22. Performance Strategy
-
-SprintHub is designed to deliver a responsive and efficient user experience.
-
----
-
-## Frontend Optimization
-
-Performance strategies include:
-
-- Lazy loading.
-- Route-based code splitting.
-- Image optimization.
-- Memoization.
-- Efficient state management.
-
----
-
-## Backend Optimization
-
-Backend performance is achieved through:
-
-- Optimized database queries.
-- Proper indexing.
-- Efficient validation.
-- Connection pooling.
-
----
-
-## Future Performance Enhancements
-
-As the platform grows, additional optimizations may include:
-
-- Distributed caching.
-- Background job processing.
-- Queue-based workloads.
-
-These enhancements are planned for future versions and are intentionally excluded from the MVP.
-
----
-
-# 23. Scalability Strategy
-
-SprintHub is designed to evolve without requiring significant architectural changes.
-
----
-
-## Application Scalability
-
-The architecture supports:
-
-- Additional business modules.
-- New REST endpoints.
-- Additional frontend features.
-- Increased user capacity.
-
----
-
-## Infrastructure Scalability
-
-Future infrastructure improvements may include:
-
-- Distributed caching.
-- Background workers.
-- Queue processing.
-- WebSocket services.
-- Horizontal scaling.
-- Load balancing.
-
-These capabilities have been considered during the architectural design but are not part of the current MVP implementation.
-
----
-
-# 24. Observability
-
-SprintHub incorporates basic observability mechanisms appropriate for the MVP.
-
----
-
-## Logging
-
-The application records:
-
-- Application errors.
-- Authentication events.
-- Unexpected exceptions.
-
----
-
-## Health Checks
-
-Health endpoints (`GET /api/health` and `GET /health`) provide a lightweight liveness check verifying API availability and service status without querying the database on every probe.
-
-Future infrastructure components may expose additional readiness checks as they are introduced.
-
----
-
-## Monitoring
-
-The MVP focuses on application stability through logging and health endpoints.
-
-Future versions may integrate external monitoring platforms and alerting services.
-
----
-
-# 25. Risks and Trade-offs
-
-The following architectural trade-offs were intentionally accepted.
-
-| Decision               | Benefit                                    | Trade-off                                                 |
-| ---------------------- | ------------------------------------------ | --------------------------------------------------------- |
-| Modular Monolith       | Simpler development and deployment         | Less isolation than microservices                         |
-| REST API               | Broad compatibility and simplicity         | No real-time communication in the MVP                     |
-| PostgreSQL             | Strong consistency and relational modeling | Vertical scaling limits compared to distributed databases |
-| Feature-Based Frontend | High maintainability                       | Requires consistent architectural discipline              |
-| Layered Backend        | Clear separation of responsibilities       | Additional abstraction compared to simpler designs        |
-
----
-
-# 26. Architecture Decision Summary
-
-The architecture of SprintHub is based on the following key decisions:
-
-- Modular Monolith architecture.
-- Feature-Based Frontend Architecture.
-- Layered Backend Architecture.
-- RESTful API communication.
-- PostgreSQL as the primary database.
-- Prisma ORM for data access.
-- JWT Authentication.
-- Role-Based Access Control (RBAC).
-- Docker-based development.
-- GitHub Actions for CI/CD.
-
-Detailed rationale for each significant decision is documented in the project's ADRs.
-
----
-
-# 27. Future Evolution
-
-SprintHub has been designed to support long-term evolution while preserving architectural consistency.
-
-Potential future enhancements include:
-
-- Email notifications.
-- Push notifications.
-- Real-time collaboration.
-- Team analytics.
-- Advanced reporting.
-- Calendar integrations.
-- Distributed caching.
-- Background job processing.
-- Queue-based messaging.
-- Horizontal scaling.
-
-These capabilities can be incorporated incrementally without requiring major architectural refactoring.
-
----
-
-# 28. Conclusion
-
-The Architecture Design Document defines the architectural foundation of SprintHub.
-
-It documents the principles, patterns, technology choices, and structural decisions that guide the implementation of the application while ensuring consistency, maintainability, scalability, and long-term evolution.
-
-Together with the Blueprint, PRD, SRS, DDS, ADS, ADRs, and Developer Guide, this document provides a comprehensive architectural reference for the project.
-
----
+- Push notifications (Web/Mobile).
+
+- Granular notification preferences and digests.
+
+These capabilities are intentionally excluded from the MVP.
+
+---
+
+# 16. External Integrations
+
+SprintHub has been designed to support external integrations while keeping the MVP implementation intentionally simple.
+
+---
+
+## Current Integrations
+
+The MVP currently integrates with the following external platforms and services:
+
+- Vercel for frontend deployment.
+- Render for backend deployment.
+- GitHub Actions for CI/CD automation.
+
+PostgreSQL is used as the primary database and Docker is used for local development and testing. These are infrastructure components rather than external product integrations.
+
+---
+
+## Planned Integrations
+
+Future versions may integrate with:
+
+- Google Calendar
+- GitHub
+- Slack
+- Microsoft Teams
+- Cloud Storage Providers
+- Email Delivery Services
+
+---
+
+# 17. Architectural Decisions
+
+The following high-level decisions define the architectural foundation of SprintHub.
+
+| Decision               | Rationale                                                               |
+| ---------------------- | ----------------------------------------------------------------------- |
+| Modular Monolith       | Simplifies development while remaining scalable.                        |
+| Feature-Based Frontend | Improves modularity and maintainability.                                |
+| Layered Backend        | Separates business logic from infrastructure concerns.                  |
+| PostgreSQL             | Reliable relational database with strong consistency.                   |
+| Prisma ORM             | Type-safe database access and migrations.                               |
+| JWT Authentication     | Stateless authentication for REST APIs.                                 |
+| RBAC                   | Flexible authorization model for workspace permissions.                 |
+| Docker                 | Consistent and reproducible local development and testing environments. |
+
+Detailed architectural decisions are documented individually in the project's Architecture Decision Records (ADRs).
+
+---
+
+# 18. Infrastructure Architecture
+
+The MVP infrastructure focuses on the components required to operate the application reliably.
+
+---
+
+## Infrastructure Components
+
+```text
+Users
+   │
+   ▼
+Frontend (Next.js)
+   │
+   ▼
+Backend (Express)
+   │
+   ▼
+PostgreSQL
+```
+
+---
+
+## Supporting Services
+
+The MVP development and delivery infrastructure includes:
+
+- Docker
+- Docker Compose
+- GitHub Actions
+
+Docker and Docker Compose are used for local development and testing, while GitHub Actions is used for continuous integration and deployment automation.
+
+---
+
+## Future Infrastructure
+
+As SprintHub evolves, additional infrastructure components may be introduced, including:
+
+- Distributed caching
+- Background job processing
+- Queue-based processing
+- WebSocket services
+
+These components are reserved for future scalability improvements and are not part of the MVP implementation.
+
+---
+
+# 19. Docker Strategy
+
+SprintHub uses Docker to provide a consistent and reproducible local development and testing environment.
+
+Docker is not used as the production deployment platform. Production deployments are handled by Vercel for the frontend and Render for the backend.
+
+---
+
+## Containerization Goals
+
+Docker is used to:
+
+- Standardize local development environments.
+- Simplify onboarding.
+- Ensure consistent local dependencies.
+- Provide reproducible development and testing environments.
+- Reduce environment-specific issues.
+
+---
+
+## MVP Services
+
+The Docker Compose environment includes:
+
+- Frontend (Next.js container)
+- Backend (Express API container)
+- PostgreSQL (Database container on port `5432` with persistent volume `postgres_data`)
+
+These services support both running the entire application stack in containers for zero-setup evaluation, and isolating the database container while running applications on the host for active development.
+
+---
+
+## Production Deployment
+
+Docker is not the production deployment platform for the MVP.
+
+Production services are deployed independently:
+
+- Frontend → Vercel
+- Backend → Render
+- Database → PostgreSQL
+
+---
+
+# 20. CI/CD Architecture
+
+SprintHub uses GitHub Actions to automate code quality verification and deployment workflows.
+
+---
+
+## Continuous Integration
+
+Every Pull Request triggers an automated pipeline that performs:
+
+1. Dependency installation.
+2. Linting.
+3. Type checking.
+4. Unit tests.
+5. Build verification.
+
+```text
+Install
+    │
+    ▼
+Lint
+    │
+    ▼
+Type Check
+    │
+    ▼
+Tests
+    │
+    ▼
+Build
+```
+
+---
+
+## Continuous Deployment
+
+Production deployments occur only after:
+
+- Successful CI execution.
+- Pull Request approval.
+- Merge into the `main` branch.
+
+Deployment targets include:
+
+- Vercel (Frontend)
+- Render (Backend)
+
+---
+
+# 21. Deployment Architecture
+
+SprintHub is deployed as independent frontend and backend applications.
+
+---
+
+## Deployment Overview
+
+```text
+Users
+   │
+   ▼
+Frontend (Vercel)
+   │
+   │ REST API
+   ▼
+Backend (Render)
+   │
+   │ Prisma
+   ▼
+PostgreSQL
+```
+
+---
+
+## Deployment Principles
+
+The deployment strategy follows these principles:
+
+- Independent deployments.
+- Environment isolation.
+- Immutable builds.
+- Environment-based configuration.
+
+---
+
+## Environment Variables
+
+Sensitive configuration is managed using environment variables.
+
+Examples include:
+
+- Database connection strings.
+- JWT secrets.
+- API keys.
+
+No secrets are stored in the source code repository.
+
+---
+
+# 22. Performance Strategy
+
+SprintHub is designed to deliver a responsive and efficient user experience.
+
+---
+
+## Frontend Optimization
+
+Performance strategies include:
+
+- Lazy loading.
+- Route-based code splitting.
+- Image optimization.
+- Memoization.
+- Efficient state management.
+
+---
+
+## Backend Optimization
+
+Backend performance is achieved through:
+
+- Optimized database queries.
+- Proper indexing.
+- Efficient validation.
+- Connection pooling.
+
+---
+
+## Future Performance Enhancements
+
+As the platform grows, additional optimizations may include:
+
+- Distributed caching.
+- Background job processing.
+- Queue-based workloads.
+
+These enhancements are planned for future versions and are intentionally excluded from the MVP.
+
+---
+
+# 23. Scalability Strategy
+
+SprintHub is designed to evolve without requiring significant architectural changes.
+
+---
+
+## Application Scalability
+
+The architecture supports:
+
+- Additional business modules.
+- New REST endpoints.
+- Additional frontend features.
+- Increased user capacity.
+
+---
+
+## Infrastructure Scalability
+
+Future infrastructure improvements may include:
+
+- Distributed caching.
+- Background workers.
+- Queue processing.
+- WebSocket services.
+- Horizontal scaling.
+- Load balancing.
+
+These capabilities have been considered during the architectural design but are not part of the current MVP implementation.
+
+---
+
+# 24. Observability
+
+SprintHub incorporates basic observability mechanisms appropriate for the MVP.
+
+---
+
+## Logging
+
+The application records:
+
+- Application errors.
+- Authentication events.
+- Unexpected exceptions.
+
+---
+
+## Health Checks
+
+Health endpoints (`GET /api/health` and `GET /health`) provide a lightweight liveness check verifying API availability and service status without querying the database on every probe.
+
+Future infrastructure components may expose additional readiness checks as they are introduced.
+
+---
+
+## Monitoring
+
+The MVP focuses on application stability through logging and health endpoints.
+
+Future versions may integrate external monitoring platforms and alerting services.
+
+---
+
+# 25. Risks and Trade-offs
+
+The following architectural trade-offs were intentionally accepted.
+
+| Decision               | Benefit                                    | Trade-off                                                 |
+| ---------------------- | ------------------------------------------ | --------------------------------------------------------- |
+| Modular Monolith       | Simpler development and deployment         | Less isolation than microservices                         |
+| REST API + SSE         | Broad compatibility, simplicity, and unidirectional push streaming | No bidirectional socket channel in MVP (unidirectional SSE used for mutations and notifications) |
+| PostgreSQL             | Strong consistency and relational modeling | Vertical scaling limits compared to distributed databases |
+| Feature-Based Frontend | High maintainability                       | Requires consistent architectural discipline              |
+| Layered Backend        | Clear separation of responsibilities       | Additional abstraction compared to simpler designs        |
+
+---
+
+# 26. Architecture Decision Summary
+
+The architecture of SprintHub is based on the following key decisions:
+
+- Modular Monolith architecture.
+- Feature-Based Frontend Architecture.
+- Layered Backend Architecture.
+- RESTful API communication.
+- PostgreSQL as the primary database.
+- Prisma ORM for data access.
+- JWT Authentication.
+- Role-Based Access Control (RBAC).
+- Docker-based development.
+- GitHub Actions for CI/CD.
+
+Detailed rationale for each significant decision is documented in the project's ADRs.
+
+---
+
+# 27. Future Evolution
+
+SprintHub has been designed to support long-term evolution while preserving architectural consistency.
+
+Potential future enhancements include:
+
+- Email notifications.
+- Push notifications.
+- Real-time collaboration.
+- Team analytics.
+- Advanced reporting.
+- Calendar integrations.
+- Distributed caching.
+- Background job processing.
+- Queue-based messaging.
+- Horizontal scaling.
+
+These capabilities can be incorporated incrementally without requiring major architectural refactoring.
+
+---
+
+# 28. Conclusion
+
+The Architecture Design Document defines the architectural foundation of SprintHub.
+
+It documents the principles, patterns, technology choices, and structural decisions that guide the implementation of the application while ensuring consistency, maintainability, scalability, and long-term evolution.
+
+Together with the Blueprint, PRD, SRS, DDS, ADS, ADRs, and Developer Guide, this document provides a comprehensive architectural reference for the project.
+
+---

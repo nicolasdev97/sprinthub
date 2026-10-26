@@ -148,6 +148,18 @@ The project intentionally prioritizes software quality over feature quantity.
 
 The Minimum Viable Product includes the essential functionality required for a complete project management workflow.
 
+## User Management & Profile
+
+- View personal profile information
+- Update first name and last name
+- Secure account deletion with confirmation check (blocking deletion if user owns active workspaces)
+
+## Theme & UI Customization
+
+- Dark mode and light mode switching
+- System color scheme preference auto-detection
+- Persistent theme choice across sessions
+
 ## Authentication
 
 - User registration
@@ -166,6 +178,7 @@ The Minimum Viable Product includes the essential functionality required for a c
 - Add members
 - Remove members
 - Manage member roles
+- Transfer workspace ownership
 
 ### Workspace Search and Sorting
 
@@ -243,6 +256,12 @@ Notification recipients depend on the event:
 - **Task status changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
 - **Task priority changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
 
+## Real-Time & Multi-Tab Synchronization
+
+- Live entity mutation streaming via Server-Sent Events (SSE) for workspaces, projects, tasks, and notifications.
+- Cross-tab session lifecycle synchronization (instant logout propagation, profile sync, and query invalidation).
+- Background notification polling and window-focus cache revalidation.
+
 ## Dashboard
 
 - Workspace overview
@@ -274,8 +293,7 @@ The following features are intentionally excluded from the MVP and may be introd
 ## Notifications
 
 - Email notifications
-- Push notifications
-- Real-time notifications
+- Push notifications (Web/Mobile)
 
 ## Integrations
 
@@ -774,8 +792,7 @@ Notifications should be:
 Future versions may include:
 
 - Email notifications
-- Push notifications
-- Real-time notifications
+- Push notifications (Web/Mobile)
 
 ---
 
