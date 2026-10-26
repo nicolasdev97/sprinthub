@@ -45,6 +45,7 @@ export class NotificationRepository {
       orderBy: {
         createdAt: "desc",
       },
+      take: 50,
     });
   }
 
