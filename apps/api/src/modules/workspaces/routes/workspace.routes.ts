@@ -15,6 +15,7 @@ import {
   workspaceFilterSchema,
   workspaceParamsSchema,
   workspaceMemberParamsSchema,
+  transferWorkspaceOwnershipSchema,
 } from "../schema";
 import { WorkspaceRepository } from "../repository";
 import { WorkspaceService } from "../service";
@@ -69,6 +70,14 @@ workspaceRouter.delete(
   authenticate,
   validateParams(workspaceParamsSchema),
   workspaceController.deleteWorkspace.bind(workspaceController),
+);
+
+workspaceRouter.post(
+  "/:workspaceId/transfer-ownership",
+  authenticate,
+  validateParams(workspaceParamsSchema),
+  validate(transferWorkspaceOwnershipSchema),
+  workspaceController.transferWorkspaceOwnership.bind(workspaceController),
 );
 
 workspaceRouter.post(

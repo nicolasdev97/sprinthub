@@ -140,3 +140,28 @@ export const useRemoveWorkspaceMember = () => {
     },
   });
 };
+
+export const useTransferWorkspaceOwnership = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      workspaceId,
+      newOwnerId,
+    }: {
+      workspaceId: string;
+      newOwnerId: string;
+    }) => workspaceService.transferOwnership(workspaceId, newOwnerId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['workspaces'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['workspaces', variables.workspaceId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['workspaces', variables.workspaceId, 'members'],
+      });
+    },
+  });
+};

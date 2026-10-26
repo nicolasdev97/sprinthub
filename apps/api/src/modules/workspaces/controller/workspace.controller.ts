@@ -11,6 +11,7 @@ import {
   UpdateWorkspaceDto,
   AddWorkspaceMemberDto,
   UpdateWorkspaceMemberRoleDto,
+  TransferWorkspaceOwnershipDto,
 } from "../dto";
 import { WorkspaceService } from "../service";
 
@@ -144,5 +145,23 @@ export class WorkspaceController {
     );
 
     res.status(204).send();
+  }
+
+  async transferWorkspaceOwnership(
+    req: Request<WorkspaceParams, unknown, TransferWorkspaceOwnershipDto>,
+    res: Response,
+  ) {
+    const { workspaceId } = req.params;
+    const userId = req.user.userId;
+    const { newOwnerId } = req.body;
+
+    const updatedWorkspace =
+      await this.workspaceService.transferWorkspaceOwnership(
+        workspaceId,
+        userId,
+        newOwnerId,
+      );
+
+    res.status(200).json(updatedWorkspace);
   }
 }

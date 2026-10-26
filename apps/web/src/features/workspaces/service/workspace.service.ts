@@ -72,4 +72,13 @@ export const workspaceService = {
   async removeMember(workspaceId: string, memberId: string): Promise<void> {
     await httpClient.delete(`/workspaces/${workspaceId}/members/${memberId}`);
   },
+
+  async transferOwnership(workspaceId: string, newOwnerId: string): Promise<Workspace> {
+    const response = await httpClient.post<Workspace>(
+      `/workspaces/${workspaceId}/transfer-ownership`,
+      { newOwnerId }
+    );
+
+    return response.data;
+  },
 };

@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import {
   AlertCircle,
+  Check,
   Loader2,
   RefreshCw,
   ShieldCheck,
   UserMinus,
   Users,
+  X,
 } from 'lucide-react';
 
 import {
@@ -79,6 +81,7 @@ export function WorkspaceMembersTable({
 
   const [updatingMemberId, setUpdatingMemberId] = useState<string | null>(null);
   const [memberToRemove, setMemberToRemove] = useState<WorkspaceMember | null>(null);
+  const [pendingRoles, setPendingRoles] = useState<Record<string, AssignableWorkspaceRole>>({});
 
   const currentMember = members?.find((m) => m.userId === user?.id);
   const currentUserRole: WorkspaceRole =
@@ -326,26 +329,89 @@ export function WorkspaceMembersTable({
                               OWNER
                             </Badge>
                           ) : canChangeRoles ? (
-                            <div className="flex items-center gap-2">
-                              <Select
-                                value={member.role}
-                                disabled={isUpdatingThisRow}
-                                onValueChange={(val) => {
-                                  void handleRoleChange(
-                                    member,
-                                    val as AssignableWorkspaceRole
-                                  );
-                                }}
-                                className="h-8 w-32 text-xs"
-                                aria-label={`Change role for ${fullName}`}
-                              >
-                                <SelectOption value="ADMIN">ADMIN</SelectOption>
-                                <SelectOption value="MEMBER">MEMBER</SelectOption>
-                              </Select>
-                              {isUpdatingThisRow && (
-                                <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
-                              )}
-                            </div>
+                            (() => {
+                              const pendingRole = pendingRoles[member.id];
+                              const isDirty = Boolean(pendingRole && pendingRole !== member.role);
+                              const displayedRole = pendingRole ?? member.role;
+
+                              return (
+                                <div className="flex items-center gap-1.5">
+                                  <Select
+                                    value={displayedRole}
+                                    disabled={isUpdatingThisRow}
+                                    onValueChange={(val) => {
+                                      const nextRole = val as AssignableWorkspaceRole;
+                                      if (nextRole === member.role) {
+                                        setPendingRoles((prev) => {
+                                          const copy = { ...prev };
+                                          delete copy[member.id];
+                                          return copy;
+                                        });
+                                      } else {
+                                        setPendingRoles((prev) => ({
+                                          ...prev,
+                                          [member.id]: nextRole,
+                                        }));
+                                      }
+                                    }}
+                                    className="h-8 w-28 text-xs"
+                                    aria-label={`Change role for ${fullName}`}
+                                  >
+                                    <SelectOption value="ADMIN">ADMIN</SelectOption>
+                                    <SelectOption value="MEMBER">MEMBER</SelectOption>
+                                  </Select>
+
+                                  {isDirty && (
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        variant="default"
+                                        disabled={isUpdatingThisRow}
+                                        onClick={async () => {
+                                          if (!pendingRole) return;
+                                          await handleRoleChange(member, pendingRole);
+                                          setPendingRoles((prev) => {
+                                            const copy = { ...prev };
+                                            delete copy[member.id];
+                                            return copy;
+                                          });
+                                        }}
+                                        className="h-8 px-2 text-xs gap-1 font-medium"
+                                        title="Save role change"
+                                      >
+                                        {isUpdatingThisRow ? (
+                                          <Loader2 className="size-3 animate-spin" />
+                                        ) : (
+                                          <Check className="size-3" />
+                                        )}
+                                        <span>Save</span>
+                                      </Button>
+
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        disabled={isUpdatingThisRow}
+                                        onClick={() => {
+                                          setPendingRoles((prev) => {
+                                            const copy = { ...prev };
+                                            delete copy[member.id];
+                                            return copy;
+                                          });
+                                        }}
+                                        className="h-8 px-1.5 text-xs text-muted-foreground hover:text-foreground"
+                                        title="Cancel role change"
+                                      >
+                                        <X className="size-3" />
+                                      </Button>
+                                    </>
+                                  )}
+
+                                  {isUpdatingThisRow && !isDirty && (
+                                    <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+                                  )}
+                                </div>
+                              );
+                            })()
                           ) : (
                             <Badge
                               variant={member.role === 'ADMIN' ? 'secondary' : 'outline'}
