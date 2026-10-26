@@ -12,7 +12,7 @@ export const taskFilterSchema = z.object({
       message: "Invalid due date",
     })
     .optional(),
-  sortBy: z.enum(["createdAt", "dueDate", "priority"]).optional(),
+  sortBy: z.enum(["createdAt", "dueDate", "priority", "title"]).optional(),
   sortOrder: z.enum(["asc", "desc"]).optional(),
   search: z.string().optional(),
 });

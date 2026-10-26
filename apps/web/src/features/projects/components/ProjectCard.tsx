@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Archive,
   ArchiveRestore,
+  Briefcase,
   Calendar,
   CheckCircle2,
   Clock,
@@ -38,12 +39,14 @@ import { normalizeApiError } from '@/shared/errors';
 import { cn } from '@/shared/utils';
 
 import { useArchiveProject } from '../hook';
-import { Project, ProjectStatus } from '../types';
+import { Project } from '../types';
 import { DeleteProjectDialog } from './DeleteProjectDialog';
+import { ProjectStatusBadge } from './ProjectStatusBadge';
 
 interface ProjectCardProps {
   project: Project;
   canManage: boolean;
+  workspaceName?: string;
 }
 
 export function deriveProjectKey(project: Project): string {
@@ -56,37 +59,19 @@ export function deriveProjectKey(project: Project): string {
   return `${prefix}-${shortId}`;
 }
 
-export function getProjectStatusBadgeVariant(
-  status: ProjectStatus
-): 'default' | 'secondary' | 'outline' {
-  switch (status) {
-    case 'ACTIVE':
-      return 'default';
-    case 'COMPLETED':
-      return 'secondary';
-    case 'PLANNING':
-    default:
-      return 'outline';
-  }
-}
-
-export function formatProjectStatusLabel(status: ProjectStatus): string {
-  switch (status) {
-    case 'PLANNING':
-      return 'Planning';
-    case 'ACTIVE':
-      return 'Active';
-    case 'COMPLETED':
-      return 'Completed';
-  }
-}
-
-export function ProjectCard({ project, canManage }: ProjectCardProps) {
+export function ProjectCard({ project, canManage, workspaceName }: ProjectCardProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
   const { data: tasks, isLoading: isTasksLoading } = useTasks(project.id);
   const archiveMutation = useArchiveProject(project.workspaceId);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const isFromProjectsHub = pathname.startsWith('/projects');
+  const settingsFrom = isFromProjectsHub ? 'hub' : 'workspace';
+  const tasksHref = isFromProjectsHub
+    ? `/workspaces/${project.workspaceId}/projects/${project.id}/tasks?from=projects`
+    : `/workspaces/${project.workspaceId}/projects/${project.id}/tasks`;
 
   const activeTasksCount =
     tasks?.filter((task) => task.status !== 'DONE').length ?? 0;
@@ -96,7 +81,6 @@ export function ProjectCard({ project, canManage }: ProjectCardProps) {
   const completionRate =
     totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
 
-  const projectKey = deriveProjectKey(project);
   const formattedDate = new Date(project.createdAt).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -131,7 +115,7 @@ export function ProjectCard({ project, canManage }: ProjectCardProps) {
     <>
       <Card
         className={cn(
-          'group flex flex-col justify-between transition-all hover:border-primary/40 hover:shadow-sm',
+          'group flex flex-col gap-4 transition-all hover:border-primary/40 hover:shadow-sm',
           project.archived && 'bg-muted/20 opacity-85'
         )}
       >
@@ -140,35 +124,62 @@ export function ProjectCard({ project, canManage }: ProjectCardProps) {
             <div className="flex min-w-0 items-center gap-3">
               <div
                 className={cn(
-                  'flex size-10 shrink-0 items-center justify-center rounded-lg text-xs font-bold uppercase',
+                  'flex size-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold uppercase',
                   project.archived
                     ? 'bg-muted text-muted-foreground'
                     : 'bg-primary/10 text-primary'
                 )}
               >
-                <FolderKanban className="size-5" />
+                {project.name.slice(0, 2)}
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">
-                    {projectKey}
-                  </span>
+                <Link
+                  href={tasksHref}
+                  className="block truncate hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded"
+                >
+                  <CardTitle className="truncate text-base transition-colors hover:text-primary">
+                    {project.name}
+                  </CardTitle>
+                </Link>
+                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                  {workspaceName && (
+                    <Link
+                      href={`/workspaces/${project.workspaceId}/projects${
+                        isFromProjectsHub ? '?from=projects' : ''
+                      }`}
+                      className="hover:opacity-80 transition-opacity"
+                    >
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] gap-1 font-normal border-border/80 px-2 py-0.5 h-5 -ml-1 cursor-pointer hover:bg-muted/50"
+                      >
+                        <Briefcase className="size-2.5 text-muted-foreground" />
+                        <span className="truncate max-w-28">{workspaceName}</span>
+                      </Badge>
+                    </Link>
+                  )}
                   {project.archived ? (
-                    <Badge variant="outline" className="text-[10px] text-muted-foreground">
-                      Archived
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        'text-[10px] text-muted-foreground px-2 py-0.5 h-5 gap-1',
+                        !workspaceName && '-ml-1'
+                      )}
+                    >
+                      <Archive className="size-2.5" />
+                      <span>Archived</span>
                     </Badge>
                   ) : (
-                    <Badge
-                      variant={getProjectStatusBadgeVariant(project.status)}
-                      className="text-[10px]"
-                    >
-                      {formatProjectStatusLabel(project.status)}
-                    </Badge>
+                    <ProjectStatusBadge
+                      status={project.status}
+                      className={cn('text-[10px] px-2 py-0.5 h-5', !workspaceName && '-ml-1')}
+                    />
                   )}
+                  <div className="flex items-center gap-1 text-[11px] text-muted-foreground sm:ml-1">
+                    <Calendar className="size-3 shrink-0" />
+                    <span>Created {formattedDate}</span>
+                  </div>
                 </div>
-                <CardTitle className="mt-1 truncate text-base">
-                  {project.name}
-                </CardTitle>
               </div>
             </div>
 
@@ -187,25 +198,23 @@ export function ProjectCard({ project, canManage }: ProjectCardProps) {
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    onClick={() =>
-                      router.push(
-                        `/workspaces/${project.workspaceId}/projects/${project.id}/tasks`
-                      )
-                    }
+                    onClick={() => router.push(tasksHref)}
                   >
                     <FolderKanban className="size-4 text-muted-foreground" />
                     <span>View Tasks</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() =>
-                      router.push(
-                        `/workspaces/${project.workspaceId}/projects/${project.id}/settings`
-                      )
-                    }
-                  >
-                    <Settings className="size-4 text-muted-foreground" />
-                    <span>Project Settings</span>
-                  </DropdownMenuItem>
+                  {canManage && (
+                    <DropdownMenuItem
+                      onClick={() =>
+                        router.push(
+                          `/workspaces/${project.workspaceId}/projects/${project.id}/settings?from=${settingsFrom}`
+                        )
+                      }
+                    >
+                      <Settings className="size-4 text-muted-foreground" />
+                      <span>Project Settings</span>
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuGroup>
 
                 {canManage && (
@@ -275,7 +284,7 @@ export function ProjectCard({ project, canManage }: ProjectCardProps) {
             </div>
           </div>
 
-          {/* Progress Bar & Date */}
+          {/* Progress Bar */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-[11px] text-muted-foreground">
               <span>Task Completion</span>
@@ -287,35 +296,33 @@ export function ProjectCard({ project, canManage }: ProjectCardProps) {
                 style={{ width: `${completionRate}%` }}
               />
             </div>
-            <div className="flex items-center gap-1.5 pt-1 text-[11px] text-muted-foreground">
-              <Calendar className="size-3 shrink-0" />
-              <span>Created {formattedDate}</span>
-            </div>
           </div>
         </CardContent>
 
-        <CardFooter className="flex items-center justify-between gap-2 border-t border-border/60 pt-4">
+        <CardFooter className="mt-auto flex items-center justify-between gap-2 border-t border-border/60 pt-4">
           <Link
-            href={`/workspaces/${project.workspaceId}/projects/${project.id}/tasks`}
+            href={tasksHref}
             className="flex-1"
           >
             <Button variant="default" size="sm" className="w-full">
-              Open Tasks
+              View Tasks
             </Button>
           </Link>
 
-          <Link
-            href={`/workspaces/${project.workspaceId}/projects/${project.id}/settings`}
-          >
-            <Button
-              variant="outline"
-              size="sm"
-              aria-label={`Settings for ${project.name}`}
+          {canManage && (
+            <Link
+              href={`/workspaces/${project.workspaceId}/projects/${project.id}/settings?from=${settingsFrom}`}
             >
-              <Settings className="size-3.5" />
-              <span>Settings</span>
-            </Button>
-          </Link>
+              <Button
+                variant="outline"
+                size="sm"
+                aria-label={`Settings for ${project.name}`}
+              >
+                <Settings className="size-3.5" />
+                <span>Settings</span>
+              </Button>
+            </Link>
+          )}
         </CardFooter>
       </Card>
 

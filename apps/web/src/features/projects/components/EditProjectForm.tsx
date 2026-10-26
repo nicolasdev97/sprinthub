@@ -150,44 +150,26 @@ export function EditProjectForm({ project, canManage }: EditProjectFormProps) {
               </Alert>
             )}
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Project Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Project name"
-                        disabled={!isEditable || isSubmitting}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* 1. Name */}
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Project Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Project name"
+                      disabled={!isEditable || isSubmitting}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Project Status</FormLabel>
-                    <FormControl>
-                      <Select disabled={!isEditable || isSubmitting} {...field}>
-                        <SelectOption value="PLANNING">Planning</SelectOption>
-                        <SelectOption value="ACTIVE">Active</SelectOption>
-                        <SelectOption value="COMPLETED">Completed</SelectOption>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
+            {/* 2. Description */}
             <FormField
               control={form.control}
               name="description"
@@ -203,6 +185,25 @@ export function EditProjectForm({ project, canManage }: EditProjectFormProps) {
                     />
                   </FormControl>
                   <FormDescription>Maximum 1000 characters.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* 3. Status */}
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Project Status</FormLabel>
+                  <FormControl>
+                    <Select disabled={!isEditable || isSubmitting} {...field}>
+                      <SelectOption value="PLANNING">Planning</SelectOption>
+                      <SelectOption value="ACTIVE">Active</SelectOption>
+                      <SelectOption value="COMPLETED">Completed</SelectOption>
+                    </Select>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

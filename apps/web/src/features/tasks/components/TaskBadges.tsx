@@ -206,8 +206,14 @@ export function TaskDueDateBadge({
 }) {
   if (!task.dueDate) {
     return (
-      <span className={cn('text-xs text-muted-foreground', className)}>
-        No due date
+      <span
+        className={cn(
+          'inline-flex items-center gap-1 text-xs text-muted-foreground/75 font-normal',
+          className
+        )}
+      >
+        <Calendar className="size-3 shrink-0 opacity-50" />
+        <span>No due date</span>
       </span>
     );
   }

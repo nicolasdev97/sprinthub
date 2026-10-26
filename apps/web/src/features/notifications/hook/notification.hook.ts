@@ -1,11 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { crossTabSync } from '@/shared/utils';
 import { notificationService } from '../service';
 
-export const useNotifications = () => {
+export const useNotifications = (options?: { enabled?: boolean }) => {
   return useQuery({
     queryKey: ['notifications'],
     queryFn: () => notificationService.getNotifications(),
+    enabled: options?.enabled ?? true,
+    refetchInterval: 15_000, // Background polling every 15s
+    refetchIntervalInBackground: false, // Pauses when tab is inactive to save battery/network
   });
 };
 
@@ -18,6 +22,10 @@ export const useMarkNotificationAsRead = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['notifications'],
+      });
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['notifications']],
       });
     },
   });
@@ -41,6 +49,10 @@ export const useMarkAllNotificationsAsRead = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['notifications'],
+      });
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['notifications']],
       });
     },
   });

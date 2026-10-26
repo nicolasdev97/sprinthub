@@ -1,14 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   AlertCircle,
   Archive,
   ArrowLeft,
   ArrowUpDown,
+  CheckCircle2,
   CheckSquare,
-  Filter,
+  CircleDot,
+  Flame,
   Kanban,
   List,
   Plus,
@@ -35,9 +38,7 @@ import {
 } from '@/components/ui';
 import { useAuth } from '@/features/auth';
 import {
-  deriveProjectKey,
-  formatProjectStatusLabel,
-  getProjectStatusBadgeVariant,
+  ProjectStatusBadge,
   useProject,
 } from '@/features/projects';
 import {
@@ -49,7 +50,9 @@ import { normalizeApiError } from '@/shared/errors';
 
 import { useTasks } from '../hook';
 import { TaskPriority, TaskQueryParams, TaskStatus } from '../types';
+import { AssigneeFilterSelect } from './AssigneeFilterSelect';
 import { CreateTaskDialog } from './CreateTaskDialog';
+import { DueDateFilterSelect } from './DueDateFilterSelect';
 import { TaskDetailSheet } from './TaskDetailSheet';
 import { TaskKanbanBoard } from './TaskKanbanBoard';
 import { TaskListTable } from './TaskListTable';
@@ -57,6 +60,7 @@ import { TaskListTable } from './TaskListTable';
 interface ProjectTasksViewProps {
   workspaceId: string;
   projectId: string;
+  initialTaskId?: string;
 }
 
 type StatusFilterValue = 'ALL' | TaskStatus;
@@ -65,8 +69,14 @@ type PriorityFilterValue = 'ALL' | TaskPriority;
 export function ProjectTasksView({
   workspaceId,
   projectId,
+  initialTaskId,
 }: ProjectTasksViewProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const { user } = useAuth();
+  const currentUserId = user?.id;
   const { activeWorkspaceId, setActiveWorkspaceId } = useWorkspaceContext();
 
   const { data: workspace } = useWorkspace(workspaceId);
@@ -76,7 +86,36 @@ export function ProjectTasksView({
   const [activeView, setActiveView] = useState<'board' | 'list'>('board');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createDefaultStatus, setCreateDefaultStatus] = useState<TaskStatus>('TODO');
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
+  const urlTaskId = searchParams.get('taskId') || initialTaskId || null;
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [closedTaskId, setClosedTaskId] = useState<string | null>(null);
+
+  const selectedTaskId =
+    activeTaskId || (urlTaskId && urlTaskId !== closedTaskId ? urlTaskId : null);
+
+  const handleSelectTask = (id: string) => {
+    setActiveTaskId(id);
+    setClosedTaskId(null);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('taskId', id);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const handleSheetOpenChange = (open: boolean) => {
+    if (!open) {
+      setActiveTaskId(null);
+      if (urlTaskId) {
+        setClosedTaskId(urlTaskId);
+      }
+      if (searchParams.get('taskId')) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete('taskId');
+        const qs = params.toString();
+        router.replace(`${pathname}${qs ? `?${qs}` : ''}`, { scroll: false });
+      }
+    }
+  };
 
   // Filters & Debounced Search
   const [searchInput, setSearchInput] = useState('');
@@ -84,6 +123,7 @@ export function ProjectTasksView({
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>('ALL');
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>('ALL');
   const [assigneeFilter, setAssigneeFilter] = useState<string>('ALL');
+  const [dueDateFilter, setDueDateFilter] = useState<string>('');
   const [sortBy, setSortBy] = useState<NonNullable<TaskQueryParams['sortBy']>>('createdAt');
   const [sortOrder, setSortOrder] = useState<NonNullable<TaskQueryParams['sortOrder']>>('desc');
 
@@ -103,22 +143,43 @@ export function ProjectTasksView({
     };
   }, [searchInput]);
 
+  const resolvedAssigneeId =
+    assigneeFilter === 'ASSIGNED_TO_ME'
+      ? currentUserId
+      : assigneeFilter === 'ALL' ||
+          assigneeFilter === 'UNASSIGNED' ||
+          assigneeFilter === 'CREATED_BY_ME'
+        ? undefined
+        : assigneeFilter;
+
   const queryParams: TaskQueryParams = {
     ...(debouncedSearch ? { search: debouncedSearch } : {}),
     ...(statusFilter !== 'ALL' ? { status: statusFilter } : {}),
     ...(priorityFilter !== 'ALL' ? { priority: priorityFilter } : {}),
-    ...(assigneeFilter !== 'ALL' ? { assigneeId: assigneeFilter } : {}),
+    ...(resolvedAssigneeId ? { assigneeId: resolvedAssigneeId } : {}),
+    ...(dueDateFilter ? { dueDate: dueDateFilter } : {}),
     sortBy,
     sortOrder,
   };
 
   const {
-    data: tasks,
+    data: rawTasks,
     isLoading: isTasksLoading,
     isError,
     error,
     refetch,
   } = useTasks(projectId, queryParams);
+
+  const tasks = useMemo(() => {
+    if (!rawTasks) return [];
+    if (assigneeFilter === 'UNASSIGNED') {
+      return rawTasks.filter((t) => !t.assigneeId);
+    }
+    if (assigneeFilter === 'CREATED_BY_ME' && currentUserId) {
+      return rawTasks.filter((t) => t.createdById === currentUserId);
+    }
+    return rawTasks;
+  }, [rawTasks, assigneeFilter, currentUserId]);
 
   const currentMember = members.find((m) => m.userId === user?.id);
   const canManageProject = Boolean(
@@ -127,12 +188,15 @@ export function ProjectTasksView({
       workspace?.ownerId === user?.id
   );
   const isProjectArchived = Boolean(project?.archived);
+  const isCustomSort = sortBy !== 'createdAt' || sortOrder !== 'desc';
 
   const hasActiveFilters =
     Boolean(searchInput.trim()) ||
     statusFilter !== 'ALL' ||
     priorityFilter !== 'ALL' ||
-    assigneeFilter !== 'ALL';
+    assigneeFilter !== 'ALL' ||
+    Boolean(dueDateFilter) ||
+    isCustomSort;
 
   const handleResetFilters = () => {
     setSearchInput('');
@@ -140,6 +204,9 @@ export function ProjectTasksView({
     setStatusFilter('ALL');
     setPriorityFilter('ALL');
     setAssigneeFilter('ALL');
+    setDueDateFilter('');
+    setSortBy('createdAt');
+    setSortOrder('desc');
   };
 
   const handleOpenCreateInStatus = (status: TaskStatus) => {
@@ -147,17 +214,60 @@ export function ProjectTasksView({
     setIsCreateOpen(true);
   };
 
+  const fromParam = searchParams.get('from');
+  const isFromProjectsHub = fromParam === 'projects' || fromParam === 'projects-hub';
+  const isFromTasksHub = fromParam === 'tasks' || fromParam === 'tasks-hub';
+  const isFromDashboard = fromParam === 'dashboard';
+
+  const backHref = isFromProjectsHub
+    ? '/projects'
+    : isFromTasksHub
+      ? '/tasks'
+      : isFromDashboard
+        ? '/dashboard'
+        : `/workspaces/${workspaceId}/projects`;
+
+  const backLabel = isFromProjectsHub
+    ? 'Back to Projects Hub'
+    : isFromTasksHub
+      ? 'Back to Tasks Hub'
+      : isFromDashboard
+        ? 'Back to Dashboard'
+        : workspace
+          ? `Back to ${workspace.name}`
+          : 'Back to Workspace';
+
+  const settingsHref = `/workspaces/${workspaceId}/projects/${projectId}/settings?from=project${
+    fromParam ? `&source=${fromParam}` : ''
+  }`;
+
+  const totalTasksCount = tasks?.length ?? 0;
+  const completedTasksCount =
+    tasks?.filter((t) => t.status === 'DONE').length ?? 0;
+  const inProgressTasksCount =
+    tasks?.filter((t) => t.status === 'IN_PROGRESS').length ?? 0;
+  const todoTasksCount =
+    tasks?.filter((t) => t.status === 'TODO' || t.status === 'BACKLOG').length ??
+    0;
+  const criticalTasksCount =
+    tasks?.filter((t) => t.priority === 'CRITICAL' && t.status !== 'DONE')
+      .length ?? 0;
+  const progressPercent =
+    totalTasksCount > 0
+      ? Math.round((completedTasksCount / totalTasksCount) * 100)
+      : 0;
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="space-y-1">
           <Link
-            href={`/workspaces/${workspaceId}/projects`}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            href={backHref}
+            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="size-3.5" />
-            <span>Back to Projects</span>
+            <span>{backLabel}</span>
           </Link>
 
           {isProjectLoading ? (
@@ -168,22 +278,14 @@ export function ProjectTasksView({
           ) : (
             <>
               <div className="flex flex-wrap items-center gap-2.5">
-                {project && (
-                  <span className="rounded bg-muted px-2 py-0.5 font-mono text-xs font-semibold text-muted-foreground">
-                    {deriveProjectKey(project)}
-                  </span>
-                )}
                 <h1 className="text-2xl font-bold tracking-tight text-foreground">
                   {project ? `${project.name} — Tasks` : 'Project Tasks'}
                 </h1>
-                {project && (
-                  <Badge variant={getProjectStatusBadgeVariant(project.status)}>
-                    {formatProjectStatusLabel(project.status)}
-                  </Badge>
-                )}
+                {project && <ProjectStatusBadge status={project.status} />}
                 {isProjectArchived && (
-                  <Badge variant="outline" className="text-muted-foreground">
-                    Archived
+                  <Badge variant="outline" className="text-muted-foreground gap-1">
+                    <Archive className="size-3" />
+                    <span>Archived</span>
                   </Badge>
                 )}
               </div>
@@ -196,12 +298,14 @@ export function ProjectTasksView({
         </div>
 
         <div className="flex items-center gap-2">
-          <Link href={`/workspaces/${workspaceId}/projects/${projectId}/settings`}>
-            <Button variant="outline" size="sm">
-              <Settings className="size-4" />
-              <span>Project Settings</span>
-            </Button>
-          </Link>
+          {canManageProject && (
+            <Link href={settingsHref}>
+              <Button variant="outline" size="sm">
+                <Settings className="size-4" />
+                <span>Project Settings</span>
+              </Button>
+            </Link>
+          )}
 
           <CreateTaskDialog
             projectId={projectId}
@@ -229,19 +333,65 @@ export function ProjectTasksView({
         </Alert>
       )}
 
+      {/* Linear-style Project Health & Progress Summary Bar */}
+      {!isTasksLoading && tasks && tasks.length > 0 && (
+        <div className="flex flex-col gap-3 rounded-xl border border-border/70 bg-card/60 p-3 sm:flex-row sm:items-center sm:justify-between shadow-2xs">
+          {/* Progress bar + Completion Percentage */}
+          <div className="flex flex-1 items-center gap-3.5 min-w-0">
+            <div className="flex flex-col gap-1 min-w-0 flex-1 max-w-sm sm:max-w-md">
+              <div className="flex items-center justify-between text-xs font-medium">
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <CheckCircle2 className="size-3.5 text-primary" />
+                  <span>Project Progress</span>
+                </span>
+                <span className="font-semibold text-foreground">{progressPercent}%</span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-500"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Quick status breakdown pills */}
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="inline-flex items-center gap-1 rounded-md bg-muted/60 px-2 py-0.5 font-medium text-muted-foreground">
+              <span className="size-1.5 rounded-full bg-emerald-500" />
+              <span>{completedTasksCount} done</span>
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-md bg-muted/60 px-2 py-0.5 font-medium text-muted-foreground">
+              <span className="size-1.5 rounded-full bg-blue-500" />
+              <span>{inProgressTasksCount} in progress</span>
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-md bg-muted/60 px-2 py-0.5 font-medium text-muted-foreground">
+              <span className="size-1.5 rounded-full bg-slate-400" />
+              <span>{todoTasksCount} to do</span>
+            </span>
+            {criticalTasksCount > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-red-500/10 px-2 py-0.5 font-medium text-red-600 dark:text-red-400">
+                <Flame className="size-3" />
+                <span>{criticalTasksCount} critical</span>
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Dual View Tabs & Filter Bar */}
       <Tabs
         value={activeView}
         onValueChange={(val) => setActiveView(val as 'board' | 'list')}
       >
         <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
-          <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {/* Search Input with Debounce */}
-            <div className="relative flex-1 lg:max-w-xs">
+            <div className="relative w-full sm:max-w-xs md:max-w-sm">
               <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Search tasks by title..."
+                placeholder="Search tasks..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 className="pl-9 pr-8"
@@ -260,20 +410,13 @@ export function ProjectTasksView({
             </div>
 
             {/* View Switcher (Board / List) */}
-            <div className="flex items-center justify-between gap-3 sm:justify-end">
-              {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={handleResetFilters}>
-                  <X className="size-3.5" />
-                  <span>Clear Filters</span>
-                </Button>
-              )}
-
-              <TabsList>
-                <TabsTrigger value="board">
+            <div className="flex items-center justify-end shrink-0 w-full sm:w-auto">
+              <TabsList className="w-full sm:w-auto grid grid-cols-2 sm:flex">
+                <TabsTrigger value="board" className="justify-center">
                   <Kanban className="size-3.5" />
                   <span>Kanban Board</span>
                 </TabsTrigger>
-                <TabsTrigger value="list">
+                <TabsTrigger value="list" className="justify-center">
                   <List className="size-3.5" />
                   <span>List View</span>
                 </TabsTrigger>
@@ -282,16 +425,22 @@ export function ProjectTasksView({
           </div>
 
           {/* Filter Dropdowns */}
-          <div className="flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <Filter className="size-3.5" />
-              <span>Filter:</span>
-            </div>
+          <div className="flex flex-col xl:flex-row xl:flex-wrap items-stretch xl:items-center gap-2 border-t border-border/60 pt-3">
+            <AssigneeFilterSelect
+              value={assigneeFilter}
+              onChange={setAssigneeFilter}
+              members={members}
+              allowCreatedByMe
+              allLabel="All Tasks"
+              membersTitle="Project Members"
+              className="w-full xl:w-44"
+            />
 
             <Select
+              icon={CircleDot}
               value={statusFilter}
               onValueChange={(val) => setStatusFilter(val as StatusFilterValue)}
-              className="h-8 w-36 text-xs"
+              className="w-full xl:w-40"
               aria-label="Filter by status"
             >
               <SelectOption value="ALL">All Statuses</SelectOption>
@@ -303,68 +452,58 @@ export function ProjectTasksView({
             </Select>
 
             <Select
+              icon={Flame}
               value={priorityFilter}
               onValueChange={(val) => setPriorityFilter(val as PriorityFilterValue)}
-              className="h-8 w-36 text-xs"
+              className="w-full xl:w-40"
               aria-label="Filter by priority"
             >
               <SelectOption value="ALL">All Priorities</SelectOption>
-              <SelectOption value="LOW">Low</SelectOption>
-              <SelectOption value="MEDIUM">Medium</SelectOption>
-              <SelectOption value="HIGH">High</SelectOption>
               <SelectOption value="CRITICAL">Critical</SelectOption>
+              <SelectOption value="HIGH">High</SelectOption>
+              <SelectOption value="MEDIUM">Medium</SelectOption>
+              <SelectOption value="LOW">Low</SelectOption>
             </Select>
+
+            <DueDateFilterSelect
+              value={dueDateFilter}
+              onChange={setDueDateFilter}
+              className="w-full xl:w-40"
+            />
 
             <Select
-              value={assigneeFilter}
-              onValueChange={(val) => setAssigneeFilter(val)}
-              className="h-8 w-44 text-xs"
-              aria-label="Filter by assignee"
+              icon={ArrowUpDown}
+              value={`${sortBy}-${sortOrder}`}
+              onValueChange={(val) => {
+                const [newSortBy, newSortOrder] = val.split('-') as [
+                  NonNullable<TaskQueryParams['sortBy']>,
+                  NonNullable<TaskQueryParams['sortOrder']>
+                ];
+                setSortBy(newSortBy);
+                setSortOrder(newSortOrder);
+              }}
+              className="w-full xl:w-44"
+              aria-label="Sort tasks"
             >
-              <SelectOption value="ALL">All Assignees</SelectOption>
-              {members.map((member) => {
-                const label = member.user
-                  ? `${member.user.firstName} ${member.user.lastName}`
-                  : member.userId;
-                return (
-                  <SelectOption key={member.userId} value={member.userId}>
-                    {label}
-                  </SelectOption>
-                );
-              })}
+              <SelectOption value="createdAt-desc">Newest First</SelectOption>
+              <SelectOption value="createdAt-asc">Oldest First</SelectOption>
+              <SelectOption value="title-asc">Name (A-Z)</SelectOption>
+              <SelectOption value="title-desc">Name (Z-A)</SelectOption>
+              <SelectOption value="dueDate-asc">Due Date</SelectOption>
+              <SelectOption value="priority-desc">Highest Priority</SelectOption>
             </Select>
 
-            <div className="ml-auto flex items-center gap-2">
-              <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                <ArrowUpDown className="size-3.5" />
-                <span className="hidden sm:inline">Sort:</span>
-              </div>
-
-              <Select
-                value={sortBy}
-                onValueChange={(val) =>
-                  setSortBy(val as NonNullable<TaskQueryParams['sortBy']>)
-                }
-                className="h-8 w-32 text-xs"
-                aria-label="Sort tasks by field"
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetFilters}
+                className="w-full xl:w-auto gap-1.5 text-xs text-muted-foreground hover:text-foreground"
               >
-                <SelectOption value="createdAt">Created Date</SelectOption>
-                <SelectOption value="dueDate">Due Date</SelectOption>
-                <SelectOption value="priority">Priority</SelectOption>
-              </Select>
-
-              <Select
-                value={sortOrder}
-                onValueChange={(val) =>
-                  setSortOrder(val as NonNullable<TaskQueryParams['sortOrder']>)
-                }
-                className="h-8 w-28 text-xs"
-                aria-label="Sort order"
-              >
-                <SelectOption value="desc">Descending</SelectOption>
-                <SelectOption value="asc">Ascending</SelectOption>
-              </Select>
-            </div>
+                <X className="size-3.5" />
+                <span>Reset</span>
+              </Button>
+            )}
           </div>
         </div>
 
@@ -376,7 +515,7 @@ export function ProjectTasksView({
                 {Array.from({ length: 5 }).map((_, colIdx) => (
                   <div
                     key={colIdx}
-                    className="flex min-h-96 flex-col gap-3 rounded-xl border border-border bg-muted/25 p-3"
+                    className="flex min-h-40 xl:min-h-96 flex-col gap-3 rounded-xl border border-border bg-muted/25 p-3"
                   >
                     <div className="flex items-center justify-between">
                       <Skeleton className="h-4 w-24" />
@@ -481,7 +620,7 @@ export function ProjectTasksView({
                 tasks={tasks}
                 members={members}
                 isProjectArchived={isProjectArchived}
-                onSelectTask={(id) => setSelectedTaskId(id)}
+                onSelectTask={handleSelectTask}
                 onCreateTaskInStatus={handleOpenCreateInStatus}
               />
             </TabsContent>
@@ -493,7 +632,7 @@ export function ProjectTasksView({
                 members={members}
                 canManageProject={canManageProject}
                 isProjectArchived={isProjectArchived}
-                onSelectTask={(id) => setSelectedTaskId(id)}
+                onSelectTask={handleSelectTask}
               />
             </TabsContent>
           </>
@@ -505,9 +644,7 @@ export function ProjectTasksView({
         projectId={projectId}
         taskId={selectedTaskId}
         open={Boolean(selectedTaskId)}
-        onOpenChange={(open) => {
-          if (!open) setSelectedTaskId(null);
-        }}
+        onOpenChange={handleSheetOpenChange}
         members={members}
         canManageProject={canManageProject}
         isProjectArchived={isProjectArchived}

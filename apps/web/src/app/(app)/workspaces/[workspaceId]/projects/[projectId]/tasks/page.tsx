@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 
 import { ProjectTasksView } from '@/features/tasks';
@@ -9,13 +10,23 @@ export const metadata: Metadata = {
 
 interface ProjectTasksPageProps {
   params: Promise<{ workspaceId: string; projectId: string }>;
+  searchParams: Promise<{ taskId?: string }>;
 }
 
 export default async function ProjectTasksPage({
   params,
+  searchParams,
 }: ProjectTasksPageProps) {
   const { workspaceId, projectId } = await params;
+  const { taskId } = await searchParams;
 
-  return <ProjectTasksView workspaceId={workspaceId} projectId={projectId} />;
+  return (
+    <Suspense>
+      <ProjectTasksView
+        workspaceId={workspaceId}
+        projectId={projectId}
+        initialTaskId={taskId}
+      />
+    </Suspense>
+  );
 }
-

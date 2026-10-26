@@ -1,15 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  AlertCircle,
-  ArrowUpDown,
-  Briefcase,
-  Plus,
-  RefreshCw,
-  Search,
-  X,
-} from 'lucide-react';
+import { AlertCircle, ArrowUpDown, Briefcase, Plus, RefreshCw, Search, X } from 'lucide-react';
 
 import {
   Alert,
@@ -34,16 +26,15 @@ interface WorkspacesListViewProps {
   initialCreateOpen?: boolean;
 }
 
-export function WorkspacesListView({
-  initialCreateOpen = false,
-}: WorkspacesListViewProps) {
+export function WorkspacesListView({ initialCreateOpen = false }: WorkspacesListViewProps) {
   const { toast } = useToast();
   const { activeWorkspaceId, setActiveWorkspaceId } = useWorkspaceContext();
 
   const [isCreateOpen, setIsCreateOpen] = useState<boolean>(initialCreateOpen);
   const [searchInput, setSearchInput] = useState<string>('');
   const [sortBy, setSortBy] = useState<NonNullable<WorkspaceQueryParams['sortBy']>>('createdAt');
-  const [sortOrder, setSortOrder] = useState<NonNullable<WorkspaceQueryParams['sortOrder']>>('desc');
+  const [sortOrder, setSortOrder] =
+    useState<NonNullable<WorkspaceQueryParams['sortOrder']>>('desc');
 
   const queryParams: WorkspaceQueryParams = {
     ...(searchInput.trim() ? { search: searchInput.trim() } : {}),
@@ -51,13 +42,7 @@ export function WorkspacesListView({
     sortOrder,
   };
 
-  const {
-    data: workspaces,
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useWorkspaces(queryParams);
+  const { data: workspaces, isLoading, isError, error, refetch } = useWorkspaces(queryParams);
 
   const handleSelectWorkspace = (workspaceId: string) => {
     const selected = workspaces?.find((w) => w.id === workspaceId);
@@ -76,9 +61,7 @@ export function WorkspacesListView({
       {/* Page Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Workspaces
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Workspaces Hub</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Select an active workspace or create a new one to collaborate with your team.
           </p>
@@ -88,12 +71,12 @@ export function WorkspacesListView({
       </div>
 
       {/* Filters & Sorting Bar */}
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1 sm:max-w-sm">
+      <div className="flex flex-col xl:flex-row xl:items-start gap-2.5 rounded-xl border border-border bg-card p-4">
+        <div className="relative w-full xl:w-72 shrink-0">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search workspaces by name..."
+            placeholder="Search workspaces..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             className="pl-9 pr-8"
@@ -111,34 +94,42 @@ export function WorkspacesListView({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-            <ArrowUpDown className="size-3.5" />
-            <span className="hidden sm:inline">Sort by:</span>
-          </div>
+        <div className="flex flex-col xl:flex-row xl:flex-1 xl:flex-wrap items-stretch xl:items-center gap-2">
           <Select
-            value={sortBy}
-            onValueChange={(val) =>
-              setSortBy(val as NonNullable<WorkspaceQueryParams['sortBy']>)
-            }
-            className="w-36"
-            aria-label="Sort workspaces by field"
+            icon={ArrowUpDown}
+            value={`${sortBy}-${sortOrder}`}
+            onValueChange={(val) => {
+              const [newSortBy, newSortOrder] = val.split('-') as [
+                NonNullable<WorkspaceQueryParams['sortBy']>,
+                NonNullable<WorkspaceQueryParams['sortOrder']>,
+              ];
+              setSortBy(newSortBy);
+              setSortOrder(newSortOrder);
+            }}
+            className="w-full xl:w-44"
+            aria-label="Sort workspaces"
           >
-            <SelectOption value="createdAt">Date Created</SelectOption>
-            <SelectOption value="name">Name</SelectOption>
+            <SelectOption value="createdAt-desc">Newest First</SelectOption>
+            <SelectOption value="createdAt-asc">Oldest First</SelectOption>
+            <SelectOption value="name-asc">Name (A - Z)</SelectOption>
+            <SelectOption value="name-desc">Name (Z - A)</SelectOption>
           </Select>
 
-          <Select
-            value={sortOrder}
-            onValueChange={(val) =>
-              setSortOrder(val as NonNullable<WorkspaceQueryParams['sortOrder']>)
-            }
-            className="w-32"
-            aria-label="Sort order"
-          >
-            <SelectOption value="desc">Descending</SelectOption>
-            <SelectOption value="asc">Ascending</SelectOption>
-          </Select>
+          {(Boolean(searchInput.trim()) || sortBy !== 'createdAt' || sortOrder !== 'desc') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearchInput('');
+                setSortBy('createdAt');
+                setSortOrder('desc');
+              }}
+              className="w-full xl:w-auto gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-3.5" />
+              <span>Reset</span>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -208,11 +199,10 @@ export function WorkspacesListView({
           {searchInput.trim() ? (
             <>
               <div className="max-w-md space-y-1">
-                <h2 className="text-base font-semibold text-foreground">
-                  No matching workspaces
-                </h2>
+                <h2 className="text-base font-semibold text-foreground">No matching workspaces</h2>
                 <p className="text-sm text-muted-foreground">
-                  No workspaces matched &ldquo;{searchInput.trim()}&rdquo;. Try a different search term or clear the filter.
+                  No workspaces matched &ldquo;{searchInput.trim()}&rdquo;. Try a different search
+                  term or clear the filter.
                 </p>
               </div>
               <Button variant="outline" onClick={() => setSearchInput('')}>
@@ -226,7 +216,8 @@ export function WorkspacesListView({
                   You don&apos;t belong to any workspace yet
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Create your first workspace to start organizing projects, sprints, and tasks with your team.
+                  Create your first workspace to start organizing projects, sprints, and tasks with
+                  your team.
                 </p>
               </div>
               <Button onClick={() => setIsCreateOpen(true)}>
@@ -254,4 +245,3 @@ export function WorkspacesListView({
     </div>
   );
 }
-

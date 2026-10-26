@@ -45,7 +45,7 @@ export interface TaskQueryParams {
   priority?: TaskPriority;
   assigneeId?: string;
   dueDate?: string;
-  sortBy?: 'createdAt' | 'dueDate' | 'priority';
+  sortBy?: 'createdAt' | 'dueDate' | 'priority' | 'title';
   sortOrder?: 'asc' | 'desc';
 }
 

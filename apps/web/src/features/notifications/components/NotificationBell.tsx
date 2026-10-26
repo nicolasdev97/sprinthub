@@ -7,11 +7,12 @@ import {
   AtSign,
   Bell,
   BellOff,
+  Briefcase,
+  Check,
   CheckCheck,
-  CheckCircle2,
   ClipboardList,
+  FolderKanban,
   RefreshCw,
-  UserPlus,
 } from 'lucide-react';
 
 import {
@@ -20,11 +21,10 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-  ScrollArea,
-  Separator,
   Skeleton,
   useToast,
 } from '@/components/ui';
+import { useAuth } from '@/features/auth';
 import { useWorkspaceContext } from '@/features/workspaces';
 import { normalizeApiError } from '@/shared/errors';
 import { cn } from '@/shared/utils';
@@ -67,37 +67,50 @@ function formatRelativeTime(isoDate: string): string {
 }
 
 function getNotificationIcon(notification: Notification) {
-  const combined = `${notification.title} ${notification.message}`.toLowerCase();
+  const cleanMessage = notification.message.replace(/<!--.*?-->/g, '').toLowerCase();
+  const cleanTitle = notification.title.toLowerCase();
+  const combined = `${cleanTitle} ${cleanMessage}`;
 
-  if (combined.includes('assign')) {
+  // Task notifications (priority, status, assignment) -> Blue ClipboardList
+  if (
+    cleanTitle.includes('task') ||
+    combined.includes('task') ||
+    combined.includes('priority') ||
+    combined.includes('assign') ||
+    combined.includes('status')
+  ) {
     return {
       icon: ClipboardList,
       className: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
     };
   }
 
-  if (combined.includes('mention') || combined.includes('@')) {
+  // Project notifications -> Orange/Amber FolderKanban
+  if (cleanTitle.includes('project') || combined.includes('project')) {
     return {
-      icon: AtSign,
+      icon: FolderKanban,
+      className: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+    };
+  }
+
+  // Workspace notifications -> Purple Briefcase
+  if (
+    cleanTitle.includes('workspace') ||
+    combined.includes('workspace') ||
+    combined.includes('invite') ||
+    combined.includes('member')
+  ) {
+    return {
+      icon: Briefcase,
       className: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
     };
   }
 
-  if (
-    combined.includes('status') ||
-    combined.includes('completed') ||
-    combined.includes('done')
-  ) {
+  // Mention notifications
+  if (combined.includes('mention') || combined.includes('@')) {
     return {
-      icon: CheckCircle2,
-      className: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-    };
-  }
-
-  if (combined.includes('invite') || combined.includes('workspace') || combined.includes('member')) {
-    return {
-      icon: UserPlus,
-      className: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+      icon: AtSign,
+      className: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
     };
   }
 
@@ -111,7 +124,8 @@ export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const { activeWorkspace } = useWorkspaceContext();
+  const { isAuthenticated, isInitializing } = useAuth();
+  const { activeWorkspace, setActiveWorkspaceId } = useWorkspaceContext();
 
   const {
     data: notifications = [],
@@ -120,13 +134,44 @@ export function NotificationBell() {
     error,
     refetch,
     isFetching,
-  } = useNotifications();
+  } = useNotifications({
+    enabled: isAuthenticated && !isInitializing,
+  });
 
   const markAsReadMutation = useMarkNotificationAsRead();
   const markAllAsReadMutation = useMarkAllNotificationsAsRead();
 
+  const [filterTab, setFilterTab] = useState<'all' | 'unread'>('all');
+
   const unreadNotifications = notifications.filter((item) => !item.isRead);
   const unreadCount = unreadNotifications.length;
+
+  const displayedNotifications =
+    filterTab === 'unread' ? unreadNotifications : notifications;
+  const visibleNotifications = displayedNotifications.slice(0, 50);
+
+  const handleSingleMarkAsRead = async (
+    e: React.MouseEvent,
+    notificationId: string
+  ) => {
+    e.stopPropagation();
+    if (markAsReadMutation.isPending) return;
+
+    try {
+      await markAsReadMutation.mutateAsync(notificationId);
+      toast({
+        title: 'Marked as read',
+        description: 'Notification updated.',
+        variant: 'success',
+      });
+    } catch (err) {
+      toast({
+        title: 'Failed to update notification',
+        description: normalizeApiError(err).message,
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleNotificationClick = async (notification: Notification) => {
     if (!notification.isRead && !markAsReadMutation.isPending) {
@@ -142,6 +187,17 @@ export function NotificationBell() {
     }
 
     setIsOpen(false);
+
+    const linkMatch = notification.message.match(/<!--link:(.*?)-->/);
+    if (linkMatch && linkMatch[1]) {
+      const targetUrl = linkMatch[1];
+      const wsMatch = targetUrl.match(/\/workspaces\/([0-9a-fA-F-]+)/);
+      if (wsMatch && wsMatch[1]) {
+        setActiveWorkspaceId(wsMatch[1]);
+      }
+      router.push(targetUrl);
+      return;
+    }
 
     const combined = `${notification.title} ${notification.message}`.toLowerCase();
     if (combined.includes('task') || combined.includes('assign') || combined.includes('status')) {
@@ -208,37 +264,69 @@ export function NotificationBell() {
         )}
       </PopoverTrigger>
 
-      <PopoverContent align="end" sideOffset={8} className="w-88 p-0 sm:w-96">
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        className="w-88 p-0 sm:w-96 flex flex-col h-[440px] max-h-[85vh] overflow-hidden shadow-lg"
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-foreground">Notifications</h3>
+        <div className="flex flex-col border-b border-border bg-card shrink-0">
+          <div className="flex items-center justify-between px-4 py-2.5">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-foreground">Notifications</h3>
+              {unreadCount > 0 && (
+                <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+                  {unreadCount} new
+                </Badge>
+              )}
+            </div>
+
             {unreadCount > 0 && (
-              <Badge variant="secondary" className="px-1.5 py-0 text-[11px]">
-                {unreadCount} new
-              </Badge>
+              <Button
+                variant="ghost"
+                size="xs"
+                onClick={handleMarkAllAsRead}
+                disabled={markAllAsReadMutation.isPending}
+                className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <CheckCheck className="size-3.5" />
+                <span>Mark all as read</span>
+              </Button>
             )}
           </div>
 
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="xs"
-              onClick={handleMarkAllAsRead}
-              disabled={markAllAsReadMutation.isPending}
-              className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground"
+          {/* Filter Tabs: All vs Unread */}
+          <div className="flex items-center gap-1.5 px-3 pb-2">
+            <button
+              type="button"
+              onClick={() => setFilterTab('all')}
+              className={cn(
+                'rounded-md px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer',
+                filterTab === 'all'
+                  ? 'bg-muted text-foreground'
+                  : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+              )}
             >
-              <CheckCheck className="size-3.5" />
-              <span>Mark all as read</span>
-            </Button>
-          )}
+              All ({notifications.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterTab('unread')}
+              className={cn(
+                'rounded-md px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer',
+                filterTab === 'unread'
+                  ? 'bg-muted text-foreground'
+                  : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+              )}
+            >
+              Unread ({unreadCount})
+            </button>
+          </div>
         </div>
-
-        <Separator />
 
         {/* Content Body: 4 UI States */}
         {isLoading ? (
-          <div className="flex flex-col gap-3 p-4" aria-busy="true">
+          <div className="flex-1 flex flex-col gap-3 p-4 overflow-y-auto" aria-busy="true">
             {Array.from({ length: 4 }).map((_, index) => (
               <div key={index} className="flex items-start gap-3">
                 <Skeleton className="size-8 shrink-0 rounded-lg" />
@@ -251,7 +339,7 @@ export function NotificationBell() {
             ))}
           </div>
         ) : isError ? (
-          <div className="flex flex-col items-center justify-center gap-2.5 px-4 py-8 text-center">
+          <div className="flex-1 flex flex-col items-center justify-center gap-2.5 px-4 py-8 text-center">
             <div className="flex size-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
               <AlertCircle className="size-5" />
             </div>
@@ -274,42 +362,58 @@ export function NotificationBell() {
               <span>Retry</span>
             </Button>
           </div>
-        ) : notifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 px-4 py-10 text-center">
-            <div className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
-              <BellOff className="size-5" />
-            </div>
-            <p className="text-sm font-medium text-foreground">No notifications yet</p>
-            <p className="max-w-60 text-xs text-muted-foreground">
-              You will be notified here when tasks are assigned to you or updated.
-            </p>
+        ) : displayedNotifications.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center gap-2 px-4 py-10 text-center">
+            {filterTab === 'unread' ? (
+              <>
+                <div className="flex size-10 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+                  <CheckCheck className="size-5" />
+                </div>
+                <p className="text-sm font-semibold text-foreground">You are all caught up</p>
+                <p className="max-w-60 text-xs text-muted-foreground">
+                  No unread notifications right now.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                  <BellOff className="size-5" />
+                </div>
+                <p className="text-sm font-semibold text-foreground">No notifications yet</p>
+                <p className="max-w-60 text-xs text-muted-foreground">
+                  You will be notified here when tasks are assigned to you or updated.
+                </p>
+              </>
+            )}
           </div>
         ) : (
-          <ScrollArea className="max-h-96 divide-y divide-border">
-            {notifications.map((notification) => {
+          <div className="flex-1 overflow-y-auto divide-y divide-border">
+            {visibleNotifications.map((notification) => {
               const { icon: Icon, className: iconTone } =
                 getNotificationIcon(notification);
 
               return (
-                <button
+                <div
                   key={notification.id}
-                  type="button"
-                  onClick={() => handleNotificationClick(notification)}
                   className={cn(
-                    'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:outline-none',
+                    'group flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/60',
                     !notification.isRead && 'bg-primary/[0.04]'
                   )}
                 >
                   <div
+                    onClick={() => handleNotificationClick(notification)}
                     className={cn(
-                      'mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg',
+                      'mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg cursor-pointer',
                       iconTone
                     )}
                   >
                     <Icon className="size-4" />
                   </div>
 
-                  <div className="min-w-0 flex-1 space-y-1">
+                  <div
+                    onClick={() => handleNotificationClick(notification)}
+                    className="min-w-0 flex-1 space-y-1 cursor-pointer"
+                  >
                     <div className="flex items-start justify-between gap-2">
                       <p
                         className={cn(
@@ -321,26 +425,46 @@ export function NotificationBell() {
                       >
                         {notification.title}
                       </p>
-                      <span className="shrink-0 text-[11px] text-muted-foreground">
+                      <span className="shrink-0 text-[10px] text-muted-foreground">
                         {formatRelativeTime(notification.createdAt)}
                       </span>
                     </div>
 
                     <p className="line-clamp-2 text-xs text-muted-foreground">
-                      {notification.message}
+                      {notification.message.replace(/<!--.*?-->/g, '').trim()}
                     </p>
                   </div>
 
-                  {!notification.isRead && (
-                    <span
-                      aria-label="Unread notification"
-                      className="mt-2 size-2 shrink-0 rounded-full bg-primary"
-                    />
-                  )}
-                </button>
+                  {/* Inline Mark As Read Action Button */}
+                  <div className="shrink-0 flex items-center pt-0.5">
+                    {!notification.isRead ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => handleSingleMarkAsRead(e, notification.id)}
+                        disabled={markAsReadMutation.isPending}
+                        className="size-6 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                        title="Mark as read"
+                        aria-label="Mark as read"
+                      >
+                        <Check className="size-3.5" />
+                      </Button>
+                    ) : (
+                      <span className="size-2 invisible" />
+                    )}
+                  </div>
+                </div>
               );
             })}
-          </ScrollArea>
+          </div>
+        )}
+
+        {/* Footer info */}
+        {displayedNotifications.length > 0 && (
+          <div className="border-t border-border px-4 py-2 text-center text-[11px] text-muted-foreground bg-muted/20 shrink-0">
+            Showing {visibleNotifications.length} recent notification{visibleNotifications.length === 1 ? '' : 's'}
+          </div>
         )}
       </PopoverContent>
     </Popover>

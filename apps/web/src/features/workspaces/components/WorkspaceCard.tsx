@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Calendar, CheckCircle2, FolderKanban, Settings, Users } from 'lucide-react';
+import { Calendar, FolderKanban, Settings, Users } from 'lucide-react';
 
 import {
   Badge,
@@ -15,11 +15,12 @@ import {
   Skeleton,
 } from '@/components/ui';
 import { useAuth } from '@/features/auth';
-import { useWorkspaceDashboard } from '@/features/dashboard';
+import { useProjects } from '@/features/projects';
 import { cn } from '@/shared/utils';
 
 import { useWorkspaceMembers } from '../hook';
 import { Workspace, WorkspaceRole } from '../types';
+import { WorkspaceStatusBadge } from './WorkspaceStatusBadge';
 
 interface WorkspaceCardProps {
   workspace: Workspace;
@@ -41,7 +42,9 @@ function getRoleBadgeVariant(role: WorkspaceRole): 'default' | 'secondary' | 'ou
 export function WorkspaceCard({ workspace, isActive, onSelect }: WorkspaceCardProps) {
   const { user } = useAuth();
   const { data: members, isLoading: isMembersLoading } = useWorkspaceMembers(workspace.id);
-  const { data: dashboard, isLoading: isDashboardLoading } = useWorkspaceDashboard(workspace.id);
+  const { data: projects, isLoading: isProjectsLoading } = useProjects(workspace.id);
+
+  const projectsCount = projects?.filter((p) => !p.archived).length ?? 0;
 
   const currentMember = members?.find((member) => member.userId === user?.id);
   const userRole: WorkspaceRole =
@@ -56,7 +59,7 @@ export function WorkspaceCard({ workspace, isActive, onSelect }: WorkspaceCardPr
   return (
     <Card
       className={cn(
-        'group flex flex-col justify-between transition-all hover:border-primary/40 hover:shadow-sm',
+        'group flex flex-col gap-4 transition-all hover:border-primary/40 hover:shadow-sm',
         isActive && 'border-primary/60 ring-1 ring-primary/20'
       )}
     >
@@ -67,7 +70,15 @@ export function WorkspaceCard({ workspace, isActive, onSelect }: WorkspaceCardPr
               {workspace.name.slice(0, 2)}
             </div>
             <div className="min-w-0">
-              <CardTitle className="truncate text-base">{workspace.name}</CardTitle>
+              <Link
+                href={`/workspaces/${workspace.id}/projects`}
+                onClick={() => onSelect(workspace.id)}
+                className="hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded"
+              >
+                <CardTitle className="truncate text-base transition-colors hover:text-primary">
+                  {workspace.name}
+                </CardTitle>
+              </Link>
               <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Calendar className="size-3 shrink-0" />
                 <span>Created {formattedDate}</span>
@@ -76,12 +87,7 @@ export function WorkspaceCard({ workspace, isActive, onSelect }: WorkspaceCardPr
           </div>
 
           <div className="flex shrink-0 items-center gap-1.5">
-            {isActive && (
-              <Badge variant="outline" className="border-primary/40 text-primary">
-                <CheckCircle2 className="size-3" />
-                Active
-              </Badge>
-            )}
+            <WorkspaceStatusBadge isActive={isActive} />
             <Badge variant={getRoleBadgeVariant(userRole)}>{userRole}</Badge>
           </div>
         </div>
@@ -109,11 +115,11 @@ export function WorkspaceCard({ workspace, isActive, onSelect }: WorkspaceCardPr
             <FolderKanban className="size-4 text-muted-foreground" />
             <div>
               <p className="text-muted-foreground">Projects</p>
-              {isDashboardLoading ? (
+              {isProjectsLoading && !projects ? (
                 <Skeleton className="mt-0.5 h-4 w-8" />
               ) : (
                 <p className="font-semibold text-foreground">
-                  {dashboard?.activeProjects ?? 0}
+                  {projectsCount}
                 </p>
               )}
             </div>
@@ -121,17 +127,22 @@ export function WorkspaceCard({ workspace, isActive, onSelect }: WorkspaceCardPr
         </div>
       </CardContent>
 
-      <CardFooter className="flex items-center justify-between gap-2 border-t border-border/60 pt-4">
-        <Button
-          variant={isActive ? 'secondary' : 'default'}
-          size="sm"
+      <CardFooter className="mt-auto flex items-center justify-between gap-2 border-t border-border/60 pt-4">
+        <Link
+          href={`/workspaces/${workspace.id}/projects`}
           onClick={() => onSelect(workspace.id)}
           className="flex-1"
         >
-          {isActive ? 'Selected Workspace' : 'Switch to Workspace'}
-        </Button>
+          <Button
+            variant={isActive ? 'default' : 'secondary'}
+            size="sm"
+            className="w-full"
+          >
+            {isActive ? 'View Projects' : 'Switch & View Projects'}
+          </Button>
+        </Link>
 
-        <Link href={`/workspaces/${workspace.id}/settings`}>
+        <Link href={`/workspaces/${workspace.id}/settings?from=hub`}>
           <Button
             variant="outline"
             size="sm"

@@ -1,7 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   AlertCircle,
   Archive,
@@ -35,36 +36,68 @@ import { normalizeApiError } from '@/shared/errors';
 import { useArchiveProject, useProject } from '../hook';
 import { DeleteProjectDialog } from './DeleteProjectDialog';
 import { EditProjectForm } from './EditProjectForm';
-import {
-  deriveProjectKey,
-  formatProjectStatusLabel,
-  getProjectStatusBadgeVariant,
-} from './ProjectCard';
+import { ProjectStatusBadge } from './ProjectStatusBadge';
 
 interface ProjectSettingsViewProps {
   workspaceId: string;
   projectId: string;
 }
 
-export function ProjectSettingsView({
-  workspaceId,
-  projectId,
-}: ProjectSettingsViewProps) {
+export function ProjectSettingsView({ workspaceId, projectId }: ProjectSettingsViewProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const from = searchParams.get('from');
+
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const {
-    data: project,
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useProject(projectId);
+  const { data: project, isLoading, isError, error, refetch } = useProject(projectId);
 
   const { data: workspace } = useWorkspace(workspaceId);
   const { data: members } = useWorkspaceMembers(workspaceId);
   const archiveMutation = useArchiveProject(workspaceId);
+
+  const isFromHub = from === 'hub';
+  const isFromWorkspace = from === 'workspace';
+  const isFromDashboard = from === 'dashboard';
+  const source = searchParams.get('source');
+
+  const projectTasksHref = `/workspaces/${workspaceId}/projects/${projectId}/tasks${
+    source ? `?from=${source}` : ''
+  }`;
+
+  const backHref = isFromHub
+    ? '/projects'
+    : isFromWorkspace
+      ? `/workspaces/${workspaceId}/projects`
+      : isFromDashboard
+        ? '/dashboard'
+        : projectTasksHref;
+
+  const backLabel = isFromHub
+    ? 'Back to Projects Hub'
+    : isFromWorkspace
+      ? workspace
+        ? `Back to ${workspace.name}`
+        : 'Back to Workspace'
+      : isFromDashboard
+        ? 'Back to Dashboard'
+        : project
+          ? `Back to ${project.name}`
+          : 'Back to Project';
+
+  const currentMember = members?.find((m) => m.userId === user?.id);
+  const canManage =
+    currentMember?.role === 'OWNER' ||
+    currentMember?.role === 'ADMIN' ||
+    workspace?.ownerId === user?.id;
+
+  // Enforce access control: if user is a regular MEMBER, redirect back to tasks
+  useEffect(() => {
+    if (!isLoading && project && members && !canManage) {
+      router.replace(projectTasksHref);
+    }
+  }, [isLoading, project, members, canManage, router, projectTasksHref]);
 
   // 1. Loading State
   if (isLoading) {
@@ -90,10 +123,10 @@ export function ProjectSettingsView({
 
     return (
       <div className="space-y-4">
-        <Link href={`/workspaces/${workspaceId}/projects`}>
+        <Link href={backHref}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="size-4" />
-            <span>Back to Projects</span>
+            <span>{backLabel}</span>
           </Button>
         </Link>
 
@@ -140,14 +173,6 @@ export function ProjectSettingsView({
     );
   }
 
-  const currentMember = members?.find((m) => m.userId === user?.id);
-  const canManage =
-    currentMember?.role === 'OWNER' ||
-    currentMember?.role === 'ADMIN' ||
-    workspace?.ownerId === user?.id;
-
-  const projectKey = deriveProjectKey(project);
-
   const handleToggleArchive = async () => {
     const nextArchived = !project.archived;
 
@@ -178,25 +203,21 @@ export function ProjectSettingsView({
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="space-y-1">
           <Link
-            href={`/workspaces/${workspaceId}/projects`}
+            href={backHref}
             className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="size-3.5" />
-            <span>Back to Projects</span>
+            <span>{backLabel}</span>
           </Link>
           <div className="flex flex-wrap items-center gap-2.5">
-            <span className="rounded bg-muted px-2 py-0.5 font-mono text-xs font-semibold text-muted-foreground">
-              {projectKey}
-            </span>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
               {project.name} — Settings
             </h1>
-            <Badge variant={getProjectStatusBadgeVariant(project.status)}>
-              {formatProjectStatusLabel(project.status)}
-            </Badge>
+            <ProjectStatusBadge status={project.status} />
             {project.archived && (
-              <Badge variant="outline" className="text-muted-foreground">
-                Archived
+              <Badge variant="outline" className="text-muted-foreground gap-1">
+                <Archive className="size-3" />
+                <span>Archived</span>
               </Badge>
             )}
           </div>
@@ -205,7 +226,7 @@ export function ProjectSettingsView({
           </p>
         </div>
 
-        <Link href={`/workspaces/${workspaceId}/projects/${project.id}/tasks`}>
+        <Link href={projectTasksHref}>
           <Button variant="outline" size="sm">
             <FolderKanban className="size-4" />
             <span>Open Project Tasks</span>
@@ -296,9 +317,7 @@ export function ProjectSettingsView({
 
         <CardContent className="flex flex-col justify-between gap-4 border-t border-destructive/20 pt-4 sm:flex-row sm:items-center">
           <div className="space-y-0.5">
-            <p className="text-sm font-semibold text-foreground">
-              Delete this project
-            </p>
+            <p className="text-sm font-semibold text-foreground">Delete this project</p>
             <p className="text-xs text-muted-foreground">
               Once deleted, &ldquo;{project.name}&rdquo; and all of its tasks cannot be recovered.
             </p>
@@ -319,4 +338,3 @@ export function ProjectSettingsView({
     </div>
   );
 }
-

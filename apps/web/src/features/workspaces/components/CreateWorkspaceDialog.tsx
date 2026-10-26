@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle, Loader2, Plus } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 
 import {
   Alert,
@@ -39,12 +39,14 @@ interface CreateWorkspaceDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
+  triggerLabel?: string;
 }
 
 export function CreateWorkspaceDialog({
   open: controlledOpen,
   onOpenChange: setControlledOpen,
   showTrigger = true,
+  triggerLabel = 'New Workspace',
 }: CreateWorkspaceDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -62,6 +64,11 @@ export function CreateWorkspaceDialog({
       name: '',
       description: '',
     },
+  });
+
+  const watchedName = useWatch({
+    control: form.control,
+    name: 'name',
   });
 
   const isSubmitting = createWorkspaceMutation.isPending || form.formState.isSubmitting;
@@ -117,7 +124,7 @@ export function CreateWorkspaceDialog({
       {showTrigger && (
         <DialogTrigger render={<Button />}>
           <Plus className="size-4" />
-          <span>Create Workspace</span>
+          <span>{triggerLabel}</span>
         </DialogTrigger>
       )}
 
@@ -144,7 +151,9 @@ export function CreateWorkspaceDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Workspace Name</FormLabel>
+                  <FormLabel>
+                    Workspace Name <span className="text-destructive">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="e.g. Acme Product Engineering"
@@ -165,7 +174,7 @@ export function CreateWorkspaceDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Briefly describe the purpose of this workspace..."
@@ -180,20 +189,25 @@ export function CreateWorkspaceDialog({
               )}
             />
 
-            <DialogFooter className="pt-2">
-              <DialogClose render={<Button variant="outline" disabled={isSubmitting} />}>
-                Cancel
-              </DialogClose>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" />
-                    <span>Creating...</span>
-                  </>
-                ) : (
-                  <span>Create Workspace</span>
-                )}
-              </Button>
+            <DialogFooter className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between pt-2">
+              <p className="text-[11px] text-muted-foreground">
+                <span className="text-destructive font-semibold">*</span> Required fields
+              </p>
+              <div className="flex items-center gap-2 justify-end">
+                <DialogClose render={<Button variant="outline" disabled={isSubmitting} />}>
+                  Cancel
+                </DialogClose>
+                <Button type="submit" disabled={isSubmitting || !watchedName?.trim()}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      <span>Creating...</span>
+                    </>
+                  ) : (
+                    <span>Create Workspace</span>
+                  )}
+                </Button>
+              </div>
             </DialogFooter>
           </form>
         </Form>

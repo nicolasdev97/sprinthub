@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const createProjectSchema = z.object({
+  workspaceId: z.string().min(1, 'Workspace is required'),
   name: z
     .string()
     .trim()
