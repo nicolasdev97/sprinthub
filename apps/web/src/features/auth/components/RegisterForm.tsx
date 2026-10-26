@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -38,6 +38,15 @@ export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Auto-dismiss registration error after 5 seconds
+  useEffect(() => {
+    if (!serverError) return;
+    const timer = setTimeout(() => {
+      setServerError(null);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [serverError]);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -213,11 +222,12 @@ export function RegisterForm() {
                       disabled={isSubmitting}
                       className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      title={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? (
-                        <EyeOff className="size-4" />
-                      ) : (
                         <Eye className="size-4" />
+                      ) : (
+                        <EyeOff className="size-4" />
                       )}
                     </button>
                   </div>
@@ -253,11 +263,16 @@ export function RegisterForm() {
                           ? 'Hide password confirmation'
                           : 'Show password confirmation'
                       }
+                      title={
+                        showConfirmPassword
+                          ? 'Hide password confirmation'
+                          : 'Show password confirmation'
+                      }
                     >
                       {showConfirmPassword ? (
-                        <EyeOff className="size-4" />
-                      ) : (
                         <Eye className="size-4" />
+                      ) : (
+                        <EyeOff className="size-4" />
                       )}
                     </button>
                   </div>
