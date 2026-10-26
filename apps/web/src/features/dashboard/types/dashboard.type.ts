@@ -2,6 +2,7 @@ import { Project } from '@/features/projects';
 import { Task, TaskPriority, TaskStatus } from '@/features/tasks';
 
 export interface WorkspaceDashboard {
+  totalProjects: number;
   activeProjects: number;
   pendingTasks: number;
   completedTasks: number;

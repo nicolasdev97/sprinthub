@@ -68,7 +68,10 @@ export function DashboardKpiGrid({ metrics }: DashboardKpiGridProps) {
       description: 'Currently active in this workspace',
       icon: FolderKanban,
       iconClassName: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
-      badge: metrics.activeProjects === 1 ? '1 stream' : `${metrics.activeProjects} streams`,
+      badge:
+        metrics.totalProjects > 0
+          ? `${metrics.activeProjects}/${metrics.totalProjects} active`
+          : 'No projects',
       badgeVariant: 'outline' as const,
     },
   ];

@@ -9,15 +9,26 @@ export class DashboardRepository {
   ): Promise<WorkspaceDashboardDto> {
     const now = new Date();
 
-    const [activeProjects, pendingTasks, completedTasks, overdueTasks] =
-      await Promise.all([
-        prisma.project.count({
-          where: {
-            workspaceId,
-            status: "ACTIVE",
-            archived: false,
-          },
-        }),
+    const [
+      totalProjects,
+      activeProjects,
+      pendingTasks,
+      completedTasks,
+      overdueTasks,
+    ] = await Promise.all([
+      prisma.project.count({
+        where: {
+          workspaceId,
+          archived: false,
+        },
+      }),
+      prisma.project.count({
+        where: {
+          workspaceId,
+          status: "ACTIVE",
+          archived: false,
+        },
+      }),
         prisma.task.count({
           where: {
             project: {
@@ -57,6 +68,7 @@ export class DashboardRepository {
       ]);
 
     return {
+      totalProjects,
       activeProjects,
       pendingTasks,
       completedTasks,

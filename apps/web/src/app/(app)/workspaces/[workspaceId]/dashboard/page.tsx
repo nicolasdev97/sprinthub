@@ -1,13 +1,4 @@
-import { use } from 'react';
-import type { Metadata } from 'next';
-
-import { WorkspaceDashboardView } from '@/features/dashboard';
-
-export const metadata: Metadata = {
-  title: 'Workspace Dashboard | SprintHub',
-  description:
-    'Monitor workspace KPIs, task workflow distribution, priority breakdown, and upcoming deadlines.',
-};
+import { redirect } from 'next/navigation';
 
 interface WorkspaceDashboardPageProps {
   params: Promise<{
@@ -15,11 +6,9 @@ interface WorkspaceDashboardPageProps {
   }>;
 }
 
-export default function WorkspaceDashboardPage({
+export default async function WorkspaceDashboardPage({
   params,
 }: WorkspaceDashboardPageProps) {
-  const { workspaceId } = use(params);
-
-  return <WorkspaceDashboardView workspaceId={workspaceId} />;
+  const { workspaceId } = await params;
+  redirect(`/workspaces/${workspaceId}/projects`);
 }
-

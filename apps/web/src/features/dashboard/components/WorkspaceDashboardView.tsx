@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import {
   AlertCircle,
+  ArrowLeft,
   CheckSquare,
   FolderKanban,
   LayoutDashboard,
@@ -84,6 +85,13 @@ export function WorkspaceDashboardView({
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
+          <Link
+            href={`/workspaces/${workspaceId}/projects`}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="size-3.5" />
+            <span>Back to Projects</span>
+          </Link>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
               {workspace ? `${workspace.name} Dashboard` : 'Workspace Dashboard'}
@@ -116,7 +124,7 @@ export function WorkspaceDashboardView({
             variant="outline"
             size="sm"
             nativeButton={false}
-            render={<Link href={`/workspaces/${workspaceId}/settings`} />}
+            render={<Link href={`/workspaces/${workspaceId}/settings?from=dashboard`} />}
           >
             <Settings className="size-3.5" />
             <span>Settings</span>

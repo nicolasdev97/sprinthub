@@ -92,7 +92,7 @@ export function DashboardUpcomingTasks({
               {upcomingTasks.map((task) => (
                 <Link
                   key={task.id}
-                  href={`/workspaces/${workspaceId}/projects/${task.project.id}/tasks`}
+                  href={`/workspaces/${workspaceId}/projects/${task.project.id}/tasks?taskId=${task.id}`}
                   className="flex flex-col gap-2 p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0 flex-1 space-y-1">
@@ -164,7 +164,7 @@ export function DashboardUpcomingTasks({
                 return (
                   <Link
                     key={task.id}
-                    href={`/workspaces/${workspaceId}/projects/${task.project.id}/tasks`}
+                    href={`/workspaces/${workspaceId}/projects/${task.project.id}/tasks?taskId=${task.id}`}
                     className="flex flex-col gap-2 p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="min-w-0 flex-1 space-y-1">
