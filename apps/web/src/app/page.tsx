@@ -1017,3 +1017,9 @@ export default function LandingPage() {
     </div>
   );
 }
+
+// Revisar a donde se re dirigen ws, pr y ts si se eliminan.
+// Revisar cuando se elimina un ws, pr y ts, qué pasa en otra pestaña.
+// Revisar las notificaciones en tiempo real.
+// Revisar la actualización de profile en tiempo real.
+// Revisar la sesión de usuario y la expiración de token.
