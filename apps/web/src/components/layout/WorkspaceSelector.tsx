@@ -1,14 +1,16 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   AlertCircle,
   Briefcase,
   Check,
-  ChevronsUpDown,
+  ChevronDown,
   FolderOpen,
   Plus,
   RefreshCw,
+  Search,
 } from 'lucide-react';
 
 import {
@@ -20,6 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  Input,
   Skeleton,
 } from '@/components/ui';
 import { useWorkspaceContext } from '@/features/workspaces';
@@ -27,6 +30,10 @@ import { cn } from '@/shared/utils';
 
 export function WorkspaceSelector() {
   const router = useRouter();
+  const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
   const {
     workspaces,
     activeWorkspace,
@@ -36,86 +43,115 @@ export function WorkspaceSelector() {
     refetchWorkspaces,
   } = useWorkspaceContext();
 
-  // 1. Loading State
+  const segments = pathname.split('/').filter(Boolean);
+  const isWorkspacesListPage = pathname === '/workspaces' || pathname === '/workspaces/';
+  const workspaceIdFromUrl =
+    segments[0] === 'workspaces' && segments[1] && segments[1] !== 'settings'
+      ? segments[1]
+      : undefined;
+
+  // If on the workspaces list page, show "Select Workspace". Otherwise, use URL workspace or active workspace.
+  const currentWorkspace = isWorkspacesListPage
+    ? null
+    : workspaceIdFromUrl
+      ? (workspaces.find((w) => w.id === workspaceIdFromUrl) ?? activeWorkspace)
+      : activeWorkspace;
+
+  // Filter workspaces based on search query
+  const filteredWorkspaces = useMemo(() => {
+    const trimmed = searchQuery.trim().toLowerCase();
+    if (!trimmed) return workspaces;
+    return workspaces.filter(
+      (w) =>
+        w.name.toLowerCase().includes(trimmed) ||
+        w.description?.toLowerCase().includes(trimmed)
+    );
+  }, [workspaces, searchQuery]);
+
+  const handleSelectWorkspace = (workspaceId: string) => {
+    setActiveWorkspaceId(workspaceId);
+    setIsOpen(false);
+    setSearchQuery('');
+    router.push(`/workspaces/${workspaceId}/projects`);
+  };
+
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2" aria-label="Loading workspaces">
-        <Skeleton className="size-8 rounded-lg" />
-        <div className="hidden sm:flex sm:flex-col sm:gap-1">
-          <Skeleton className="h-3.5 w-28" />
-          <Skeleton className="h-2.5 w-16" />
-        </div>
+      <div className="flex items-center gap-1.5" aria-label="Loading workspace selector">
+        <Skeleton className="h-7 w-28 rounded-md" />
       </div>
     );
   }
 
-  // 2. Error State
   if (isError) {
     return (
       <Button
-        variant="outline"
+        variant="ghost"
         size="sm"
-        onClick={() => {
-          void refetchWorkspaces();
-        }}
-        className="border-destructive/40 text-destructive hover:bg-destructive/10"
+        onClick={() => void refetchWorkspaces()}
+        className="h-8 gap-1.5 px-2 text-xs text-destructive hover:bg-destructive/10"
         title="Retry loading workspaces"
       >
         <AlertCircle className="size-3.5" />
-        <span className="hidden sm:inline">Workspaces unavailable</span>
+        <span className="hidden sm:inline">Retry</span>
         <RefreshCw className="size-3" />
       </Button>
     );
   }
 
-  // 3 & 4. Empty State & Success State inside Dropdown
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger
         className={cn(
-          'inline-flex h-9 max-w-56 items-center gap-2 rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm font-medium text-foreground shadow-2xs transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring'
+          'group inline-flex h-8 max-w-32 sm:max-w-44 items-center gap-1 rounded-md px-2 py-1 text-xs sm:text-sm font-semibold text-foreground/90 transition-colors hover:bg-muted/70 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring outline-none cursor-pointer'
         )}
         aria-label="Select workspace"
       >
-        <div className="flex size-5 shrink-0 items-center justify-center rounded-md bg-primary text-[11px] font-bold text-primary-foreground uppercase">
-          {activeWorkspace ? activeWorkspace.name.slice(0, 1) : <Briefcase className="size-3" />}
-        </div>
         <span className="truncate">
-          {activeWorkspace ? activeWorkspace.name : 'Select Workspace'}
+          {currentWorkspace ? currentWorkspace.name : 'Select Workspace'}
         </span>
-        <ChevronsUpDown className="ml-auto size-3.5 shrink-0 text-muted-foreground" />
+
+        <ChevronDown className="size-3 shrink-0 text-muted-foreground/70 transition-transform duration-200 group-data-[state=open]:rotate-180" />
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="start" className="w-64">
+      <DropdownMenuContent align="start" className="w-64 p-1.5">
+        {/* Real-time Workspace Search Bar */}
+        <div className="relative mb-1.5 px-1 pt-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.stopPropagation()}
+            placeholder="Search workspaces..."
+            className="h-8 pl-8 pr-2 text-xs"
+            autoFocus
+          />
+        </div>
+
         <DropdownMenuGroup>
           <DropdownMenuGroupLabel>Workspaces</DropdownMenuGroupLabel>
 
-          {workspaces.length === 0 ? (
+          {filteredWorkspaces.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-1.5 px-3 py-4 text-center">
               <div className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
                 <FolderOpen className="size-4" />
               </div>
-              <p className="text-xs font-medium text-foreground">No workspaces yet</p>
+              <p className="text-xs font-medium text-foreground">No workspaces found</p>
               <p className="text-[11px] text-muted-foreground">
-                Create your first workspace to organize projects and tasks.
+                {searchQuery ? 'Try a different keyword' : 'Create a workspace to get started'}
               </p>
             </div>
           ) : (
-            workspaces.map((workspace) => {
-              const isSelected = activeWorkspace?.id === workspace.id;
+            filteredWorkspaces.map((workspace) => {
+              const isSelected = currentWorkspace?.id === workspace.id;
 
               return (
                 <DropdownMenuItem
                   key={workspace.id}
-                  onClick={() => setActiveWorkspaceId(workspace.id)}
-                  className="flex items-center justify-between gap-2"
+                  onClick={() => handleSelectWorkspace(workspace.id)}
+                  className="flex items-center justify-between gap-2 cursor-pointer"
                 >
-                  <div className="flex min-w-0 items-center gap-2">
-                    <div className="flex size-5 shrink-0 items-center justify-center rounded-sm bg-muted text-[11px] font-semibold text-foreground uppercase">
-                      {workspace.name.slice(0, 1)}
-                    </div>
-                    <span className="truncate font-medium">{workspace.name}</span>
-                  </div>
+                  <span className="truncate font-medium">{workspace.name}</span>
                   {isSelected && <Check className="size-4 shrink-0 text-primary" />}
                 </DropdownMenuItem>
               );
@@ -126,11 +162,23 @@ export function WorkspaceSelector() {
         <DropdownMenuSeparator />
 
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => router.push('/workspaces')}>
+          <DropdownMenuItem
+            onClick={() => {
+              setIsOpen(false);
+              router.push('/workspaces');
+            }}
+            className="cursor-pointer"
+          >
             <Briefcase className="size-4 text-muted-foreground" />
             <span>All Workspaces</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push('/workspaces?create=true')}>
+          <DropdownMenuItem
+            onClick={() => {
+              setIsOpen(false);
+              router.push('/workspaces?create=true');
+            }}
+            className="cursor-pointer"
+          >
             <Plus className="size-4 text-muted-foreground" />
             <span>Create Workspace</span>
           </DropdownMenuItem>
@@ -139,4 +187,3 @@ export function WorkspaceSelector() {
     </DropdownMenu>
   );
 }
-

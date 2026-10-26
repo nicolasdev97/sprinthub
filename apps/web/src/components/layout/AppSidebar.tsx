@@ -1,18 +1,17 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
+  Briefcase,
   CheckSquare,
   FolderKanban,
-  Layers,
   LayoutDashboard,
   LucideIcon,
-  Settings,
 } from 'lucide-react';
 
 import { cn } from '@/shared/utils';
-import { useWorkspaceContext } from '@/features/workspaces';
 
 export interface NavItem {
   label: string;
@@ -28,6 +27,11 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
+    label: 'Workspaces',
+    href: '/workspaces',
+    icon: Briefcase,
+  },
+  {
     label: 'Projects',
     href: '/projects',
     icon: FolderKanban,
@@ -36,11 +40,6 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
     label: 'Tasks',
     href: '/tasks',
     icon: CheckSquare,
-  },
-  {
-    label: 'Workspace Settings',
-    href: '/workspaces/settings',
-    icon: Settings,
   },
 ];
 
@@ -60,32 +59,30 @@ export function isNavItemActive(pathname: string, item: NavItem): boolean {
     );
   }
 
-  if (item.href === '/tasks') {
-    return (
-      pathname === '/tasks' ||
-      pathname.startsWith('/tasks/') ||
-      /^\/workspaces\/[^/]+\/projects\/[^/]+\/tasks(\/|$)/.test(pathname)
-    );
-  }
+  // Inside a specific project context (/workspaces/:workspaceId/projects/:projectId/...)
+  const isInsideSpecificProject = /^\/workspaces\/[^/]+\/projects\/[^/]+(\/|$)/.test(pathname);
 
   if (item.href === '/projects') {
-    if (/^\/workspaces\/[^/]+\/projects\/[^/]+\/tasks(\/|$)/.test(pathname)) {
-      return false;
-    }
-
     return (
       pathname === '/projects' ||
       pathname.startsWith('/projects/') ||
-      /^\/workspaces\/[^/]+\/projects(\/|$)/.test(pathname)
+      isInsideSpecificProject
     );
   }
 
-  if (item.href === '/workspaces/settings') {
-    return (
-      pathname === '/workspaces' ||
-      pathname === '/workspaces/settings' ||
-      /^\/workspaces\/[^/]+\/settings(\/|$)/.test(pathname)
-    );
+  if (item.href === '/workspaces') {
+    if (/^\/workspaces\/[^/]+\/dashboard(\/|$)/.test(pathname)) {
+      return false;
+    }
+    // When inside a specific project, active item shifts to Projects
+    if (isInsideSpecificProject) {
+      return false;
+    }
+    return pathname === '/workspaces' || pathname.startsWith('/workspaces/');
+  }
+
+  if (item.href === '/tasks') {
+    return pathname === '/tasks' || pathname.startsWith('/tasks/');
   }
 
   if (item.matchExact) {
@@ -95,13 +92,8 @@ export function isNavItemActive(pathname: string, item: NavItem): boolean {
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
-export function AppSidebar({
-  isCollapsed = false,
-  onNavigate,
-  className,
-}: AppSidebarProps) {
+export function AppSidebar({ isCollapsed = false, onNavigate, className }: AppSidebarProps) {
   const pathname = usePathname();
-  const { activeWorkspace } = useWorkspaceContext();
 
   return (
     <aside
@@ -120,23 +112,22 @@ export function AppSidebar({
         )}
       >
         <Link
-          href={
-            activeWorkspace
-              ? `/workspaces/${activeWorkspace.id}/dashboard`
-              : '/dashboard'
-          }
+          href="/dashboard"
           onClick={onNavigate}
           className="flex items-center gap-2.5 font-semibold tracking-tight text-sidebar-foreground outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring rounded-md"
         >
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground shadow-xs">
-            <Layers className="size-4" />
-          </div>
+          <Image
+            src="/logo.png"
+            alt="SprintHub Logo"
+            width={32}
+            height={32}
+            className="size-8 shrink-0 rounded-lg object-contain"
+            priority
+          />
           {!isCollapsed && (
             <div className="flex flex-col leading-none">
               <span className="text-base font-bold tracking-tight">SprintHub</span>
-              <span className="text-[11px] font-normal text-muted-foreground">
-                Workspace OS
-              </span>
+              <span className="text-[11px] font-normal text-muted-foreground">Workspace OS</span>
             </div>
           )}
         </Link>
@@ -154,20 +145,7 @@ export function AppSidebar({
           {MAIN_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = isNavItemActive(pathname, item);
-            const resolvedHref =
-              item.href === '/dashboard'
-                ? activeWorkspace
-                  ? `/workspaces/${activeWorkspace.id}/dashboard`
-                  : '/dashboard'
-                : item.href === '/projects'
-                  ? activeWorkspace
-                    ? `/workspaces/${activeWorkspace.id}/projects`
-                    : '/projects'
-                  : item.href === '/workspaces/settings'
-                    ? activeWorkspace
-                      ? `/workspaces/${activeWorkspace.id}/settings`
-                      : '/workspaces'
-                    : item.href;
+            const resolvedHref = item.href;
 
             return (
               <Link
@@ -204,36 +182,6 @@ export function AppSidebar({
           })}
         </nav>
       </div>
-
-      {/* Active Workspace Footer Summary */}
-      <div className="border-t border-sidebar-border p-3">
-        <div
-          className={cn(
-            'flex items-center rounded-lg bg-sidebar-accent/50 px-2.5 py-2 text-xs',
-            isCollapsed ? 'justify-center px-1.5' : 'gap-2.5'
-          )}
-          title={
-            activeWorkspace
-              ? `Active Workspace: ${activeWorkspace.name}`
-              : 'No active workspace selected'
-          }
-        >
-          <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-[11px] font-bold text-primary uppercase">
-            {activeWorkspace ? activeWorkspace.name.slice(0, 2) : 'SH'}
-          </div>
-          {!isCollapsed && (
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-medium text-sidebar-foreground">
-                {activeWorkspace ? activeWorkspace.name : 'No Workspace'}
-              </p>
-              <p className="truncate text-[11px] text-muted-foreground">
-                {activeWorkspace ? 'Active environment' : 'Select or create one'}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
     </aside>
   );
 }
-

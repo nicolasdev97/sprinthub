@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, Moon, Settings, Sun, User as UserIcon } from 'lucide-react';
+import { Keyboard, LogOut, User as UserIcon } from 'lucide-react';
 
 import {
   Avatar,
@@ -16,55 +15,32 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui';
 import { useAuth } from '@/features/auth';
-import { useWorkspaceContext } from '@/features/workspaces';
 
-const THEME_STORAGE_KEY = 'sprinthub:theme';
+interface UserNavProps {
+  onOpenShortcuts?: () => void;
+}
 
-export function UserNav() {
+export function UserNav({ onOpenShortcuts }: UserNavProps) {
   const router = useRouter();
   const { user, logout } = useAuth();
-  const { activeWorkspaceId } = useWorkspaceContext();
-  const [isDark, setIsDark] = useState<boolean>(() => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-    return document.documentElement.classList.contains('dark');
-  });
 
-  useEffect(() => {
+  const handleLogout = async () => {
     try {
-      const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-      if (savedTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else if (savedTheme === 'light') {
-        document.documentElement.classList.remove('dark');
-      }
-    } catch {
-      // Ignore storage access errors
-    }
-  }, []);
-
-  const handleToggleTheme = () => {
-    const nextIsDark = !document.documentElement.classList.contains('dark');
-    document.documentElement.classList.toggle('dark', nextIsDark);
-    setIsDark(nextIsDark);
-    try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, nextIsDark ? 'dark' : 'light');
+      window.sessionStorage.setItem('sprinthub:logout-redirect', '1');
     } catch {
       // Ignore storage write errors
     }
-  };
-
-  const handleLogout = async () => {
     await logout();
-    router.push('/login');
+    router.replace('/');
   };
 
-  const fullName = user ? `${user.firstName} ${user.lastName}`.trim() : 'Guest User';
-  const email = user?.email ?? 'Not signed in';
-  const initials = user
-    ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
-    : 'GU';
+  if (!user) {
+    return null;
+  }
+
+  const fullName = `${user.firstName} ${user.lastName}`.trim();
+  const email = user.email;
+  const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
 
   return (
     <DropdownMenu>
@@ -94,50 +70,21 @@ export function UserNav() {
             <UserIcon className="size-4 text-muted-foreground" />
             <span>Profile</span>
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() =>
-              router.push(
-                activeWorkspaceId
-                  ? `/workspaces/${activeWorkspaceId}/settings`
-                  : '/workspaces'
-              )
-            }
-          >
-            <Settings className="size-4 text-muted-foreground" />
-            <span>Workspace Settings</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleToggleTheme}>
-            {isDark ? (
-              <>
-                <Sun className="size-4 text-muted-foreground" />
-                <span>Light Mode</span>
-              </>
-            ) : (
-              <>
-                <Moon className="size-4 text-muted-foreground" />
-                <span>Dark Mode</span>
-              </>
-            )}
+          <DropdownMenuItem onClick={() => onOpenShortcuts?.()} className="cursor-pointer">
+            <Keyboard className="size-4 text-muted-foreground" />
+            <span>Keyboard Shortcuts</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
 
         <DropdownMenuSeparator />
 
         <DropdownMenuGroup>
-          {user ? (
-            <DropdownMenuItem variant="destructive" onClick={() => void handleLogout()}>
-              <LogOut className="size-4" />
-              <span>Log out</span>
-            </DropdownMenuItem>
-          ) : (
-            <DropdownMenuItem onClick={() => router.push('/login')}>
-              <UserIcon className="size-4 text-muted-foreground" />
-              <span>Log in</span>
-            </DropdownMenuItem>
-          )}
+          <DropdownMenuItem variant="destructive" onClick={() => void handleLogout()}>
+            <LogOut className="size-4" />
+            <span>Log out</span>
+          </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
-
