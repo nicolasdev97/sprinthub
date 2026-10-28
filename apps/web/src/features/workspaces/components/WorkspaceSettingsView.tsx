@@ -3,14 +3,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  AlertCircle,
-  ArrowLeft,
-  FolderKanban,
-  Lock,
-  RefreshCw,
-  ShieldAlert,
-} from 'lucide-react';
+import { AlertCircle, ArrowLeft, FolderKanban, Lock, RefreshCw, ShieldAlert } from 'lucide-react';
 
 import {
   Alert,
@@ -28,6 +21,7 @@ import {
 } from '@/components/ui';
 import { useAuth } from '@/features/auth';
 import { normalizeApiError } from '@/shared/errors';
+import { deletedEntities } from '@/shared/utils';
 
 import { useWorkspaceContext } from '../context';
 import { useWorkspace, useWorkspaceMembers } from '../hook';
@@ -68,10 +62,28 @@ export function WorkspaceSettingsView({ workspaceId }: WorkspaceSettingsViewProp
 
   // Enforce access control: if user is a regular MEMBER, redirect to projects view
   useEffect(() => {
-    if (!isLoading && !isMembersLoading && workspace && members && !canManage) {
+    if (
+      !isLoading &&
+      !isMembersLoading &&
+      workspace &&
+      members &&
+      currentMember?.role === 'MEMBER' &&
+      !canManage &&
+      !deletedEntities.isDeleted(workspaceId)
+    ) {
       router.replace(workspaceProjectsHref);
     }
-  }, [isLoading, isMembersLoading, workspace, members, canManage, router, workspaceProjectsHref]);
+  }, [
+    isLoading,
+    isMembersLoading,
+    workspace,
+    workspaceId,
+    members,
+    currentMember,
+    canManage,
+    router,
+    workspaceProjectsHref,
+  ]);
 
   const backHref = isFromHub
     ? '/workspaces'
@@ -107,7 +119,12 @@ export function WorkspaceSettingsView({ workspaceId }: WorkspaceSettingsViewProp
   // 2. Error State
   if (isError) {
     const apiError = normalizeApiError(error);
-    const isNotFound = apiError.statusCode === 404 || apiError.message.toLowerCase().includes('not found');
+    const isNotFound =
+      apiError.statusCode === 404 ||
+      apiError.statusCode === 403 ||
+      apiError.message.toLowerCase().includes('not found') ||
+      apiError.message.toLowerCase().includes('forbidden') ||
+      apiError.message.toLowerCase().includes('not a member');
 
     if (isNotFound) {
       return (
@@ -244,11 +261,7 @@ export function WorkspaceSettingsView({ workspaceId }: WorkspaceSettingsViewProp
 
       {/* Section 2.5: Transfer Ownership (Owner only) */}
       {isOwner && members && user && (
-        <TransferOwnershipDialog
-          workspace={workspace}
-          members={members}
-          currentUserId={user.id}
-        />
+        <TransferOwnershipDialog workspace={workspace} members={members} currentUserId={user.id} />
       )}
 
       {/* Section 3: Danger Zone */}

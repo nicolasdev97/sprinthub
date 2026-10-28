@@ -5,12 +5,14 @@ import {
   ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth';
+import { deletedEntities } from '@/shared/utils';
 
 import { workspaceService } from '../service';
 import { Workspace } from '../types';
@@ -48,7 +50,7 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
   });
 
   const {
-    data: workspaces = [],
+    data: rawWorkspaces = [],
     isLoading: isQueryLoading,
     isError,
     refetch,
@@ -57,6 +59,11 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     queryFn: () => workspaceService.getWorkspaces(),
     enabled: isAuthenticated && !isInitializing,
   });
+
+  const workspaces = useMemo(
+    () => rawWorkspaces.filter((w) => !deletedEntities.isDeleted(w.id)),
+    [rawWorkspaces]
+  );
 
   const activeWorkspace = useMemo<Workspace | null>(() => {
     if (workspaces.length === 0) {
@@ -74,8 +81,50 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     return workspaces[0] ?? null;
   }, [workspaces, selectedWorkspaceId]);
 
+  // Keep selectedWorkspaceId synchronized if the current workspace is removed
+  useEffect(() => {
+    if (isQueryLoading || isInitializing) {
+      return;
+    }
+
+    if (selectedWorkspaceId) {
+      if (workspaces.length === 0) {
+        setSelectedWorkspaceId(null);
+        if (typeof window !== 'undefined') {
+          try {
+            window.localStorage.removeItem(ACTIVE_WORKSPACE_STORAGE_KEY);
+          } catch {
+            // Ignore storage errors
+          }
+        }
+      } else {
+        const exists = workspaces.some((w) => w.id === selectedWorkspaceId);
+        if (!exists) {
+          const nextId = workspaces[0]?.id ?? null;
+          if (nextId !== selectedWorkspaceId) {
+            setSelectedWorkspaceId(nextId);
+            if (typeof window !== 'undefined') {
+              try {
+                if (nextId) {
+                  window.localStorage.setItem(ACTIVE_WORKSPACE_STORAGE_KEY, nextId);
+                } else {
+                  window.localStorage.removeItem(ACTIVE_WORKSPACE_STORAGE_KEY);
+                }
+              } catch {
+                // Ignore storage errors
+              }
+            }
+          }
+        }
+      }
+    }
+  }, [workspaces, selectedWorkspaceId, isQueryLoading, isInitializing]);
+
   const setActiveWorkspaceId = useCallback((workspaceId: string) => {
-    setSelectedWorkspaceId(workspaceId);
+    if (!workspaceId || deletedEntities.isDeleted(workspaceId)) {
+      return;
+    }
+    setSelectedWorkspaceId((prev) => (prev === workspaceId ? prev : workspaceId));
     if (typeof window !== 'undefined') {
       try {
         window.localStorage.setItem(ACTIVE_WORKSPACE_STORAGE_KEY, workspaceId);
@@ -119,4 +168,3 @@ export function useWorkspaceContext() {
 
   return context;
 }
-

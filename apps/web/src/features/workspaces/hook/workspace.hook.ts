@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { crossTabSync } from '@/shared/utils';
+import { crossTabSync, deletedEntities } from '@/shared/utils';
 
 import { workspaceService } from '../service';
 import {
@@ -8,6 +8,8 @@ import {
   CreateWorkspaceRequest,
   UpdateWorkspaceMemberRoleRequest,
   UpdateWorkspaceRequest,
+  Workspace,
+  WorkspaceMember,
   WorkspaceQueryParams,
 } from '../types';
 
@@ -18,19 +20,23 @@ export const useWorkspaces = (params?: WorkspaceQueryParams) => {
   });
 };
 
-export const useWorkspace = (workspaceId: string) => {
+export const useWorkspace = (workspaceId: string, options?: { enabled?: boolean }) => {
+  const isEnabled = Boolean(workspaceId) && !deletedEntities.isDeleted(workspaceId);
   return useQuery({
     queryKey: ['workspaces', workspaceId],
     queryFn: () => workspaceService.getWorkspace(workspaceId),
-    enabled: Boolean(workspaceId),
+    enabled: options?.enabled !== undefined ? options.enabled && isEnabled : isEnabled,
+    retry: false,
   });
 };
 
-export const useWorkspaceMembers = (workspaceId: string) => {
+export const useWorkspaceMembers = (workspaceId: string, options?: { enabled?: boolean }) => {
+  const isEnabled = Boolean(workspaceId) && !deletedEntities.isDeleted(workspaceId);
   return useQuery({
     queryKey: ['workspaces', workspaceId, 'members'],
     queryFn: () => workspaceService.getMembers(workspaceId),
-    enabled: Boolean(workspaceId),
+    enabled: options?.enabled !== undefined ? options.enabled && isEnabled : isEnabled,
+    retry: false,
   });
 };
 
@@ -79,26 +85,65 @@ export const useDeleteWorkspace = () => {
 
   return useMutation({
     mutationFn: (workspaceId: string) => workspaceService.deleteWorkspace(workspaceId),
+    onMutate: async (workspaceId: string) => {
+      // 1. Immediately register workspace as permanently deleted
+      deletedEntities.markDeleted(workspaceId);
+
+      // 2. Immediately silence and set null on queries for this workspace and child entities
+      queryClient.setQueryDefaults(['workspaces', workspaceId], { enabled: false, retry: false });
+      queryClient.setQueryDefaults(['workspaces', workspaceId, 'members'], {
+        enabled: false,
+        retry: false,
+      });
+      queryClient.setQueryDefaults(['projects', workspaceId], { enabled: false, retry: false });
+      queryClient.setQueryDefaults(['tasks', workspaceId], { enabled: false, retry: false });
+      queryClient.setQueryDefaults(['dashboard', workspaceId], { enabled: false, retry: false });
+
+      await queryClient.cancelQueries({ queryKey: ['workspaces', workspaceId] });
+      await queryClient.cancelQueries({ queryKey: ['workspaces', workspaceId, 'members'] });
+      await queryClient.cancelQueries({ queryKey: ['projects', workspaceId] });
+      await queryClient.cancelQueries({ queryKey: ['tasks', workspaceId] });
+      await queryClient.cancelQueries({ queryKey: ['dashboard', workspaceId] });
+
+      queryClient.setQueryData(['workspaces', workspaceId], null);
+      queryClient.setQueriesData({ queryKey: ['workspaces', workspaceId, 'members'] }, []);
+      queryClient.setQueriesData({ queryKey: ['projects', workspaceId] }, []);
+      queryClient.setQueriesData({ queryKey: ['tasks', workspaceId] }, []);
+      queryClient.setQueryData(['dashboard', workspaceId], null);
+
+      // 3. Optimistically remove from all workspace lists so <WorkspaceCard> unmounts right away
+      queryClient.setQueriesData<Workspace[]>({ queryKey: ['workspaces'] }, (old) => {
+        if (!Array.isArray(old)) return old;
+        return old.filter((w) => w.id !== workspaceId);
+      });
+    },
     onSuccess: (_, workspaceId) => {
-      queryClient.invalidateQueries({
-        queryKey: ['workspaces'],
-      });
+      deletedEntities.markDeleted(workspaceId);
 
-      queryClient.invalidateQueries({
-        queryKey: ['workspaces', workspaceId],
+      queryClient.setQueryDefaults(['workspaces', workspaceId], { enabled: false, retry: false });
+      queryClient.setQueryDefaults(['workspaces', workspaceId, 'members'], {
+        enabled: false,
+        retry: false,
       });
+      queryClient.setQueryDefaults(['projects', workspaceId], { enabled: false, retry: false });
+      queryClient.setQueryDefaults(['tasks', workspaceId], { enabled: false, retry: false });
+      queryClient.setQueryDefaults(['dashboard', workspaceId], { enabled: false, retry: false });
 
-      queryClient.invalidateQueries({
-        queryKey: ['projects'],
-      });
+      queryClient.setQueryData(['workspaces', workspaceId], null);
+      queryClient.setQueriesData({ queryKey: ['workspaces', workspaceId, 'members'] }, []);
+      queryClient.setQueriesData({ queryKey: ['projects', workspaceId] }, []);
+      queryClient.setQueriesData({ queryKey: ['tasks', workspaceId] }, []);
+      queryClient.setQueryData(['dashboard', workspaceId], null);
 
-      queryClient.invalidateQueries({
-        queryKey: ['tasks'],
+      queryClient.setQueriesData<Workspace[]>({ queryKey: ['workspaces'] }, (old) => {
+        if (!Array.isArray(old)) return old;
+        return old.filter((w) => w.id !== workspaceId);
       });
 
       crossTabSync.postMessage({
-        type: 'QUERY_INVALIDATE',
-        queryKeys: [['workspaces'], ['projects'], ['tasks'], ['dashboard']],
+        type: 'ENTITY_DELETED',
+        entity: 'workspace',
+        id: workspaceId,
       });
     },
   });
@@ -110,7 +155,21 @@ export const useAddWorkspaceMember = () => {
   return useMutation({
     mutationFn: ({ workspaceId, data }: { workspaceId: string; data: AddWorkspaceMemberRequest }) =>
       workspaceService.addMember(workspaceId, data),
-    onSuccess: (_, variables) => {
+    onSuccess: (newMember, variables) => {
+      if (newMember && newMember.id) {
+        queryClient.setQueryData<WorkspaceMember[]>(
+          ['workspaces', variables.workspaceId, 'members'],
+          (old) => {
+            if (!Array.isArray(old)) return [newMember];
+            return old.some((m) => m.id === newMember.id) ? old : [...old, newMember];
+          }
+        );
+      }
+
+      queryClient.invalidateQueries({
+        queryKey: ['workspaces'],
+      });
+
       queryClient.invalidateQueries({
         queryKey: ['workspaces', variables.workspaceId],
       });
@@ -120,12 +179,16 @@ export const useAddWorkspaceMember = () => {
       });
 
       queryClient.invalidateQueries({
+        queryKey: ['dashboard', variables.workspaceId],
+      });
+
+      queryClient.invalidateQueries({
         queryKey: ['notifications'],
       });
 
       crossTabSync.postMessage({
         type: 'QUERY_INVALIDATE',
-        queryKeys: [['workspaces'], ['workspace-members']],
+        queryKeys: [['workspaces'], ['workspace-members'], ['dashboard']],
       });
     },
   });
@@ -144,7 +207,21 @@ export const useUpdateWorkspaceMemberRole = () => {
       memberId: string;
       data: UpdateWorkspaceMemberRoleRequest;
     }) => workspaceService.updateMemberRole(workspaceId, memberId, data),
-    onSuccess: (_, variables) => {
+    onSuccess: (updatedMember, variables) => {
+      if (updatedMember && updatedMember.id) {
+        queryClient.setQueryData<WorkspaceMember[]>(
+          ['workspaces', variables.workspaceId, 'members'],
+          (old) =>
+            Array.isArray(old)
+              ? old.map((m) => (m.id === updatedMember.id ? { ...m, ...updatedMember } : m))
+              : old
+        );
+      }
+
+      queryClient.invalidateQueries({
+        queryKey: ['workspaces'],
+      });
+
       queryClient.invalidateQueries({
         queryKey: ['workspaces', variables.workspaceId],
       });
@@ -168,6 +245,15 @@ export const useRemoveWorkspaceMember = () => {
     mutationFn: ({ workspaceId, memberId }: { workspaceId: string; memberId: string }) =>
       workspaceService.removeMember(workspaceId, memberId),
     onSuccess: (_, variables) => {
+      queryClient.setQueryData<WorkspaceMember[]>(
+        ['workspaces', variables.workspaceId, 'members'],
+        (old) => (Array.isArray(old) ? old.filter((m) => m.id !== variables.memberId) : old)
+      );
+
+      queryClient.invalidateQueries({
+        queryKey: ['workspaces'],
+      });
+
       queryClient.invalidateQueries({
         queryKey: ['workspaces', variables.workspaceId],
       });
@@ -176,9 +262,13 @@ export const useRemoveWorkspaceMember = () => {
         queryKey: ['workspaces', variables.workspaceId, 'members'],
       });
 
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', variables.workspaceId],
+      });
+
       crossTabSync.postMessage({
         type: 'QUERY_INVALIDATE',
-        queryKeys: [['workspaces'], ['workspace-members']],
+        queryKeys: [['workspaces'], ['workspace-members'], ['dashboard']],
       });
     },
   });
@@ -188,13 +278,8 @@ export const useTransferWorkspaceOwnership = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      workspaceId,
-      newOwnerId,
-    }: {
-      workspaceId: string;
-      newOwnerId: string;
-    }) => workspaceService.transferOwnership(workspaceId, newOwnerId),
+    mutationFn: ({ workspaceId, newOwnerId }: { workspaceId: string; newOwnerId: string }) =>
+      workspaceService.transferOwnership(workspaceId, newOwnerId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['workspaces'],
