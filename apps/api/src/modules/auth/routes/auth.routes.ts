@@ -15,6 +15,7 @@ const authService = new AuthService(authRepository);
 
 const authController = new AuthController(authService);
 
+// Strict rate limiting applied to credential-based endpoints to prevent brute force & credential stuffing
 authRouter.post(
   "/register",
   authRateLimiter,
@@ -29,11 +30,12 @@ authRouter.post(
   authController.login.bind(authController),
 );
 
+// Token refresh uses cryptographic HttpOnly cookie verification; not subject to brute-force rate limiter
 authRouter.post(
   "/refresh",
-  authRateLimiter,
   authController.refresh.bind(authController),
 );
 
 authRouter.post("/logout", authController.logout.bind(authController));
 
+export default authRouter;

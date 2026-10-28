@@ -4,6 +4,8 @@ import { RegisterDto, LoginDto } from '../dto';
 import { AuthService } from '../service';
 import { AppError } from '../../../shared';
 
+export const SESSION_COOKIE_NAME = 'sprinthub_session';
+
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -21,8 +23,17 @@ export class AuthController {
     const response = await this.authService.login(data);
     const isProduction = process.env.NODE_ENV === 'production';
 
+    // Set secure HttpOnly refresh token
     res.cookie('refreshToken', response.refreshToken, {
       httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // Set lightweight non-sensitive session indicator for client-side auth initialization
+    res.cookie(SESSION_COOKIE_NAME, 'active', {
+      httpOnly: false,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -34,7 +45,7 @@ export class AuthController {
   }
 
   async refresh(req: Request, res: Response) {
-    const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req.cookies?.refreshToken;
 
     if (!refreshToken) {
       throw new AppError('Refresh token is required', 401);
@@ -46,7 +57,7 @@ export class AuthController {
   }
 
   async logout(req: Request, res: Response) {
-    const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req.cookies?.refreshToken;
 
     if (!refreshToken) {
       throw new AppError('Refresh token is required', 401);
@@ -57,6 +68,12 @@ export class AuthController {
 
     res.clearCookie('refreshToken', {
       httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+    });
+
+    res.clearCookie(SESSION_COOKIE_NAME, {
+      httpOnly: false,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'lax',
     });
