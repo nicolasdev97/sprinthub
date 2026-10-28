@@ -55,9 +55,7 @@ export function TaskKanbanBoard({
 
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [dragOverStatus, setDragOverStatus] = useState<TaskStatus | null>(null);
-  const [optimisticStatusMap, setOptimisticStatusMap] = useState<
-    Record<string, TaskStatus>
-  >({});
+  const [optimisticStatusMap, setOptimisticStatusMap] = useState<Record<string, TaskStatus>>({});
   const dragCounters = useRef<Record<string, number>>({});
   const isDraggingRef = useRef(false);
 
@@ -209,14 +207,10 @@ export function TaskKanbanBoard({
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
       {TASK_STATUS_COLUMNS.map((column) => {
-        const columnTasks = effectiveTasks.filter(
-          (task) => task.status === column.status
-        );
+        const columnTasks = effectiveTasks.filter((task) => task.status === column.status);
 
         const isDropTarget = Boolean(
-          dragOverStatus === column.status &&
-            draggedTask &&
-            draggedTask.status !== column.status
+          dragOverStatus === column.status && draggedTask && draggedTask.status !== column.status
         );
 
         return (
@@ -228,8 +222,7 @@ export function TaskKanbanBoard({
             onDrop={(e) => handleDrop(e, column.status)}
             className={cn(
               'flex flex-col rounded-xl border border-border bg-muted/25 p-3 transition-colors duration-150 min-h-0 xl:min-h-[500px]',
-              isDropTarget &&
-                'border-primary bg-primary/10 ring-2 ring-primary/25 shadow-sm'
+              isDropTarget && 'border-primary bg-primary/10 ring-2 ring-primary/25 shadow-sm'
             )}
           >
             {/* Column Header */}
@@ -289,9 +282,7 @@ export function TaskKanbanBoard({
                       }}
                       className={cn(
                         'gap-3 py-3.5 transition-all select-none hover:border-primary/50 hover:shadow-xs',
-                        isProjectArchived
-                          ? 'cursor-pointer'
-                          : 'cursor-grab active:cursor-grabbing',
+                        isProjectArchived ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing',
                         task.status === 'DONE' &&
                           'border-emerald-500/30 bg-emerald-500/[0.03] opacity-85',
                         draggedTaskId === task.id &&
@@ -321,22 +312,15 @@ export function TaskKanbanBoard({
                                 >
                                   <ArrowRight className="size-3" />
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                  align="end"
-                                  className="w-44"
-                                >
+                                <DropdownMenuContent align="end" className="w-44">
                                   <DropdownMenuGroup>
-                                    <DropdownMenuGroupLabel>
-                                      Move to
-                                    </DropdownMenuGroupLabel>
+                                    <DropdownMenuGroupLabel>Move to</DropdownMenuGroupLabel>
                                     {TASK_STATUS_COLUMNS.filter(
                                       (col) => col.status !== task.status
                                     ).map((col) => (
                                       <DropdownMenuItem
                                         key={col.status}
-                                        onClick={() =>
-                                          void handleMoveTask(task, col.status)
-                                        }
+                                        onClick={() => void handleMoveTask(task, col.status)}
                                       >
                                         <span>{col.label}</span>
                                       </DropdownMenuItem>
@@ -351,8 +335,7 @@ export function TaskKanbanBoard({
                         <CardTitle
                           className={cn(
                             'mt-1.5 line-clamp-2 text-sm leading-snug font-semibold flex items-start gap-1.5',
-                            task.status === 'DONE' &&
-                              'line-through text-muted-foreground'
+                            task.status === 'DONE' && 'line-through text-muted-foreground'
                           )}
                         >
                           {task.status === 'DONE' && (
@@ -382,9 +365,7 @@ export function TaskKanbanBoard({
                               </AvatarFallback>
                             </Avatar>
                           ) : (
-                            <span className="text-[11px] text-muted-foreground">
-                              Unassigned
-                            </span>
+                            <span className="text-[11px] text-muted-foreground">Unassigned</span>
                           )}
                         </div>
                       </CardContent>

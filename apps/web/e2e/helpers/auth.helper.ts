@@ -40,7 +40,10 @@ export async function registerUserViaUi(page: Page, user: TestUser): Promise<voi
 /**
  * Logs in with the provided user credentials through the login UI.
  */
-export async function loginUserViaUi(page: Page, user: Pick<TestUser, 'email' | 'password'>): Promise<void> {
+export async function loginUserViaUi(
+  page: Page,
+  user: Pick<TestUser, 'email' | 'password'>
+): Promise<void> {
   await page.goto('/login');
   await expect(page.getByText(/welcome back/i)).toBeVisible();
 

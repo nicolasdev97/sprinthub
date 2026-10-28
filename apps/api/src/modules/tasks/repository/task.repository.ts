@@ -1,8 +1,8 @@
-import { prisma } from "../../../database/prisma";
+import { prisma } from '../../../database/prisma';
 
-import { CreateTaskDto, UpdateTaskDto } from "../dto";
-import { TaskStatus, TaskPriority } from "@prisma/client";
-import { TaskFilterParams } from "../types";
+import { CreateTaskDto, UpdateTaskDto } from '../dto';
+import { TaskStatus, TaskPriority } from '@prisma/client';
+import { TaskFilterParams } from '../types';
 
 export class TaskRepository {
   async createTask(data: CreateTaskDto) {
@@ -24,8 +24,8 @@ export class TaskRepository {
           0,
           0,
           0,
-          0,
-        ),
+          0
+        )
       );
       const endOfDay = new Date(
         Date.UTC(
@@ -35,8 +35,8 @@ export class TaskRepository {
           23,
           59,
           59,
-          999,
-        ),
+          999
+        )
       );
 
       dueDateFilter = {
@@ -57,13 +57,13 @@ export class TaskRepository {
         ...(filters?.search && {
           title: {
             contains: filters.search,
-            mode: "insensitive",
+            mode: 'insensitive',
           },
         }),
       },
       orderBy: filters?.sortBy
         ? {
-            [filters.sortBy]: filters.sortOrder ?? "asc",
+            [filters.sortBy]: filters.sortOrder ?? 'asc',
           }
         : undefined,
     });
@@ -124,11 +124,7 @@ export class TaskRepository {
     });
   }
 
-  async updateTaskStatus(
-    taskId: string,
-    status: TaskStatus,
-    completedAt: Date | null,
-  ) {
+  async updateTaskStatus(taskId: string, status: TaskStatus, completedAt: Date | null) {
     return prisma.task.update({
       where: {
         id: taskId,

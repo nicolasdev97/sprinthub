@@ -40,9 +40,7 @@ export const useMarkAllNotificationsAsRead = () => {
         return;
       }
       await Promise.all(
-        notificationIds.map((notificationId) =>
-          notificationService.markAsRead(notificationId)
-        )
+        notificationIds.map((notificationId) => notificationService.markAsRead(notificationId))
       );
     },
 
@@ -57,4 +55,3 @@ export const useMarkAllNotificationsAsRead = () => {
     },
   });
 };
-

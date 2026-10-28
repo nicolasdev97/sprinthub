@@ -1,46 +1,34 @@
-import { TaskStatus } from "@prisma/client";
+import { TaskStatus } from '@prisma/client';
 
-import { prisma } from "../../../database/prisma";
-import { WorkspaceDashboardDto } from "../dto";
+import { prisma } from '../../../database/prisma';
+import { WorkspaceDashboardDto } from '../dto';
 
 export class DashboardRepository {
-  async getWorkspaceDashboard(
-    workspaceId: string,
-  ): Promise<WorkspaceDashboardDto> {
+  async getWorkspaceDashboard(workspaceId: string): Promise<WorkspaceDashboardDto> {
     const now = new Date();
 
-    const [
-      totalProjects,
-      activeProjects,
-      pendingTasks,
-      completedTasks,
-      overdueTasks,
-    ] = await Promise.all([
-      prisma.project.count({
-        where: {
-          workspaceId,
-          archived: false,
-        },
-      }),
-      prisma.project.count({
-        where: {
-          workspaceId,
-          status: "ACTIVE",
-          archived: false,
-        },
-      }),
+    const [totalProjects, activeProjects, pendingTasks, completedTasks, overdueTasks] =
+      await Promise.all([
+        prisma.project.count({
+          where: {
+            workspaceId,
+            archived: false,
+          },
+        }),
+        prisma.project.count({
+          where: {
+            workspaceId,
+            status: 'ACTIVE',
+            archived: false,
+          },
+        }),
         prisma.task.count({
           where: {
             project: {
               workspaceId,
             },
             status: {
-              in: [
-                TaskStatus.BACKLOG,
-                TaskStatus.TODO,
-                TaskStatus.IN_PROGRESS,
-                TaskStatus.REVIEW,
-              ],
+              in: [TaskStatus.BACKLOG, TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.REVIEW],
             },
           },
         }),
@@ -76,4 +64,3 @@ export class DashboardRepository {
     };
   }
 }
-

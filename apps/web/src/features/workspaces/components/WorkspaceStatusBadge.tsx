@@ -13,13 +13,9 @@ export function WorkspaceStatusBadge({
   if (!isActive) return null;
 
   return (
-    <Badge
-      variant="outline"
-      className={cn('border-primary/40 text-primary', className)}
-    >
+    <Badge variant="outline" className={cn('border-primary/40 text-primary', className)}>
       <CheckCircle2 className="size-3" />
       <span>Active</span>
     </Badge>
   );
 }
-

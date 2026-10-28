@@ -5,4 +5,3 @@ export interface WorkspaceDashboardDto {
   completedTasks: number;
   overdueTasks: number;
 }
-

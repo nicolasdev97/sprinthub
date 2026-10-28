@@ -27,12 +27,7 @@ export const updateWorkspaceSchema = z.object({
 });
 
 export const addWorkspaceMemberSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .min(1, 'Email is required')
-    .email('Invalid email address')
-    .toLowerCase(),
+  email: z.string().trim().min(1, 'Email is required').email('Invalid email address').toLowerCase(),
   role: z.enum(['ADMIN', 'MEMBER']),
 });
 
@@ -52,4 +47,3 @@ export type AddWorkspaceMemberFormValues = z.infer<typeof addWorkspaceMemberSche
 export type DeleteWorkspaceConfirmFormValues = {
   confirmationName: string;
 };
-

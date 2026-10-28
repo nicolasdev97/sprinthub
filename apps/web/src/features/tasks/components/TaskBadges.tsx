@@ -77,13 +77,7 @@ export function formatTaskPriorityLabel(priority: TaskPriority): string {
   }
 }
 
-export function TaskStatusBadge({
-  status,
-  className,
-}: {
-  status: TaskStatus;
-  className?: string;
-}) {
+export function TaskStatusBadge({ status, className }: { status: TaskStatus; className?: string }) {
   switch (status) {
     case 'DONE':
       return (
@@ -242,4 +236,3 @@ export function TaskDueDateBadge({
     </span>
   );
 }
-

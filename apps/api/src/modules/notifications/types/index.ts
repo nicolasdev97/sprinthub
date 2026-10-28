@@ -1,1 +1,1 @@
-export * from "./notification-params.type";
+export * from './notification-params.type';

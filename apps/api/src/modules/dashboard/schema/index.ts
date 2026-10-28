@@ -1,2 +1,1 @@
-export * from "./dashboard-params.schema";
-
+export * from './dashboard-params.schema';

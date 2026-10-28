@@ -1,4 +1,4 @@
-import { ProjectStatus } from "@prisma/client";
+import { ProjectStatus } from '@prisma/client';
 
 export interface UpdateProjectDto {
   name?: string;

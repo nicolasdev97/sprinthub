@@ -1,2 +1,1 @@
-export * from "./workspace-dashboard-params.type";
-
+export * from './workspace-dashboard-params.type';

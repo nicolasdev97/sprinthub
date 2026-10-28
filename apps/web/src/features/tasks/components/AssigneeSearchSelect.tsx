@@ -65,10 +65,7 @@ export function AssigneeSearchSelect({
     }, 10);
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
         setSearchQuery('');
       }
@@ -218,13 +215,9 @@ export function AssigneeSearchSelect({
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium text-foreground">
-                        {fullName}
-                      </p>
+                      <p className="truncate font-medium text-foreground">{fullName}</p>
                       {email && (
-                        <p className="truncate text-[11px] text-muted-foreground">
-                          {email}
-                        </p>
+                        <p className="truncate text-[11px] text-muted-foreground">{email}</p>
                       )}
                     </div>
                   </div>
@@ -244,4 +237,3 @@ export function AssigneeSearchSelect({
     </div>
   );
 }
-

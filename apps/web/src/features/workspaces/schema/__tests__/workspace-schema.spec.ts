@@ -1,6 +1,5 @@
 import {
   createWorkspaceSchema,
-  updateWorkspaceSchema,
   addWorkspaceMemberSchema,
   createDeleteWorkspaceConfirmSchema,
 } from '../workspace.schema';
@@ -30,7 +29,9 @@ describe('Workspace Zod Schemas', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Workspace name must not exceed 100 characters');
+        expect(result.error.issues[0].message).toBe(
+          'Workspace name must not exceed 100 characters'
+        );
       }
     });
   });
@@ -65,9 +66,10 @@ describe('Workspace Zod Schemas', () => {
       const result = schema.safeParse({ confirmationName: 'WrongWorkspace' });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Please type "CriticalWorkspace" to confirm deletion');
+        expect(result.error.issues[0].message).toContain(
+          'Please type "CriticalWorkspace" to confirm deletion'
+        );
       }
     });
   });
 });
-

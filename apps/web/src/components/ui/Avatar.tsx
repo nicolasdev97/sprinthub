@@ -1,6 +1,5 @@
 'use client';
 
-import * as React from 'react';
 import { Avatar as AvatarPrimitive } from '@base-ui/react/avatar';
 
 import { cn } from '@/shared/utils';
@@ -42,4 +41,3 @@ function AvatarFallback({ className, ...props }: AvatarPrimitive.Fallback.Props)
 }
 
 export { Avatar, AvatarImage, AvatarFallback };
-

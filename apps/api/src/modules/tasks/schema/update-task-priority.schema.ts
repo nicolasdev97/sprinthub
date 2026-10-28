@@ -1,5 +1,5 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const updateTaskPrioritySchema = z.object({
-  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
 });

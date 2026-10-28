@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Request, Response, NextFunction } from 'express';
-import { requireWorkspaceRole, requireProjectAccess } from '../../../src/middleware/rbac/rbac.middleware';
+import {
+  requireWorkspaceRole,
+  requireProjectAccess,
+} from '../../../src/middleware/rbac/rbac.middleware';
 import { prisma } from '../../../src/database';
 import { AppError } from '../../../src/shared/errors';
 
@@ -60,7 +63,10 @@ describe('RBAC Middleware', () => {
 
     it('should throw 403 if user is not a member of the workspace', async () => {
       req.params = { workspaceId: 'ws-1' };
-      vi.spyOn(prisma.workspace, 'findUnique').mockResolvedValue({ id: 'ws-1', ownerId: 'usr-other' } as never);
+      vi.spyOn(prisma.workspace, 'findUnique').mockResolvedValue({
+        id: 'ws-1',
+        ownerId: 'usr-other',
+      } as never);
       vi.spyOn(prisma.workspaceMember, 'findUnique').mockResolvedValue(null as never);
 
       const middleware = requireWorkspaceRole('MEMBER');
@@ -74,7 +80,10 @@ describe('RBAC Middleware', () => {
 
     it('should throw 403 if user role rank is lower than required minRole', async () => {
       req.params = { workspaceId: 'ws-1' };
-      vi.spyOn(prisma.workspace, 'findUnique').mockResolvedValue({ id: 'ws-1', ownerId: 'usr-other' } as never);
+      vi.spyOn(prisma.workspace, 'findUnique').mockResolvedValue({
+        id: 'ws-1',
+        ownerId: 'usr-other',
+      } as never);
       vi.spyOn(prisma.workspaceMember, 'findUnique').mockResolvedValue({
         id: 'mem-1',
         workspaceId: 'ws-1',
@@ -94,7 +103,10 @@ describe('RBAC Middleware', () => {
 
     it('should call next() and attach workspaceId and workspaceMember when authorized', async () => {
       req.params = { workspaceId: 'ws-1' };
-      vi.spyOn(prisma.workspace, 'findUnique').mockResolvedValue({ id: 'ws-1', ownerId: 'usr-1' } as never);
+      vi.spyOn(prisma.workspace, 'findUnique').mockResolvedValue({
+        id: 'ws-1',
+        ownerId: 'usr-1',
+      } as never);
       const member = {
         id: 'mem-1',
         workspaceId: 'ws-1',

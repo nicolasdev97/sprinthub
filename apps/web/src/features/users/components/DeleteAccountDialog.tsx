@@ -30,10 +30,7 @@ import { useAuth } from '@/features/auth';
 import { normalizeApiError } from '@/shared/errors';
 
 import { useDeleteUser } from '../hook';
-import {
-  createDeleteUserConfirmSchema,
-  DeleteUserConfirmFormValues,
-} from '../schema';
+import { createDeleteUserConfirmSchema, DeleteUserConfirmFormValues } from '../schema';
 import { User } from '../types';
 
 interface DeleteAccountDialogProps {
@@ -113,14 +110,7 @@ export function DeleteAccountDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
-      <AlertDialogTrigger
-        render={
-          <Button
-            variant="destructive"
-            className="gap-2"
-          />
-        }
-      >
+      <AlertDialogTrigger render={<Button variant="destructive" className="gap-2" />}>
         <Trash2 className="size-4" />
         <span>Delete Account</span>
       </AlertDialogTrigger>
@@ -138,18 +128,15 @@ export function DeleteAccountDialog({
             </span>
             {hasOwnedWorkspaces && (
               <span className="block font-medium text-amber-500">
-                Warning: You currently own workspaces. You must transfer ownership or delete
-                your workspaces before your account can be deleted.
+                Warning: You currently own workspaces. You must transfer ownership or delete your
+                workspaces before your account can be deleted.
               </span>
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 py-2"
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
             <FormField
               control={form.control}
               name="confirmationName"
@@ -157,9 +144,7 @@ export function DeleteAccountDialog({
                 <FormItem>
                   <FormLabel className="text-xs text-muted-foreground">
                     To confirm, please type your full name:{' '}
-                    <span className="font-semibold text-foreground select-all">
-                      {fullName}
-                    </span>
+                    <span className="font-semibold text-foreground select-all">{fullName}</span>
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -201,4 +186,3 @@ export function DeleteAccountDialog({
     </AlertDialog>
   );
 }
-

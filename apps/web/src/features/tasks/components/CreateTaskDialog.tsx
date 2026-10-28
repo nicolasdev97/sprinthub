@@ -144,8 +144,8 @@ export function CreateTaskDialog({
 
   const isWorkspaceValid = Boolean(
     selectedWorkspaceId &&
-      workspaces.some((w) => w.id === selectedWorkspaceId) &&
-      !deletedEntities.isDeleted(selectedWorkspaceId)
+    workspaces.some((w) => w.id === selectedWorkspaceId) &&
+    !deletedEntities.isDeleted(selectedWorkspaceId)
   );
 
   // Load projects for currently selected workspace

@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
 
 import {
   CreateTaskDto,
@@ -6,9 +6,9 @@ import {
   AssignTaskDto,
   UpdateTaskStatusDto,
   UpdateTaskPriorityDto,
-} from "../dto";
-import { TaskService } from "../service";
-import { ProjectTaskParams, TaskParams, TaskFilterParams } from "../types";
+} from '../dto';
+import { TaskService } from '../service';
+import { ProjectTaskParams, TaskParams, TaskFilterParams } from '../types';
 
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
@@ -17,9 +17,9 @@ export class TaskController {
     req: Request<
       ProjectTaskParams,
       unknown,
-      Omit<CreateTaskDto, "projectId" | "createdById" | "status">
+      Omit<CreateTaskDto, 'projectId' | 'createdById' | 'status'>
     >,
-    res: Response,
+    res: Response
   ) {
     const { projectId } = req.params;
     const userId = req.user.userId;
@@ -31,7 +31,7 @@ export class TaskController {
 
   async getTasks(
     req: Request<ProjectTaskParams, unknown, unknown, TaskFilterParams>,
-    res: Response,
+    res: Response
   ) {
     const { projectId } = req.params;
     const userId = req.user.userId;
@@ -51,10 +51,7 @@ export class TaskController {
     res.status(200).json(task);
   }
 
-  async updateTask(
-    req: Request<TaskParams, unknown, UpdateTaskDto>,
-    res: Response,
-  ) {
+  async updateTask(req: Request<TaskParams, unknown, UpdateTaskDto>, res: Response) {
     const { taskId } = req.params;
     const userId = req.user.userId;
 
@@ -72,10 +69,7 @@ export class TaskController {
     res.status(204).send();
   }
 
-  async assignTask(
-    req: Request<TaskParams, unknown, AssignTaskDto>,
-    res: Response,
-  ) {
+  async assignTask(req: Request<TaskParams, unknown, AssignTaskDto>, res: Response) {
     const { taskId } = req.params;
     const userId = req.user.userId;
 
@@ -84,34 +78,23 @@ export class TaskController {
     res.status(200).json(task);
   }
 
-  async updateTaskStatus(
-    req: Request<TaskParams, unknown, UpdateTaskStatusDto>,
-    res: Response,
-  ) {
+  async updateTaskStatus(req: Request<TaskParams, unknown, UpdateTaskStatusDto>, res: Response) {
     const { taskId } = req.params;
     const userId = req.user.userId;
 
-    const task = await this.taskService.updateTaskStatus(
-      taskId,
-      userId,
-      req.body,
-    );
+    const task = await this.taskService.updateTaskStatus(taskId, userId, req.body);
 
     res.status(200).json(task);
   }
 
   async updateTaskPriority(
     req: Request<TaskParams, unknown, UpdateTaskPriorityDto>,
-    res: Response,
+    res: Response
   ) {
     const { taskId } = req.params;
     const userId = req.user.userId;
 
-    const task = await this.taskService.updateTaskPriority(
-      taskId,
-      userId,
-      req.body,
-    );
+    const task = await this.taskService.updateTaskPriority(taskId, userId, req.body);
 
     res.status(200).json(task);
   }

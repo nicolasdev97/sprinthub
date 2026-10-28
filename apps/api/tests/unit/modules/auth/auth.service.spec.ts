@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AuthService } from '../../../../src/modules/auth/service/auth.service';
-import { AuthRepository } from '../../../../src/modules/auth/repository';
+
 import { AppError } from '../../../../src/shared/errors';
 import * as shared from '../../../../src/shared';
 

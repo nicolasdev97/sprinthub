@@ -3,13 +3,7 @@
 import { useRef, useState } from 'react';
 import { Calendar, ChevronDown, Clock, X } from 'lucide-react';
 
-import {
-  Button,
-  Input,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui';
+import { Button, Input, Popover, PopoverContent, PopoverTrigger } from '@/components/ui';
 import { cn } from '@/shared/utils';
 
 interface DueDateFilterSelectProps {
@@ -54,11 +48,7 @@ function getTomorrowString(): string {
   return `${year}-${month}-${day}`;
 }
 
-export function DueDateFilterSelect({
-  value,
-  onChange,
-  className,
-}: DueDateFilterSelectProps) {
+export function DueDateFilterSelect({ value, onChange, className }: DueDateFilterSelectProps) {
   const [open, setOpen] = useState(false);
   const hiddenDateInputRef = useRef<HTMLInputElement>(null);
   const [prevValue, setPrevValue] = useState(value);
@@ -139,9 +129,7 @@ export function DueDateFilterSelect({
         />
 
         {/* Display Text - Perfectly matching font size and style of standard Selects */}
-        <span className="truncate text-sm">
-          {value ? `Due: ${formattedDate}` : 'Due Date'}
-        </span>
+        <span className="truncate text-sm">{value ? `Due: ${formattedDate}` : 'Due Date'}</span>
 
         {/* Trailing Icon: Clear X when active, ChevronDown when default */}
         {value ? (
@@ -214,7 +202,10 @@ export function DueDateFilterSelect({
         {/* Custom date input with explicit uppercase DD/MM/YYYY placeholder */}
         <div className="space-y-1.5 pt-1">
           <div className="flex items-center justify-between">
-            <label htmlFor="due-date-filter-text" className="text-[11px] font-medium text-muted-foreground">
+            <label
+              htmlFor="due-date-filter-text"
+              className="text-[11px] font-medium text-muted-foreground"
+            >
               Select Specific Date
             </label>
             {value && (

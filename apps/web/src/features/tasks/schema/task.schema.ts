@@ -1,19 +1,8 @@
 import { z } from 'zod';
 
-export const taskStatusEnum = z.enum([
-  'BACKLOG',
-  'TODO',
-  'IN_PROGRESS',
-  'REVIEW',
-  'DONE',
-]);
+export const taskStatusEnum = z.enum(['BACKLOG', 'TODO', 'IN_PROGRESS', 'REVIEW', 'DONE']);
 
-export const taskPriorityEnum = z.enum([
-  'LOW',
-  'MEDIUM',
-  'HIGH',
-  'CRITICAL',
-]);
+export const taskPriorityEnum = z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
 
 export const createTaskSchema = z.object({
   title: z
@@ -48,4 +37,3 @@ export const updateTaskSchema = z.object({
 
 export type CreateTaskFormValues = z.infer<typeof createTaskSchema>;
 export type UpdateTaskFormValues = z.infer<typeof updateTaskSchema>;
-

@@ -137,7 +137,7 @@ describe('Tasks, Projects & IDOR Defense Integration Tests', () => {
       const userA = await createTestUser();
       const userB = await createTestUser();
 
-      const wsA = await createTestWorkspace(userA.user.id, 'Workspace Alpha');
+      await createTestWorkspace(userA.user.id, 'Workspace Alpha');
       const wsB = await createTestWorkspace(userB.user.id, 'Workspace Beta');
 
       const projectB = await createTestProject(wsB.id, 'Secret Project Beta');
@@ -153,9 +153,7 @@ describe('Tasks, Projects & IDOR Defense Integration Tests', () => {
       });
 
       // User A attempts to read Task B
-      const getResponse = await request(app)
-        .get(`/api/tasks/${taskB.id}`)
-        .set(userA.authHeader);
+      const getResponse = await request(app).get(`/api/tasks/${taskB.id}`).set(userA.authHeader);
 
       expect(getResponse.status).toBe(403);
 
@@ -182,4 +180,3 @@ describe('Tasks, Projects & IDOR Defense Integration Tests', () => {
     });
   });
 });
-

@@ -1,9 +1,9 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const createTaskSchema = z.object({
-  title: z.string().trim().min(1, "Task title is required"),
+  title: z.string().trim().min(1, 'Task title is required'),
   description: z.string().nullable().optional(),
   assigneeId: z.uuid().nullable().optional(),
-  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
   dueDate: z.coerce.date().nullable().optional(),
 });

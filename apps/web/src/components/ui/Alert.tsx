@@ -50,11 +50,13 @@ function AlertDescription({ className, ...props }: React.ComponentProps<'div'>) 
   return (
     <div
       data-slot="alert-description"
-      className={cn('col-start-2 grid justify-items-start gap-1 text-xs leading-relaxed opacity-90', className)}
+      className={cn(
+        'col-start-2 grid justify-items-start gap-1 text-xs leading-relaxed opacity-90',
+        className
+      )}
       {...props}
     />
   );
 }
 
 export { Alert, AlertTitle, AlertDescription };
-

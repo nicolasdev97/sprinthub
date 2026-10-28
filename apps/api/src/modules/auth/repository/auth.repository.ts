@@ -1,6 +1,6 @@
-import { prisma } from "../../../database/prisma";
+import { prisma } from '../../../database/prisma';
 
-import { CreateUserDto } from "../dto";
+import { CreateUserDto } from '../dto';
 
 export class AuthRepository {
   async getUserByEmail(email: string) {
@@ -22,11 +22,7 @@ export class AuthRepository {
     });
   }
 
-  async createRefreshToken(data: {
-    userId: string;
-    tokenHash: string;
-    expiresAt: Date;
-  }) {
+  async createRefreshToken(data: { userId: string; tokenHash: string; expiresAt: Date }) {
     return prisma.refreshToken.create({
       data,
     });

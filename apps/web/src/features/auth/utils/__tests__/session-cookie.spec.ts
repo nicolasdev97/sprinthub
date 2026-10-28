@@ -35,4 +35,3 @@ describe('session-cookie utilities', () => {
     expect(document.cookie).toContain('max-age=0');
   });
 });
-

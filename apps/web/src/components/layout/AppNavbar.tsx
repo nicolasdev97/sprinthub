@@ -173,10 +173,7 @@ export function AppNavbar() {
       />
 
       {/* Global Keyboard Shortcuts Help Modal */}
-      <KeyboardShortcutsDialog
-        open={isShortcutsOpen}
-        onOpenChange={setIsShortcutsOpen}
-      />
+      <KeyboardShortcutsDialog open={isShortcutsOpen} onOpenChange={setIsShortcutsOpen} />
     </header>
   );
 }

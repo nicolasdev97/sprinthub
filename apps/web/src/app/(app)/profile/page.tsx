@@ -225,7 +225,7 @@ export default function ProfilePage() {
   const isTasksLoading = taskQueries.some((q) => q.isLoading);
 
   const allTasks = useMemo(() => {
-    return allProjects.flatMap((project, index) => {
+    return allProjects.flatMap((_project, index) => {
       const tasks = taskQueries[index]?.data ?? [];
       return tasks;
     });

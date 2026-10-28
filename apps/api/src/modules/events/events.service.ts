@@ -1,5 +1,5 @@
-import { Response } from "express";
-import { SseEvent } from "./events.type";
+import { Response } from 'express';
+import { SseEvent } from './events.type';
 
 interface SseClient {
   userId: string;
@@ -75,7 +75,7 @@ export class EventsService {
     this.keepaliveTimer = setInterval(() => {
       this.clients.forEach((client) => {
         try {
-          client.res.write(":keepalive\n\n");
+          client.res.write(':keepalive\n\n');
         } catch {
           this.clients.delete(client);
         }
@@ -94,4 +94,3 @@ export class EventsService {
 }
 
 export const eventsService = new EventsService();
-

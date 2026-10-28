@@ -1,7 +1,7 @@
-import { Request } from "express";
-import rateLimit from "express-rate-limit";
+import { Request } from 'express';
+import rateLimit from 'express-rate-limit';
 
-const isDevelopment = process.env.NODE_ENV !== "production";
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
 /**
  * Global API Rate Limiter
@@ -18,14 +18,14 @@ export const apiRateLimiter = rateLimit({
     const isAuthenticated = Boolean(req.headers?.authorization);
     return isAuthenticated ? 300 : 100;
   },
-  standardHeaders: "draft-8",
+  standardHeaders: 'draft-8',
   legacyHeaders: false,
   statusCode: 429,
   message: {
     success: false,
-    message: "Too many requests from this IP, please try again later.",
+    message: 'Too many requests from this IP, please try again later.',
   },
-  skip: (req: Request) => req.path === "/api/health" || req.path === "/health",
+  skip: (req: Request) => req.path === '/api/health' || req.path === '/health',
   validate: {
     trustProxy: false,
     xForwardedForHeader: false,
@@ -40,12 +40,12 @@ export const apiRateLimiter = rateLimit({
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: isDevelopment ? 500 : 10,
-  standardHeaders: "draft-8",
+  standardHeaders: 'draft-8',
   legacyHeaders: false,
   statusCode: 429,
   message: {
     success: false,
-    message: "Too many authentication attempts from this IP, please try again after 15 minutes.",
+    message: 'Too many authentication attempts from this IP, please try again after 15 minutes.',
   },
   validate: {
     trustProxy: false,

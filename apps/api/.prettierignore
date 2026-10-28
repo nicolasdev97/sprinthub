@@ -2,4 +2,7 @@ node_modules
 dist
 coverage
 prisma/migrations
+.agents
+.claude
 .windsurf
+package-lock.json

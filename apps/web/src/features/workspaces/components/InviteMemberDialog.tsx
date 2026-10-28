@@ -126,7 +126,8 @@ export function InviteMemberDialog({
         <DialogHeader>
           <DialogTitle>Invite Member to {workspaceName}</DialogTitle>
           <DialogDescription>
-            Add an existing SprintHub user by their registered email address and assign their workspace role.
+            Add an existing SprintHub user by their registered email address and assign their
+            workspace role.
           </DialogDescription>
         </DialogHeader>
 
@@ -205,4 +206,3 @@ export function InviteMemberDialog({
     </Dialog>
   );
 }
-

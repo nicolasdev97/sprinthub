@@ -1,4 +1,4 @@
-import { TaskPriority, TaskStatus } from "@prisma/client";
+import { TaskPriority, TaskStatus } from '@prisma/client';
 
 export interface CreateTaskDto {
   projectId: string;

@@ -5,10 +5,10 @@ import {
   generateToken,
   generateRefreshToken,
   hashRefreshToken,
-} from "../../../shared";
+} from '../../../shared';
 
-import { RegisterDto, LoginDto } from "../dto";
-import { AuthRepository } from "../repository";
+import { RegisterDto, LoginDto } from '../dto';
+import { AuthRepository } from '../repository';
 
 export class AuthService {
   constructor(private readonly authRepository: AuthRepository) {}
@@ -17,7 +17,7 @@ export class AuthService {
     const existingUser = await this.authRepository.getUserByEmail(data.email);
 
     if (existingUser) {
-      throw new AppError("Email already exists", 409);
+      throw new AppError('Email already exists', 409);
     }
 
     const passwordHash = await hashPassword(data.password);
@@ -36,16 +36,13 @@ export class AuthService {
     const user = await this.authRepository.getUserByEmail(data.email);
 
     if (!user) {
-      throw new AppError("Invalid email or password", 401);
+      throw new AppError('Invalid email or password', 401);
     }
 
-    const isPasswordValid = await comparePassword(
-      data.password,
-      user.passwordHash,
-    );
+    const isPasswordValid = await comparePassword(data.password, user.passwordHash);
 
     if (!isPasswordValid) {
-      throw new AppError("Invalid email or password", 401);
+      throw new AppError('Invalid email or password', 401);
     }
 
     const accessToken = generateToken({
@@ -76,15 +73,14 @@ export class AuthService {
   async refreshAccessToken(refreshToken: string) {
     const refreshTokenHash = hashRefreshToken(refreshToken);
 
-    const storedRefreshToken =
-      await this.authRepository.getRefreshTokenByHash(refreshTokenHash);
+    const storedRefreshToken = await this.authRepository.getRefreshTokenByHash(refreshTokenHash);
 
     if (!storedRefreshToken) {
-      throw new AppError("Invalid or expired refresh token", 401);
+      throw new AppError('Invalid or expired refresh token', 401);
     }
 
     if (storedRefreshToken.expiresAt <= new Date()) {
-      throw new AppError("Invalid or expired refresh token", 401);
+      throw new AppError('Invalid or expired refresh token', 401);
     }
 
     const accessToken = generateToken({
@@ -99,11 +95,10 @@ export class AuthService {
   async logout(refreshToken: string) {
     const refreshTokenHash = hashRefreshToken(refreshToken);
 
-    const storedRefreshToken =
-      await this.authRepository.getRefreshTokenByHash(refreshTokenHash);
+    const storedRefreshToken = await this.authRepository.getRefreshTokenByHash(refreshTokenHash);
 
     if (!storedRefreshToken) {
-      throw new AppError("Invalid or expired refresh token", 401);
+      throw new AppError('Invalid or expired refresh token', 401);
     }
 
     await this.authRepository.deleteRefreshToken(storedRefreshToken.id);

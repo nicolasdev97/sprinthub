@@ -27,10 +27,7 @@ function Progress({
       aria-valuemax={safeMax}
       aria-valuenow={Math.round(value)}
       data-slot="progress"
-      className={cn(
-        'relative h-2 w-full overflow-hidden rounded-full bg-secondary',
-        className
-      )}
+      className={cn('relative h-2 w-full overflow-hidden rounded-full bg-secondary', className)}
       {...props}
     >
       <div
@@ -46,4 +43,3 @@ function Progress({
 }
 
 export { Progress };
-

@@ -5,8 +5,10 @@ import { Calendar, X } from 'lucide-react';
 
 import { cn } from '@/shared/utils';
 
-export interface DateInputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
+export interface DateInputProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  'value' | 'onChange'
+> {
   value?: string; // Expects ISO date string 'YYYY-MM-DD' or empty string
   onChange?: (value: string) => void;
   placeholder?: string;
@@ -169,4 +171,3 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
 );
 
 DateInput.displayName = 'DateInput';
-

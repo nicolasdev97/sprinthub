@@ -63,8 +63,7 @@ export function WorkspaceSelector() {
     if (!trimmed) return workspaces;
     return workspaces.filter(
       (w) =>
-        w.name.toLowerCase().includes(trimmed) ||
-        w.description?.toLowerCase().includes(trimmed)
+        w.name.toLowerCase().includes(trimmed) || w.description?.toLowerCase().includes(trimmed)
     );
   }, [workspaces, searchQuery]);
 

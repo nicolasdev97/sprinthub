@@ -33,18 +33,14 @@ export function DynamicBreadcrumbs() {
   // Extract route parameters if present
   const isWorkspacesRoute = segments[0] === 'workspaces';
   const workspaceIdFromUrl =
-    isWorkspacesRoute && segments[1] && segments[1] !== 'settings'
-      ? segments[1]
-      : undefined;
+    isWorkspacesRoute && segments[1] && segments[1] !== 'settings' ? segments[1] : undefined;
 
   const currentWorkspace = workspaceIdFromUrl
     ? (workspaces.find((w) => w.id === workspaceIdFromUrl) ?? activeWorkspace)
     : activeWorkspace;
 
   const projectIdFromUrl =
-    isWorkspacesRoute && segments[2] === 'projects' && segments[3]
-      ? segments[3]
-      : undefined;
+    isWorkspacesRoute && segments[2] === 'projects' && segments[3] ? segments[3] : undefined;
 
   const { data: project } = useProject(projectIdFromUrl ?? '');
 
@@ -63,10 +59,7 @@ export function DynamicBreadcrumbs() {
   });
 
   // 2. Resolve hierarchical crumbs based on pathname
-  if (
-    segments.length === 0 ||
-    segments[0] === 'dashboard'
-  ) {
+  if (segments.length === 0 || segments[0] === 'dashboard') {
     if (workspaceIdFromUrl) {
       items.push({
         label: workspaceName,
@@ -95,10 +88,7 @@ export function DynamicBreadcrumbs() {
       icon: Briefcase,
       isLast: true,
     });
-  } else if (
-    isWorkspacesRoute &&
-    (segments[1] === 'settings' || segments[2] === 'settings')
-  ) {
+  } else if (isWorkspacesRoute && (segments[1] === 'settings' || segments[2] === 'settings')) {
     if (workspaceIdFromUrl) {
       items.push({
         label: workspaceName,
@@ -197,9 +187,7 @@ export function DynamicBreadcrumbs() {
 
           return (
             <li key={`${item.href}-${index}`} className="flex items-center gap-1.5 shrink-0">
-              {index > 0 && (
-                <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/50" />
-              )}
+              {index > 0 && <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/50" />}
               {item.isLast ? (
                 <span
                   aria-current="page"

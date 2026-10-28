@@ -13,9 +13,7 @@ interface WorkspaceProjectsPageProps {
   params: Promise<{ workspaceId: string }>;
 }
 
-export default async function WorkspaceProjectsPage({
-  params,
-}: WorkspaceProjectsPageProps) {
+export default async function WorkspaceProjectsPage({ params }: WorkspaceProjectsPageProps) {
   const { workspaceId } = await params;
 
   return (

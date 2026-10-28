@@ -12,7 +12,7 @@ export const helmetMiddleware = helmet({
       frameAncestors: ["'none'"],
       imgSrc: ["'self'", 'data:', 'https:'],
       objectSrc: ["'none'"],
-      scriptSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
       scriptSrcAttr: ["'none'"],
       styleSrc: ["'self'", 'https:', "'unsafe-inline'"],
       upgradeInsecureRequests: isProduction ? [] : null,

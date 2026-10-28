@@ -8,4 +8,3 @@ export * from './WorkspaceMembersTable';
 export * from './WorkspaceSettingsView';
 export * from './WorkspaceStatusBadge';
 export * from './WorkspacesListView';
-

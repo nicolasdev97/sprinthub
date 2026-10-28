@@ -1,10 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TaskStatus, TaskPriority, WorkspaceRole } from '@prisma/client';
 import { TaskService } from '../../../../src/modules/tasks/service/task.service';
-import { TaskRepository } from '../../../../src/modules/tasks/repository';
-import { ProjectService } from '../../../../src/modules/projects';
-import { WorkspaceService } from '../../../../src/modules/workspaces';
-import { NotificationService } from '../../../../src/modules/notifications';
+
 import { eventsService } from '../../../../src/modules/events';
 
 vi.mock('../../../../src/modules/events', () => ({

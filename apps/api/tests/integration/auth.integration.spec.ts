@@ -23,9 +23,7 @@ describe('Auth Integration Tests (/api/auth)', () => {
         password: 'Password123!',
       };
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(payload);
+      const response = await request(app).post('/api/auth/register').send(payload);
 
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty('id');
@@ -48,9 +46,7 @@ describe('Auth Integration Tests (/api/auth)', () => {
         password: '123',
       };
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(invalidPayload);
+      const response = await request(app).post('/api/auth/register').send(invalidPayload);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -67,9 +63,7 @@ describe('Auth Integration Tests (/api/auth)', () => {
         password: 'Password123!',
       };
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(duplicatePayload);
+      const response = await request(app).post('/api/auth/register').send(duplicatePayload);
 
       expect(response.status).toBe(409);
       expect(response.body.message).toContain('already exists');
@@ -132,9 +126,7 @@ describe('Auth Integration Tests (/api/auth)', () => {
 
       const cookies = loginRes.headers['set-cookie'];
 
-      const refreshRes = await request(app)
-        .post('/api/auth/refresh')
-        .set('Cookie', cookies);
+      const refreshRes = await request(app).post('/api/auth/refresh').set('Cookie', cookies);
 
       expect(refreshRes.status).toBe(200);
       expect(refreshRes.body).toHaveProperty('accessToken');
@@ -161,9 +153,7 @@ describe('Auth Integration Tests (/api/auth)', () => {
       });
       expect(tokensBefore).toBe(1);
 
-      const logoutRes = await request(app)
-        .post('/api/auth/logout')
-        .set('Cookie', cookies);
+      const logoutRes = await request(app).post('/api/auth/logout').set('Cookie', cookies);
 
       expect(logoutRes.status).toBe(204);
 

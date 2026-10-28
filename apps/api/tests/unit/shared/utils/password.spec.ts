@@ -12,7 +12,9 @@ describe('Password Utilities', () => {
       const plainPassword = 'SuperSecretPassword123!';
       const expectedHash = '$2b$10$hashedstringexample';
 
-      const hashSpy = vi.spyOn(bcrypt, 'hash').mockImplementation(async () => expectedHash as never);
+      const hashSpy = vi
+        .spyOn(bcrypt, 'hash')
+        .mockImplementation(async () => expectedHash as never);
 
       const result = await hashPassword(plainPassword);
 

@@ -4,12 +4,14 @@ import { WorkspaceRole, ProjectStatus } from '@prisma/client';
 
 let userCounter = 0;
 
-export async function createTestUser(overrides: Partial<{
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-}> = {}) {
+export async function createTestUser(
+  overrides: Partial<{
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+  }> = {}
+) {
   userCounter++;
   const firstName = overrides.firstName ?? `Test`;
   const lastName = overrides.lastName ?? `User${userCounter}`;
@@ -59,7 +61,11 @@ export async function createTestWorkspace(ownerId: string, name?: string) {
   return workspace;
 }
 
-export async function addMemberToWorkspace(workspaceId: string, userId: string, role: WorkspaceRole = WorkspaceRole.MEMBER) {
+export async function addMemberToWorkspace(
+  workspaceId: string,
+  userId: string,
+  role: WorkspaceRole = WorkspaceRole.MEMBER
+) {
   return prisma.workspaceMember.create({
     data: {
       workspaceId,
@@ -79,4 +85,3 @@ export async function createTestProject(workspaceId: string, name?: string) {
     },
   });
 }
-

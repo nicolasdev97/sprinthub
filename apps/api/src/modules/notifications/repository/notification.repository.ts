@@ -1,4 +1,4 @@
-import { prisma } from "../../../database/prisma";
+import { prisma } from '../../../database/prisma';
 
 export class NotificationRepository {
   async createNotification(userId: string, title: string, message: string) {
@@ -11,11 +11,7 @@ export class NotificationRepository {
     });
   }
 
-  async createManyNotifications(
-    userIds: string[],
-    title: string,
-    message: string,
-  ) {
+  async createManyNotifications(userIds: string[], title: string, message: string) {
     if (userIds.length === 0) {
       return { count: 0 };
     }
@@ -43,7 +39,7 @@ export class NotificationRepository {
         userId,
       },
       orderBy: {
-        createdAt: "desc",
+        createdAt: 'desc',
       },
       take: 50,
     });

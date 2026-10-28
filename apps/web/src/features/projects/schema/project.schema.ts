@@ -44,4 +44,3 @@ export type UpdateProjectFormValues = z.infer<typeof updateProjectSchema>;
 export type DeleteProjectConfirmFormValues = {
   confirmationName: string;
 };
-

@@ -1,3 +1,3 @@
-import morgan from "morgan";
+import morgan from 'morgan';
 
-export const requestLogger = morgan("dev");
+export const requestLogger = morgan('dev');

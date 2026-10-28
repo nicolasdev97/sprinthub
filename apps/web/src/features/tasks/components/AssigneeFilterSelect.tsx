@@ -1,24 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import {
-  Check,
-  ChevronDown,
-  Search,
-  User,
-  UserPlus,
-  Users,
-  UserX,
-  X,
-} from 'lucide-react';
+import { Check, ChevronDown, Search, User, UserPlus, Users, UserX, X } from 'lucide-react';
 
-import {
-  Avatar,
-  AvatarFallback,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui';
+import { Avatar, AvatarFallback, Popover, PopoverContent, PopoverTrigger } from '@/components/ui';
 import { cn } from '@/shared/utils';
 
 export interface AssigneeOptionItem {
@@ -92,9 +77,7 @@ export function AssigneeFilterSelect({
     if (!searchQuery.trim()) return normalizedMembers;
     const q = searchQuery.toLowerCase().trim();
     return normalizedMembers.filter(
-      (m) =>
-        m.name.toLowerCase().includes(q) ||
-        (m.email && m.email.toLowerCase().includes(q))
+      (m) => m.name.toLowerCase().includes(q) || (m.email && m.email.toLowerCase().includes(q))
     );
   }, [normalizedMembers, searchQuery]);
 
@@ -185,9 +168,7 @@ export function AssigneeFilterSelect({
           />
         }
       >
-        <div className="flex min-w-0 items-center gap-2">
-          {renderTriggerContent()}
-        </div>
+        <div className="flex min-w-0 items-center gap-2">{renderTriggerContent()}</div>
         <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
       </PopoverTrigger>
 
@@ -245,9 +226,7 @@ export function AssigneeFilterSelect({
               <User className="size-3.5 text-muted-foreground" />
               <span>Assigned to me</span>
             </div>
-            {value === 'ASSIGNED_TO_ME' && (
-              <Check className="size-3.5 text-primary" />
-            )}
+            {value === 'ASSIGNED_TO_ME' && <Check className="size-3.5 text-primary" />}
           </button>
 
           {/* 3. Created by me */}
@@ -264,9 +243,7 @@ export function AssigneeFilterSelect({
                 <UserPlus className="size-3.5 text-muted-foreground" />
                 <span>Created by me</span>
               </div>
-              {value === 'CREATED_BY_ME' && (
-                <Check className="size-3.5 text-primary" />
-              )}
+              {value === 'CREATED_BY_ME' && <Check className="size-3.5 text-primary" />}
             </button>
           )}
 
@@ -283,9 +260,7 @@ export function AssigneeFilterSelect({
               <UserX className="size-3.5 text-muted-foreground" />
               <span>Unassigned</span>
             </div>
-            {value === 'UNASSIGNED' && (
-              <Check className="size-3.5 text-primary" />
-            )}
+            {value === 'UNASSIGNED' && <Check className="size-3.5 text-primary" />}
           </button>
         </div>
 
@@ -323,15 +298,11 @@ export function AssigneeFilterSelect({
                     <div className="min-w-0 text-left">
                       <p className="truncate text-xs leading-snug">{member.name}</p>
                       {member.email && (
-                        <p className="truncate text-[10px] text-muted-foreground">
-                          {member.email}
-                        </p>
+                        <p className="truncate text-[10px] text-muted-foreground">{member.email}</p>
                       )}
                     </div>
                   </div>
-                  {isSelected && (
-                    <Check className="size-3.5 shrink-0 text-primary" />
-                  )}
+                  {isSelected && <Check className="size-3.5 shrink-0 text-primary" />}
                 </button>
               );
             })
@@ -341,4 +312,3 @@ export function AssigneeFilterSelect({
     </Popover>
   );
 }
-
