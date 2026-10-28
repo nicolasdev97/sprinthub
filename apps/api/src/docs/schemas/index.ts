@@ -17,3 +17,4 @@ export const allSchemas = {
   ...notificationSchemas,
   ...dashboardSchemas,
 };
+
