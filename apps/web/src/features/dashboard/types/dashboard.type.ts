@@ -20,4 +20,3 @@ export interface WorkspaceTasksBreakdown {
   upcomingTasks: DashboardTaskItem[];
   recentTasks: DashboardTaskItem[];
 }
-

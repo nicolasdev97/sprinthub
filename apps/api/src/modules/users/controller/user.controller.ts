@@ -1,7 +1,7 @@
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
 
-import { UserService } from "../service";
-import { UpdateUserDto, DeleteUserDto } from "../dto";
+import { UserService } from '../service';
+import { UpdateUserDto, DeleteUserDto } from '../dto';
 
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -14,10 +14,7 @@ export class UserController {
     res.status(200).json(user);
   }
 
-  async updateUser(
-    req: Request<unknown, unknown, UpdateUserDto>,
-    res: Response,
-  ) {
+  async updateUser(req: Request<unknown, unknown, UpdateUserDto>, res: Response) {
     const userId = req.user.userId;
 
     const user = await this.userService.updateUser(userId, req.body);
@@ -25,10 +22,7 @@ export class UserController {
     res.status(200).json(user);
   }
 
-  async deleteUser(
-    req: Request<unknown, unknown, DeleteUserDto>,
-    res: Response,
-  ) {
+  async deleteUser(req: Request<unknown, unknown, DeleteUserDto>, res: Response) {
     const userId = req.user.userId;
 
     await this.userService.deleteUser(userId, req.body.confirmationName);

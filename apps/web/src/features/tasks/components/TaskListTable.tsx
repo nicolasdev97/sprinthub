@@ -1,13 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  CheckSquare,
-  ExternalLink,
-  Loader2,
-  Square,
-  Trash2,
-} from 'lucide-react';
+import { CheckSquare, ExternalLink, Loader2, Square, Trash2 } from 'lucide-react';
 
 import {
   Avatar,
@@ -151,9 +145,7 @@ export function TaskListTable({
                       onClick={() => handleToggleCompleted(task)}
                       className="inline-flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-primary disabled:pointer-events-none disabled:opacity-50"
                       aria-label={
-                        isDone
-                          ? `Mark "${task.title}" as To Do`
-                          : `Mark "${task.title}" as Done`
+                        isDone ? `Mark "${task.title}" as To Do` : `Mark "${task.title}" as Done`
                       }
                     >
                       {isUpdating ? (
@@ -197,9 +189,7 @@ export function TaskListTable({
                       <Select
                         value={task.status}
                         disabled={isUpdating}
-                        onValueChange={(val) =>
-                          void handleStatusChange(task, val as TaskStatus)
-                        }
+                        onValueChange={(val) => void handleStatusChange(task, val as TaskStatus)}
                         className="h-8 w-36 text-xs"
                         aria-label={`Change status for ${task.title}`}
                       >
@@ -288,4 +278,3 @@ export function TaskListTable({
     </>
   );
 }
-

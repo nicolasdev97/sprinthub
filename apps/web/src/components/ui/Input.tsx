@@ -17,4 +17,3 @@ function Input({ className, type = 'text', ...props }: React.ComponentProps<'inp
 }
 
 export { Input };
-

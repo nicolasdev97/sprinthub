@@ -1,1 +1,1 @@
-export * from "./workspace.routes";
+export * from './workspace.routes';

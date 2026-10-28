@@ -65,4 +65,3 @@ export function Can({
 
   return <>{hasPermission ? children : fallback}</>;
 }
-

@@ -1,10 +1,6 @@
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
 
-import {
-  WorkspaceParams,
-  WorkspaceMemberParams,
-  WorkspaceFilterParams,
-} from "../types";
+import { WorkspaceParams, WorkspaceMemberParams, WorkspaceFilterParams } from '../types';
 
 import {
   CreateWorkspaceDto,
@@ -12,8 +8,8 @@ import {
   AddWorkspaceMemberDto,
   UpdateWorkspaceMemberRoleDto,
   TransferWorkspaceOwnershipDto,
-} from "../dto";
-import { WorkspaceService } from "../service";
+} from '../dto';
+import { WorkspaceService } from '../service';
 
 export class WorkspaceController {
   constructor(private readonly workspaceService: WorkspaceService) {}
@@ -22,25 +18,19 @@ export class WorkspaceController {
     const data = req.body as CreateWorkspaceDto;
     const ownerId = req.user!.userId;
 
-    const workspace = await this.workspaceService.createWorkspace(
-      data,
-      ownerId,
-    );
+    const workspace = await this.workspaceService.createWorkspace(data, ownerId);
 
     res.status(201).json(workspace);
   }
 
   async getWorkspaces(
     req: Request<unknown, unknown, unknown, WorkspaceFilterParams>,
-    res: Response,
+    res: Response
   ) {
     const userId = req.user!.userId;
     const filters = req.validatedQuery as WorkspaceFilterParams;
 
-    const workspaces = await this.workspaceService.getWorkspaces(
-      userId,
-      filters,
-    );
+    const workspaces = await this.workspaceService.getWorkspaces(userId, filters);
 
     res.status(200).json(workspaces);
   }
@@ -49,26 +39,16 @@ export class WorkspaceController {
     const { workspaceId } = req.params;
     const userId = req.user.userId;
 
-    const workspace = await this.workspaceService.getWorkspaceById(
-      workspaceId,
-      userId,
-    );
+    const workspace = await this.workspaceService.getWorkspaceById(workspaceId, userId);
 
     res.status(200).json(workspace);
   }
 
-  async updateWorkspace(
-    req: Request<WorkspaceParams, unknown, UpdateWorkspaceDto>,
-    res: Response,
-  ) {
+  async updateWorkspace(req: Request<WorkspaceParams, unknown, UpdateWorkspaceDto>, res: Response) {
     const { workspaceId } = req.params;
     const userId = req.user.userId;
 
-    const workspace = await this.workspaceService.updateWorkspace(
-      workspaceId,
-      userId,
-      req.body,
-    );
+    const workspace = await this.workspaceService.updateWorkspace(workspaceId, userId, req.body);
 
     res.status(200).json(workspace);
   }
@@ -84,14 +64,14 @@ export class WorkspaceController {
 
   async addWorkspaceMember(
     req: Request<WorkspaceParams, unknown, AddWorkspaceMemberDto>,
-    res: Response,
+    res: Response
   ) {
     const { workspaceId } = req.params;
 
     const member = await this.workspaceService.addWorkspaceMember(
       workspaceId,
       req.user.userId,
-      req.body,
+      req.body
     );
 
     res.status(201).json(member);
@@ -101,66 +81,50 @@ export class WorkspaceController {
     const { workspaceId } = req.params;
     const userId = req.user.userId;
 
-    const workspaceMembers = await this.workspaceService.getWorkspaceMembers(
-      workspaceId,
-      userId,
-    );
+    const workspaceMembers = await this.workspaceService.getWorkspaceMembers(workspaceId, userId);
 
     res.status(200).json(workspaceMembers);
   }
 
   async updateWorkspaceMemberRole(
-    req: Request<
-      WorkspaceMemberParams,
-      Record<string, never>,
-      UpdateWorkspaceMemberRoleDto
-    >,
-    res: Response,
+    req: Request<WorkspaceMemberParams, Record<string, never>, UpdateWorkspaceMemberRoleDto>,
+    res: Response
   ) {
     const { workspaceId, memberId } = req.params;
     const userId = req.user.userId;
 
-    const workspaceMember =
-      await this.workspaceService.updateWorkspaceMemberRole(
-        workspaceId,
-        memberId,
-        userId,
-        req.body.role,
-      );
+    const workspaceMember = await this.workspaceService.updateWorkspaceMemberRole(
+      workspaceId,
+      memberId,
+      userId,
+      req.body.role
+    );
 
     res.status(200).json(workspaceMember);
   }
 
-  async removeWorkspaceMember(
-    req: Request<WorkspaceMemberParams>,
-    res: Response,
-  ) {
+  async removeWorkspaceMember(req: Request<WorkspaceMemberParams>, res: Response) {
     const { workspaceId, memberId } = req.params;
     const userId = req.user.userId;
 
-    await this.workspaceService.removeWorkspaceMember(
-      workspaceId,
-      memberId,
-      userId,
-    );
+    await this.workspaceService.removeWorkspaceMember(workspaceId, memberId, userId);
 
     res.status(204).send();
   }
 
   async transferWorkspaceOwnership(
     req: Request<WorkspaceParams, unknown, TransferWorkspaceOwnershipDto>,
-    res: Response,
+    res: Response
   ) {
     const { workspaceId } = req.params;
     const userId = req.user.userId;
     const { newOwnerId } = req.body;
 
-    const updatedWorkspace =
-      await this.workspaceService.transferWorkspaceOwnership(
-        workspaceId,
-        userId,
-        newOwnerId,
-      );
+    const updatedWorkspace = await this.workspaceService.transferWorkspaceOwnership(
+      workspaceId,
+      userId,
+      newOwnerId
+    );
 
     res.status(200).json(updatedWorkspace);
   }

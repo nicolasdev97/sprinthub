@@ -1,4 +1,4 @@
-import { evaluateRolePermission, PERMISSION_MATRIX, ROLE_HIERARCHY } from '../permissions';
+import { evaluateRolePermission, ROLE_HIERARCHY } from '../permissions';
 
 describe('RBAC Permissions Evaluator', () => {
   describe('ROLE_HIERARCHY', () => {
@@ -16,12 +16,16 @@ describe('RBAC Permissions Evaluator', () => {
 
     it('should allow OWNER to perform destructive workspace actions', () => {
       expect(evaluateRolePermission('OWNER', { permission: 'workspace:delete' })).toBe(true);
-      expect(evaluateRolePermission('OWNER', { permission: 'workspace:transfer_ownership' })).toBe(true);
+      expect(evaluateRolePermission('OWNER', { permission: 'workspace:transfer_ownership' })).toBe(
+        true
+      );
     });
 
     it('should forbid ADMIN or MEMBER from deleting workspaces or transferring ownership', () => {
       expect(evaluateRolePermission('ADMIN', { permission: 'workspace:delete' })).toBe(false);
-      expect(evaluateRolePermission('ADMIN', { permission: 'workspace:transfer_ownership' })).toBe(false);
+      expect(evaluateRolePermission('ADMIN', { permission: 'workspace:transfer_ownership' })).toBe(
+        false
+      );
       expect(evaluateRolePermission('MEMBER', { permission: 'workspace:delete' })).toBe(false);
     });
 
@@ -42,4 +46,3 @@ describe('RBAC Permissions Evaluator', () => {
     });
   });
 });
-

@@ -12,7 +12,10 @@ test.describe('Workspace & Project Lifecycle E2E', () => {
 
     // 3. Open Create Workspace Dialog
     const workspaceName = `WS_${Date.now()}`;
-    await page.getByRole('button', { name: /new workspace/i }).first().click();
+    await page
+      .getByRole('button', { name: /new workspace/i })
+      .first()
+      .click();
     await expect(page.getByRole('heading', { name: /create workspace/i })).toBeVisible();
 
     // 4. Fill Workspace Form & Submit
@@ -29,7 +32,10 @@ test.describe('Workspace & Project Lifecycle E2E', () => {
 
     // 7. Open Create Project Dialog
     const projectName = `Proj_${Date.now()}`;
-    await page.getByRole('button', { name: /new project/i }).first().click();
+    await page
+      .getByRole('button', { name: /new project/i })
+      .first()
+      .click();
     await expect(page.getByRole('heading', { name: /create project/i })).toBeVisible();
 
     // 8. Fill Project Form & Submit

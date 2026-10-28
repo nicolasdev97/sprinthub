@@ -2,6 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { openApiSpec } from '../openapi';
 
+interface OpenApiOperation {
+  summary?: string;
+  tags?: string[];
+  responses?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 function validateOpenApiSpec() {
   console.log('🔍 Validating SprintHub OpenAPI 3.0 Specification...\n');
 
@@ -14,8 +21,8 @@ function validateOpenApiSpec() {
     throw new Error('Missing info section (title or version)');
   }
 
-  const paths = openApiSpec.paths as Record<string, Record<string, any>>;
-  const schemas = openApiSpec.components.schemas as Record<string, any>;
+  const paths = openApiSpec.paths as Record<string, Record<string, OpenApiOperation>>;
+  const schemas = openApiSpec.components.schemas as Record<string, unknown>;
 
   const pathKeys = Object.keys(paths);
   const schemaKeys = Object.keys(schemas);
@@ -34,24 +41,25 @@ function validateOpenApiSpec() {
   const referencedSchemas = new Set<string>();
 
   // Helper to extract schema references recursively
-  function scanRefs(obj: any) {
+  function scanRefs(obj: unknown) {
     if (!obj || typeof obj !== 'object') return;
-    if (obj.$ref && typeof obj.$ref === 'string') {
-      const match = obj.$ref.match(/^#\/components\/schemas\/(.+)$/);
+    const record = obj as Record<string, unknown>;
+    if (record.$ref && typeof record.$ref === 'string') {
+      const match = record.$ref.match(/^#\/components\/schemas\/(.+)$/);
       if (match) {
         referencedSchemas.add(match[1]);
         if (!schemas[match[1]]) {
-          throw new Error(`Unresolved schema reference: "${obj.$ref}"`);
+          throw new Error(`Unresolved schema reference: "${record.$ref}"`);
         }
       }
     }
-    for (const key of Object.keys(obj)) {
-      scanRefs(obj[key]);
+    for (const key of Object.keys(record)) {
+      scanRefs(record[key]);
     }
   }
 
   // Scan schemas for nested refs
-  for (const [name, schema] of Object.entries(schemas)) {
+  for (const schema of Object.values(schemas)) {
     scanRefs(schema);
   }
 
@@ -115,7 +123,8 @@ function validateOpenApiSpec() {
 
 try {
   validateOpenApiSpec();
-} catch (error: any) {
-  console.error('❌ OpenAPI Validation Failed:', error.message);
+} catch (error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error('❌ OpenAPI Validation Failed:', message);
   process.exit(1);
 }

@@ -3,13 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import {
-  Briefcase,
-  CheckSquare,
-  FolderKanban,
-  LayoutDashboard,
-  LucideIcon,
-} from 'lucide-react';
+import { Briefcase, CheckSquare, FolderKanban, LayoutDashboard, LucideIcon } from 'lucide-react';
 
 import { cn } from '@/shared/utils';
 
@@ -51,22 +45,14 @@ interface AppSidebarProps {
 
 export function isNavItemActive(pathname: string, item: NavItem): boolean {
   if (item.href === '/dashboard') {
-    return (
-      pathname === '/' ||
-      pathname === '/dashboard' ||
-      pathname.startsWith('/dashboard/')
-    );
+    return pathname === '/' || pathname === '/dashboard' || pathname.startsWith('/dashboard/');
   }
 
   // Inside a specific project context (/workspaces/:workspaceId/projects/:projectId/...)
   const isInsideSpecificProject = /^\/workspaces\/[^/]+\/projects\/[^/]+(\/|$)/.test(pathname);
 
   if (item.href === '/projects') {
-    return (
-      pathname === '/projects' ||
-      pathname.startsWith('/projects/') ||
-      isInsideSpecificProject
-    );
+    return pathname === '/projects' || pathname.startsWith('/projects/') || isInsideSpecificProject;
   }
 
   if (item.href === '/workspaces') {

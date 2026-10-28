@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect, useRef } from 'react';
+import { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth';
@@ -44,132 +44,147 @@ export function RealtimeEventsProvider({ children }: RealtimeEventsProviderProps
   const queryClient = useQueryClient();
   const eventSourceRef = useRef<EventSource | null>(null);
   const userIdRef = useRef<string | undefined>(user?.id);
-  userIdRef.current = user?.id;
+
+  useEffect(() => {
+    userIdRef.current = user?.id;
+  }, [user?.id]);
 
   // Helper function to safely evict and silence deleted tasks
-  const applyTaskDeleted = (taskId: string, projectId?: string) => {
-    deletedEntities.markDeleted(taskId, projectId);
+  const applyTaskDeleted = useCallback(
+    (taskId: string, projectId?: string) => {
+      deletedEntities.markDeleted(taskId, projectId);
 
-    queryClient.cancelQueries({
-      predicate: (q) => q.queryKey.includes(taskId),
-    });
+      queryClient.cancelQueries({
+        predicate: (q) => q.queryKey.includes(taskId),
+      });
 
-    queryClient.setQueryDefaults(['tasks', taskId], { enabled: false, retry: false });
-    queryClient.setQueryData(['tasks', taskId], null);
+      queryClient.setQueryDefaults(['tasks', taskId], { enabled: false, retry: false });
+      queryClient.setQueryData(['tasks', taskId], null);
 
-    if (projectId) {
-      queryClient.setQueriesData<Task[]>({ queryKey: ['tasks', projectId] }, (old) =>
+      if (projectId) {
+        queryClient.setQueriesData<Task[]>({ queryKey: ['tasks', projectId] }, (old) =>
+          Array.isArray(old) ? old.filter((t) => t.id !== taskId) : old
+        );
+      }
+      queryClient.setQueriesData<Task[]>({ queryKey: ['tasks'] }, (old) =>
         Array.isArray(old) ? old.filter((t) => t.id !== taskId) : old
       );
-    }
-    queryClient.setQueriesData<Task[]>({ queryKey: ['tasks'] }, (old) =>
-      Array.isArray(old) ? old.filter((t) => t.id !== taskId) : old
-    );
-  };
+    },
+    [queryClient]
+  );
 
   // Helper function to safely evict and silence deleted projects (and their cached tasks)
-  const applyProjectDeleted = (projectId: string, workspaceId?: string) => {
-    deletedEntities.markDeleted(projectId, workspaceId);
+  const applyProjectDeleted = useCallback(
+    (projectId: string, workspaceId?: string) => {
+      deletedEntities.markDeleted(projectId, workspaceId);
 
-    // Cascade eviction to all cached tasks belonging to this project
-    const cachedTaskQueries = queryClient.getQueriesData<Task[]>({
-      queryKey: ['tasks', projectId],
-    });
-    cachedTaskQueries.forEach(([, tasksList]) => {
-      if (Array.isArray(tasksList)) {
-        tasksList.forEach((t) => {
-          if (t?.id) {
-            applyTaskDeleted(t.id, projectId);
-          }
-        });
+      // Cascade eviction to all cached tasks belonging to this project
+      const cachedTaskQueries = queryClient.getQueriesData<Task[]>({
+        queryKey: ['tasks', projectId],
+      });
+      cachedTaskQueries.forEach(([, tasksList]) => {
+        if (Array.isArray(tasksList)) {
+          tasksList.forEach((t) => {
+            if (t?.id) {
+              applyTaskDeleted(t.id, projectId);
+            }
+          });
+        }
+      });
+
+      queryClient.cancelQueries({
+        predicate: (q) => q.queryKey.includes(projectId),
+      });
+
+      queryClient.setQueryDefaults(['projects', projectId], { enabled: false, retry: false });
+      queryClient.setQueryDefaults(['tasks', projectId], { enabled: false, retry: false });
+
+      queryClient.setQueryData(['projects', projectId], null);
+      queryClient.setQueriesData({ queryKey: ['tasks', projectId] }, []);
+
+      if (workspaceId) {
+        queryClient.setQueriesData<Project[]>({ queryKey: ['projects', workspaceId] }, (old) =>
+          Array.isArray(old) ? old.filter((p) => p.id !== projectId) : old
+        );
       }
-    });
-
-    queryClient.cancelQueries({
-      predicate: (q) => q.queryKey.includes(projectId),
-    });
-
-    queryClient.setQueryDefaults(['projects', projectId], { enabled: false, retry: false });
-    queryClient.setQueryDefaults(['tasks', projectId], { enabled: false, retry: false });
-
-    queryClient.setQueryData(['projects', projectId], null);
-    queryClient.setQueriesData({ queryKey: ['tasks', projectId] }, []);
-
-    if (workspaceId) {
-      queryClient.setQueriesData<Project[]>({ queryKey: ['projects', workspaceId] }, (old) =>
+      queryClient.setQueriesData<Project[]>({ queryKey: ['projects'] }, (old) =>
         Array.isArray(old) ? old.filter((p) => p.id !== projectId) : old
       );
-    }
-    queryClient.setQueriesData<Project[]>({ queryKey: ['projects'] }, (old) =>
-      Array.isArray(old) ? old.filter((p) => p.id !== projectId) : old
-    );
-  };
+    },
+    [applyTaskDeleted, queryClient]
+  );
 
   // Helper function to safely evict and silence deleted or revoked workspaces
-  const applyWorkspaceDeleted = (workspaceId: string) => {
-    deletedEntities.markDeleted(workspaceId);
+  const applyWorkspaceDeleted = useCallback(
+    (workspaceId: string) => {
+      deletedEntities.markDeleted(workspaceId);
 
-    // Cascade eviction to all cached projects (and their tasks) belonging to this workspace
-    const cachedProjectQueries = queryClient.getQueriesData<Project[]>({
-      queryKey: ['projects', workspaceId],
-    });
-    cachedProjectQueries.forEach(([, projectsList]) => {
-      if (Array.isArray(projectsList)) {
-        projectsList.forEach((p) => {
-          if (p?.id) {
-            applyProjectDeleted(p.id, workspaceId);
-          }
-        });
-      }
-    });
+      // Cascade eviction to all cached projects (and their tasks) belonging to this workspace
+      const cachedProjectQueries = queryClient.getQueriesData<Project[]>({
+        queryKey: ['projects', workspaceId],
+      });
+      cachedProjectQueries.forEach(([, projectsList]) => {
+        if (Array.isArray(projectsList)) {
+          projectsList.forEach((p) => {
+            if (p?.id) {
+              applyProjectDeleted(p.id, workspaceId);
+            }
+          });
+        }
+      });
 
-    // Cancel all in-flight queries referencing this workspace
-    queryClient.cancelQueries({
-      predicate: (q) => q.queryKey.includes(workspaceId),
-    });
+      // Cancel all in-flight queries referencing this workspace
+      queryClient.cancelQueries({
+        predicate: (q) => q.queryKey.includes(workspaceId),
+      });
 
-    queryClient.setQueryDefaults(['workspaces', workspaceId], { enabled: false, retry: false });
-    queryClient.setQueryDefaults(['workspaces', workspaceId, 'members'], {
-      enabled: false,
-      retry: false,
-    });
-    queryClient.setQueryDefaults(['projects', workspaceId], { enabled: false, retry: false });
-    queryClient.setQueryDefaults(['tasks', workspaceId], { enabled: false, retry: false });
-    queryClient.setQueryDefaults(['dashboard', workspaceId], { enabled: false, retry: false });
+      queryClient.setQueryDefaults(['workspaces', workspaceId], { enabled: false, retry: false });
+      queryClient.setQueryDefaults(['workspaces', workspaceId, 'members'], {
+        enabled: false,
+        retry: false,
+      });
+      queryClient.setQueryDefaults(['projects', workspaceId], { enabled: false, retry: false });
+      queryClient.setQueryDefaults(['tasks', workspaceId], { enabled: false, retry: false });
+      queryClient.setQueryDefaults(['dashboard', workspaceId], { enabled: false, retry: false });
 
-    queryClient.setQueryData(['workspaces', workspaceId], null);
-    queryClient.setQueriesData({ queryKey: ['workspaces', workspaceId, 'members'] }, []);
-    queryClient.setQueriesData({ queryKey: ['projects', workspaceId] }, []);
-    queryClient.setQueriesData({ queryKey: ['tasks', workspaceId] }, []);
-    queryClient.setQueryData(['dashboard', workspaceId], null);
+      queryClient.setQueryData(['workspaces', workspaceId], null);
+      queryClient.setQueriesData({ queryKey: ['workspaces', workspaceId, 'members'] }, []);
+      queryClient.setQueriesData({ queryKey: ['projects', workspaceId] }, []);
+      queryClient.setQueriesData({ queryKey: ['tasks', workspaceId] }, []);
+      queryClient.setQueryData(['dashboard', workspaceId], null);
 
-    queryClient.setQueriesData<Workspace[]>({ queryKey: ['workspaces'] }, (old) =>
-      Array.isArray(old) ? old.filter((w) => w.id !== workspaceId) : old
-    );
-  };
+      queryClient.setQueriesData<Workspace[]>({ queryKey: ['workspaces'] }, (old) =>
+        Array.isArray(old) ? old.filter((w) => w.id !== workspaceId) : old
+      );
+    },
+    [applyProjectDeleted, queryClient]
+  );
 
   // Helper function to cleanly restore a workspace when a previously removed member is re-added
-  const applyWorkspaceRestored = (workspaceId: string) => {
-    const restoredIds = deletedEntities.unmarkDeleted(workspaceId);
+  const applyWorkspaceRestored = useCallback(
+    (workspaceId: string) => {
+      const restoredIds = deletedEntities.unmarkDeleted(workspaceId);
 
-    queryClient.setQueryDefaults(['workspaces', workspaceId], { retry: false });
-    queryClient.setQueryDefaults(['workspaces', workspaceId, 'members'], { retry: false });
-    queryClient.setQueryDefaults(['projects', workspaceId], { retry: false });
-    queryClient.setQueryDefaults(['tasks', workspaceId], { retry: false });
-    queryClient.setQueryDefaults(['dashboard', workspaceId], { retry: false });
+      queryClient.setQueryDefaults(['workspaces', workspaceId], { retry: false });
+      queryClient.setQueryDefaults(['workspaces', workspaceId, 'members'], { retry: false });
+      queryClient.setQueryDefaults(['projects', workspaceId], { retry: false });
+      queryClient.setQueryDefaults(['tasks', workspaceId], { retry: false });
+      queryClient.setQueryDefaults(['dashboard', workspaceId], { retry: false });
 
-    restoredIds.forEach((id) => {
-      queryClient.setQueryDefaults(['projects', id], { retry: false });
-      queryClient.setQueryDefaults(['tasks', id], { retry: false });
-    });
+      restoredIds.forEach((id) => {
+        queryClient.setQueryDefaults(['projects', id], { retry: false });
+        queryClient.setQueryDefaults(['tasks', id], { retry: false });
+      });
 
-    const restoredSet = new Set([workspaceId, ...restoredIds]);
-    queryClient.removeQueries({
-      predicate: (q) =>
-        q.queryKey.some((part) => typeof part === 'string' && restoredSet.has(part)) ||
-        Boolean(q.state.error),
-    });
-  };
+      const restoredSet = new Set([workspaceId, ...restoredIds]);
+      queryClient.removeQueries({
+        predicate: (q) =>
+          q.queryKey.some((part) => typeof part === 'string' && restoredSet.has(part)) ||
+          Boolean(q.state.error),
+      });
+    },
+    [queryClient]
+  );
 
   // Cross-tab synchronization listener for multi-tab environments
   useEffect(() => {
@@ -200,7 +215,7 @@ export function RealtimeEventsProvider({ children }: RealtimeEventsProviderProps
     return () => {
       unsubscribe();
     };
-  }, [queryClient]);
+  }, [applyProjectDeleted, applyTaskDeleted, applyWorkspaceDeleted, queryClient]);
 
   // Server-Sent Events (SSE) stream listener
   useEffect(() => {
@@ -329,7 +344,15 @@ export function RealtimeEventsProvider({ children }: RealtimeEventsProviderProps
         eventSourceRef.current = null;
       }
     };
-  }, [accessToken, isAuthenticated, queryClient]);
+  }, [
+    accessToken,
+    applyProjectDeleted,
+    applyTaskDeleted,
+    applyWorkspaceDeleted,
+    applyWorkspaceRestored,
+    isAuthenticated,
+    queryClient,
+  ]);
 
   return <>{children}</>;
 }

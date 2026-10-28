@@ -77,4 +77,3 @@ export function getSafeRedirectPath(
 
   return trimmed;
 }
-

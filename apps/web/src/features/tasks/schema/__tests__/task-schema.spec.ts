@@ -1,4 +1,4 @@
-import { createTaskSchema, updateTaskSchema, taskPriorityEnum, taskStatusEnum } from '../task.schema';
+import { createTaskSchema, updateTaskSchema } from '../task.schema';
 
 describe('Task Zod Schemas', () => {
   describe('createTaskSchema', () => {
@@ -58,4 +58,3 @@ describe('Task Zod Schemas', () => {
     });
   });
 });
-

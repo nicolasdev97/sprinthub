@@ -1,2 +1,1 @@
-export * from "./notification-params.schema";
-
+export * from './notification-params.schema';

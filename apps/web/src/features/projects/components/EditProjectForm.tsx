@@ -88,11 +88,7 @@ export function EditProjectForm({ project, canManage }: EditProjectFormProps) {
       const apiError = normalizeApiError(error);
 
       if (apiError.errors) {
-        const validFields: Array<keyof UpdateProjectFormValues> = [
-          'name',
-          'description',
-          'status',
-        ];
+        const validFields: Array<keyof UpdateProjectFormValues> = ['name', 'description', 'status'];
         for (const field of validFields) {
           const messages = apiError.errors[field];
           if (messages && messages.length > 0) {
@@ -137,7 +133,8 @@ export function EditProjectForm({ project, canManage }: EditProjectFormProps) {
                 <Archive className="size-4" />
                 <AlertTitle>This project is archived</AlertTitle>
                 <AlertDescription>
-                  Archived projects are read-only. Unarchive this project below to edit its details or status.
+                  Archived projects are read-only. Unarchive this project below to edit its details
+                  or status.
                 </AlertDescription>
               </Alert>
             )}
@@ -235,4 +232,3 @@ export function EditProjectForm({ project, canManage }: EditProjectFormProps) {
     </Card>
   );
 }
-

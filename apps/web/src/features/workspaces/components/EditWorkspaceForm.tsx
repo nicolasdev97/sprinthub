@@ -174,10 +174,7 @@ export function EditWorkspaceForm({ workspace, canEdit }: EditWorkspaceFormProps
 
           {canEdit && (
             <CardFooter className="mt-4 flex justify-end border-t border-border/60 pt-4">
-              <Button
-                type="submit"
-                disabled={isSubmitting || !form.formState.isDirty}
-              >
+              <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
@@ -197,4 +194,3 @@ export function EditWorkspaceForm({ workspace, canEdit }: EditWorkspaceFormProps
     </Card>
   );
 }
-

@@ -68,13 +68,7 @@ export function WorkspaceMembersTable({
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const {
-    data: members,
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useWorkspaceMembers(workspaceId);
+  const { data: members, isLoading, isError, error, refetch } = useWorkspaceMembers(workspaceId);
 
   const updateRoleMutation = useUpdateWorkspaceMemberRole();
   const removeMemberMutation = useRemoveWorkspaceMember();
@@ -103,10 +97,7 @@ export function WorkspaceMembersTable({
     return false;
   };
 
-  const handleRoleChange = async (
-    member: WorkspaceMember,
-    newRole: AssignableWorkspaceRole
-  ) => {
+  const handleRoleChange = async (member: WorkspaceMember, newRole: AssignableWorkspaceRole) => {
     if (member.role === newRole) return;
     setUpdatingMemberId(member.id);
 
@@ -187,10 +178,7 @@ export function WorkspaceMembersTable({
           </div>
 
           {canInviteMembers && (
-            <InviteMemberDialog
-              workspaceId={workspaceId}
-              workspaceName={workspaceName}
-            />
+            <InviteMemberDialog workspaceId={workspaceId} workspaceName={workspaceName} />
           )}
         </CardHeader>
 
@@ -250,10 +238,7 @@ export function WorkspaceMembersTable({
                 </p>
               </div>
               {canInviteMembers && (
-                <InviteMemberDialog
-                  workspaceId={workspaceId}
-                  workspaceName={workspaceName}
-                />
+                <InviteMemberDialog workspaceId={workspaceId} workspaceName={workspaceName} />
               )}
             </div>
           )}
@@ -280,14 +265,11 @@ export function WorkspaceMembersTable({
                       ? `${member.user.firstName.charAt(0)}${member.user.lastName.charAt(0)}`.toUpperCase()
                       : 'WM';
                     const isSelf = member.userId === user?.id;
-                    const joinedDate = new Date(member.joinedAt).toLocaleDateString(
-                      'en-US',
-                      {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      }
-                    );
+                    const joinedDate = new Date(member.joinedAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    });
                     const isUpdatingThisRow = updatingMemberId === member.id;
                     const canRemove = canRemoveTargetMember(member);
 
@@ -311,9 +293,7 @@ export function WorkspaceMembersTable({
                                   </Badge>
                                 )}
                               </div>
-                              <p className="truncate text-xs text-muted-foreground">
-                                {email}
-                              </p>
+                              <p className="truncate text-xs text-muted-foreground">{email}</p>
                             </div>
                           </div>
                         </TableCell>
@@ -413,9 +393,7 @@ export function WorkspaceMembersTable({
                               );
                             })()
                           ) : (
-                            <Badge
-                              variant={member.role === 'ADMIN' ? 'secondary' : 'outline'}
-                            >
+                            <Badge variant={member.role === 'ADMIN' ? 'secondary' : 'outline'}>
                               {member.role}
                             </Badge>
                           )}
@@ -464,14 +442,12 @@ export function WorkspaceMembersTable({
                   ? `${memberToRemove.user.firstName} ${memberToRemove.user.lastName}`
                   : memberToRemove?.userId}
               </span>{' '}
-              from <span className="font-semibold text-foreground">{workspaceName}</span>? Any
-              tasks currently assigned to them in this workspace will become unassigned.
+              from <span className="font-semibold text-foreground">{workspaceName}</span>? Any tasks
+              currently assigned to them in this workspace will become unassigned.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={removeMemberMutation.isPending}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={removeMemberMutation.isPending}>Cancel</AlertDialogCancel>
             <Button
               variant="destructive"
               disabled={removeMemberMutation.isPending}
@@ -492,4 +468,3 @@ export function WorkspaceMembersTable({
     </>
   );
 }
-

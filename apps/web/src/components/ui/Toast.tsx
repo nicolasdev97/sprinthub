@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  createContext,
-  ReactNode,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from 'react';
+import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
 import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
 
 import { cn } from '@/shared/utils';
@@ -79,10 +72,8 @@ export function ToastProvider({ children }: ToastProviderProps) {
               role="status"
               className={cn(
                 'pointer-events-auto flex items-start gap-3 rounded-xl border p-4 shadow-lg transition-all',
-                isSuccess &&
-                  'border-emerald-500/40 bg-card text-card-foreground',
-                isDestructive &&
-                  'border-destructive/50 bg-card text-card-foreground',
+                isSuccess && 'border-emerald-500/40 bg-card text-card-foreground',
+                isDestructive && 'border-destructive/50 bg-card text-card-foreground',
                 !isSuccess && !isDestructive && 'border-border bg-card text-card-foreground'
               )}
             >
@@ -128,4 +119,3 @@ export function useToast() {
 
   return context;
 }
-

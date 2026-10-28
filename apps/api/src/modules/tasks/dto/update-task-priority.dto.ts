@@ -1,4 +1,4 @@
-import { TaskPriority } from "@prisma/client";
+import { TaskPriority } from '@prisma/client';
 
 export interface UpdateTaskPriorityDto {
   priority: TaskPriority;

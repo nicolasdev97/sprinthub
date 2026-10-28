@@ -1,4 +1,10 @@
-import { PrismaClient, WorkspaceRole, ProjectStatus, TaskStatus, TaskPriority } from '@prisma/client';
+import {
+  PrismaClient,
+  WorkspaceRole,
+  ProjectStatus,
+  TaskStatus,
+  TaskPriority,
+} from '@prisma/client';
 import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -45,7 +51,8 @@ async function main() {
     workspace = await prisma.workspace.create({
       data: {
         name: 'SprintHub Engineering',
-        description: 'Primary engineering workspace for core platform development and sprint tracking.',
+        description:
+          'Primary engineering workspace for core platform development and sprint tracking.',
         ownerId: adminUser.id,
         members: {
           create: [
@@ -183,4 +190,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-

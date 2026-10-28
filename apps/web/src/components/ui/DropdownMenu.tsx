@@ -90,11 +90,7 @@ interface DropdownMenuItemProps extends MenuPrimitive.Item.Props {
   variant?: 'default' | 'destructive';
 }
 
-function DropdownMenuItem({
-  className,
-  variant = 'default',
-  ...props
-}: DropdownMenuItemProps) {
+function DropdownMenuItem({ className, variant = 'default', ...props }: DropdownMenuItemProps) {
   return (
     <MenuPrimitive.Item
       data-slot="dropdown-menu-item"
@@ -128,4 +124,3 @@ export {
   DropdownMenuItem,
   DropdownMenuSeparator,
 };
-

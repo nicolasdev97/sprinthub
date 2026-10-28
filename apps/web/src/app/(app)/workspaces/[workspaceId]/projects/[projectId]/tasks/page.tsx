@@ -13,20 +13,13 @@ interface ProjectTasksPageProps {
   searchParams: Promise<{ taskId?: string }>;
 }
 
-export default async function ProjectTasksPage({
-  params,
-  searchParams,
-}: ProjectTasksPageProps) {
+export default async function ProjectTasksPage({ params, searchParams }: ProjectTasksPageProps) {
   const { workspaceId, projectId } = await params;
   const { taskId } = await searchParams;
 
   return (
     <Suspense>
-      <ProjectTasksView
-        workspaceId={workspaceId}
-        projectId={projectId}
-        initialTaskId={taskId}
-      />
+      <ProjectTasksView workspaceId={workspaceId} projectId={projectId} initialTaskId={taskId} />
     </Suspense>
   );
 }

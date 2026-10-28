@@ -24,8 +24,7 @@ export function AppShell({ children }: AppShellProps) {
     if (!isInitializing && !isAuthenticated) {
       let shouldRedirectHome = false;
       try {
-        shouldRedirectHome =
-          window.sessionStorage.getItem('sprinthub:logout-redirect') === '1';
+        shouldRedirectHome = window.sessionStorage.getItem('sprinthub:logout-redirect') === '1';
         if (shouldRedirectHome) {
           window.sessionStorage.removeItem('sprinthub:logout-redirect');
         }

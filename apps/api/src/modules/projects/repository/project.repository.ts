@@ -1,6 +1,6 @@
-import { prisma } from "../../../database/prisma";
-import { CreateProjectDto, UpdateProjectDto } from "../dto";
-import { ProjectFilterParams } from "../types";
+import { prisma } from '../../../database/prisma';
+import { CreateProjectDto, UpdateProjectDto } from '../dto';
+import { ProjectFilterParams } from '../types';
 
 export class ProjectRepository {
   async createProject(data: CreateProjectDto) {
@@ -18,13 +18,13 @@ export class ProjectRepository {
         ...(filters?.search && {
           name: {
             contains: filters.search,
-            mode: "insensitive",
+            mode: 'insensitive',
           },
         }),
       },
       orderBy: filters?.sortBy
         ? {
-            [filters.sortBy]: filters.sortOrder ?? "asc",
+            [filters.sortBy]: filters.sortOrder ?? 'asc',
           }
         : undefined,
     });

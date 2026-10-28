@@ -1,11 +1,11 @@
-import { WorkspaceRole } from "@prisma/client";
+import { WorkspaceRole } from '@prisma/client';
 
-import { prisma } from "../../../database/prisma";
+import { prisma } from '../../../database/prisma';
 
-import { WorkspaceFilterParams } from "../types";
+import { WorkspaceFilterParams } from '../types';
 
-import { CreateWorkspaceDto } from "../dto";
-import { UpdateWorkspaceDto } from "../dto";
+import { CreateWorkspaceDto } from '../dto';
+import { UpdateWorkspaceDto } from '../dto';
 
 export class WorkspaceRepository {
   async createWorkspace(data: CreateWorkspaceDto, ownerId: string) {
@@ -39,7 +39,7 @@ export class WorkspaceRepository {
           workspace: {
             name: {
               contains: filters.search,
-              mode: "insensitive",
+              mode: 'insensitive',
             },
           },
         }),
@@ -50,11 +50,11 @@ export class WorkspaceRepository {
       orderBy: filters?.sortBy
         ? {
             workspace: {
-              [filters.sortBy]: filters.sortOrder ?? "asc",
+              [filters.sortBy]: filters.sortOrder ?? 'asc',
             },
           }
         : {
-            joinedAt: "asc",
+            joinedAt: 'asc',
           },
     });
   }
@@ -104,11 +104,7 @@ export class WorkspaceRepository {
     });
   }
 
-  async addWorkspaceMember(
-    workspaceId: string,
-    userId: string,
-    role: WorkspaceRole,
-  ) {
+  async addWorkspaceMember(workspaceId: string, userId: string, role: WorkspaceRole) {
     return prisma.workspaceMember.create({
       data: {
         workspaceId,
@@ -135,7 +131,7 @@ export class WorkspaceRepository {
         },
       },
       orderBy: {
-        joinedAt: "asc",
+        joinedAt: 'asc',
       },
     });
   }
@@ -169,11 +165,7 @@ export class WorkspaceRepository {
     });
   }
 
-  async deleteWorkspaceMember(
-    memberId: string,
-    workspaceId: string,
-    userId: string,
-  ) {
+  async deleteWorkspaceMember(memberId: string, workspaceId: string, userId: string) {
     return prisma.$transaction(async (tx) => {
       await tx.task.updateMany({
         where: {
@@ -206,7 +198,7 @@ export class WorkspaceRepository {
   async transferWorkspaceOwnership(
     workspaceId: string,
     currentOwnerUserId: string,
-    newOwnerUserId: string,
+    newOwnerUserId: string
   ) {
     return prisma.$transaction(async (tx) => {
       // 1. Update workspace ownerId

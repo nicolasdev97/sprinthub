@@ -146,14 +146,10 @@ export function NotificationBell() {
   const unreadNotifications = notifications.filter((item) => !item.isRead);
   const unreadCount = unreadNotifications.length;
 
-  const displayedNotifications =
-    filterTab === 'unread' ? unreadNotifications : notifications;
+  const displayedNotifications = filterTab === 'unread' ? unreadNotifications : notifications;
   const visibleNotifications = displayedNotifications.slice(0, 50);
 
-  const handleSingleMarkAsRead = async (
-    e: React.MouseEvent,
-    notificationId: string
-  ) => {
+  const handleSingleMarkAsRead = async (e: React.MouseEvent, notificationId: string) => {
     e.stopPropagation();
     if (markAsReadMutation.isPending) return;
 
@@ -206,9 +202,7 @@ export function NotificationBell() {
     }
 
     if (combined.includes('project')) {
-      router.push(
-        activeWorkspace ? `/workspaces/${activeWorkspace.id}/projects` : '/projects'
-      );
+      router.push(activeWorkspace ? `/workspaces/${activeWorkspace.id}/projects` : '/projects');
       return;
     }
 
@@ -221,9 +215,7 @@ export function NotificationBell() {
     }
 
     try {
-      await markAllAsReadMutation.mutateAsync(
-        unreadNotifications.map((item) => item.id)
-      );
+      await markAllAsReadMutation.mutateAsync(unreadNotifications.map((item) => item.id));
       toast({
         title: 'All caught up',
         description: 'All notifications have been marked as read.',
@@ -246,11 +238,7 @@ export function NotificationBell() {
             variant="ghost"
             size="icon"
             className="relative"
-            aria-label={
-              unreadCount > 0
-                ? `Notifications (${unreadCount} unread)`
-                : 'Notifications'
-            }
+            aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
           />
         }
       >
@@ -342,12 +330,8 @@ export function NotificationBell() {
               <AlertCircle className="size-5" />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium text-foreground">
-                Unable to load notifications
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {normalizeApiError(error).message}
-              </p>
+              <p className="text-sm font-medium text-foreground">Unable to load notifications</p>
+              <p className="text-xs text-muted-foreground">{normalizeApiError(error).message}</p>
             </div>
             <Button
               variant="outline"
@@ -387,8 +371,7 @@ export function NotificationBell() {
         ) : (
           <div className="flex-1 overflow-y-auto divide-y divide-border">
             {visibleNotifications.map((notification) => {
-              const { icon: Icon, className: iconTone } =
-                getNotificationIcon(notification);
+              const { icon: Icon, className: iconTone } = getNotificationIcon(notification);
 
               return (
                 <div
@@ -461,7 +444,8 @@ export function NotificationBell() {
         {/* Footer info */}
         {displayedNotifications.length > 0 && (
           <div className="border-t border-border px-4 py-2 text-center text-[11px] text-muted-foreground bg-muted/20 shrink-0">
-            Showing {visibleNotifications.length} recent notification{visibleNotifications.length === 1 ? '' : 's'}
+            Showing {visibleNotifications.length} recent notification
+            {visibleNotifications.length === 1 ? '' : 's'}
           </div>
         )}
       </PopoverContent>

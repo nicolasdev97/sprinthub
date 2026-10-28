@@ -11,11 +11,8 @@ interface ProjectSettingsPageProps {
   params: Promise<{ workspaceId: string; projectId: string }>;
 }
 
-export default async function ProjectSettingsPage({
-  params,
-}: ProjectSettingsPageProps) {
+export default async function ProjectSettingsPage({ params }: ProjectSettingsPageProps) {
   const { workspaceId, projectId } = await params;
 
   return <ProjectSettingsView workspaceId={workspaceId} projectId={projectId} />;
 }
-

@@ -1,22 +1,20 @@
-import { AppError } from "../../../shared";
-import { eventsService } from "../../events";
+import { AppError } from '../../../shared';
+import { eventsService } from '../../events';
 
-import { NotificationRepository } from "../repository";
+import { NotificationRepository } from '../repository';
 
 export class NotificationService {
-  constructor(
-    private readonly notificationRepository: NotificationRepository,
-  ) {}
+  constructor(private readonly notificationRepository: NotificationRepository) {}
 
   async createNotification(userId: string, title: string, message: string) {
     const notification = await this.notificationRepository.createNotification(
       userId,
       title,
-      message,
+      message
     );
 
     eventsService.emitToUser(userId, {
-      type: "NOTIFICATION_CREATED",
+      type: 'NOTIFICATION_CREATED',
       userId,
       notificationId: notification.id,
     });
@@ -24,22 +22,18 @@ export class NotificationService {
     return notification;
   }
 
-  async createManyNotifications(
-    userIds: string[],
-    title: string,
-    message: string,
-  ) {
+  async createManyNotifications(userIds: string[], title: string, message: string) {
     const result = await this.notificationRepository.createManyNotifications(
       userIds,
       title,
-      message,
+      message
     );
 
     userIds.forEach((uid) => {
       eventsService.emitToUser(uid, {
-        type: "NOTIFICATION_CREATED",
+        type: 'NOTIFICATION_CREATED',
         userId: uid,
-        notificationId: "bulk",
+        notificationId: 'bulk',
       });
     });
 
@@ -51,19 +45,16 @@ export class NotificationService {
   }
 
   async updateNotificationReadStatus(notificationId: string, userId: string) {
-    const notification =
-      await this.notificationRepository.getNotificationById(notificationId);
+    const notification = await this.notificationRepository.getNotificationById(notificationId);
 
     if (!notification) {
-      throw new AppError("Notification not found", 404);
+      throw new AppError('Notification not found', 404);
     }
 
     if (notification.userId !== userId) {
-      throw new AppError("Notification not found", 404);
+      throw new AppError('Notification not found', 404);
     }
 
-    return this.notificationRepository.updateNotificationReadStatus(
-      notificationId,
-    );
+    return this.notificationRepository.updateNotificationReadStatus(notificationId);
   }
 }

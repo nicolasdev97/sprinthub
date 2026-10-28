@@ -11,11 +11,8 @@ interface WorkspaceSettingsPageProps {
   params: Promise<{ workspaceId: string }>;
 }
 
-export default async function WorkspaceSettingsPage({
-  params,
-}: WorkspaceSettingsPageProps) {
+export default async function WorkspaceSettingsPage({ params }: WorkspaceSettingsPageProps) {
   const { workspaceId } = await params;
 
   return <WorkspaceSettingsView workspaceId={workspaceId} />;
 }
-

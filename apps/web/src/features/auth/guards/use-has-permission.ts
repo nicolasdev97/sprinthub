@@ -88,4 +88,3 @@ export function useHasPermission(options: UseHasPermissionOptions = {}): UseHasP
     isLoading: isWorkspaceLoading || isMembersLoading,
   };
 }
-

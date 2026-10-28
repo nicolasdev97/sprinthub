@@ -19,12 +19,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-import {
-  Badge,
-  Button,
-  Card,
-  Skeleton,
-} from '@/components/ui';
+import { Badge, Button, Card, Skeleton } from '@/components/ui';
 import { useAuth } from '@/features/auth';
 import { projectService, ProjectStatusBadge } from '@/features/projects';
 import {
@@ -139,9 +134,7 @@ export function PersonalDashboardView() {
 
   // Active / Recent Projects (first 4 active projects)
   const recentProjects = useMemo(() => {
-    return allProjects
-      .filter((p) => !p.archived)
-      .slice(0, 4);
+    return allProjects.filter((p) => !p.archived).slice(0, 4);
   }, [allProjects]);
 
   // Project status counts (strict status matching)
@@ -162,10 +155,7 @@ export function PersonalDashboardView() {
     () => allTasks.filter((t) => t.priority === 'HIGH' && t.status !== 'DONE').length,
     [allTasks]
   );
-  const overdueCount = useMemo(
-    () => allTasks.filter((t) => isTaskOverdue(t)).length,
-    [allTasks]
-  );
+  const overdueCount = useMemo(() => allTasks.filter((t) => isTaskOverdue(t)).length, [allTasks]);
 
   // Proactive upcoming deadlines (today and within next 7 days)
   const { dueThisWeekCount, dueTodayCount } = useMemo(() => {
@@ -247,7 +237,9 @@ export function PersonalDashboardView() {
             )}
           </div>
           <p className="mt-1 text-[11px] text-muted-foreground">
-            {myAssignedTasks.length === 1 ? '1 pending task' : `${myAssignedTasks.length} pending tasks`}
+            {myAssignedTasks.length === 1
+              ? '1 pending task'
+              : `${myAssignedTasks.length} pending tasks`}
           </p>
         </Card>
 
@@ -319,9 +311,7 @@ export function PersonalDashboardView() {
         <div className="flex flex-col space-y-4 lg:col-span-2">
           <div className="flex h-7 items-center justify-between">
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-semibold text-foreground">
-                Assigned to You
-              </h2>
+              <h2 className="text-base font-semibold text-foreground">Assigned to You</h2>
               <Badge variant="secondary" className="text-xs">
                 {myAssignedTasks.length}
               </Badge>
@@ -355,7 +345,8 @@ export function PersonalDashboardView() {
                     No tasks assigned to you right now
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    You are all caught up! When team members assign tasks to you across any workspace or project, they will appear right here.
+                    You are all caught up! When team members assign tasks to you across any
+                    workspace or project, they will appear right here.
                   </p>
                 </div>
                 <Link href="/tasks">
@@ -460,9 +451,7 @@ export function PersonalDashboardView() {
         {/* Right Column (1 span): Meaningful Sprint Health Analytics */}
         <div className="flex flex-col space-y-4">
           <div className="flex h-7 items-center justify-between">
-            <h2 className="text-base font-semibold text-foreground">
-              Workload & Health
-            </h2>
+            <h2 className="text-base font-semibold text-foreground">Workload & Health</h2>
           </div>
 
           <Card className="p-4 shadow-2xs flex flex-col justify-between lg:h-[340px]">
@@ -535,9 +524,7 @@ export function PersonalDashboardView() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-semibold text-foreground">
-              Recent Projects
-            </h2>
+            <h2 className="text-base font-semibold text-foreground">Recent Projects</h2>
             <Badge variant="secondary" className="text-xs">
               {recentProjects.length}
             </Badge>
@@ -566,11 +553,10 @@ export function PersonalDashboardView() {
               <FolderKanban className="size-6" />
             </div>
             <div className="max-w-sm space-y-1">
-              <h3 className="text-sm font-semibold text-foreground">
-                No recent projects found
-              </h3>
+              <h3 className="text-sm font-semibold text-foreground">No recent projects found</h3>
               <p className="text-xs text-muted-foreground">
-                You do not have any active projects yet. Join or create a project inside your workspaces to start collaborating.
+                You do not have any active projects yet. Join or create a project inside your
+                workspaces to start collaborating.
               </p>
             </div>
             <Link href="/projects">
@@ -599,7 +585,10 @@ export function PersonalDashboardView() {
                       }}
                       className="hover:opacity-80 transition-opacity"
                     >
-                      <Badge variant="outline" className="gap-1 text-[10px] font-normal border-border/80 cursor-pointer">
+                      <Badge
+                        variant="outline"
+                        className="gap-1 text-[10px] font-normal border-border/80 cursor-pointer"
+                      >
                         <Briefcase className="size-2.5 text-muted-foreground" />
                         <span className="truncate max-w-24">{project.workspaceName}</span>
                       </Badge>

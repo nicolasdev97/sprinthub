@@ -64,14 +64,10 @@ function TableCell({ className, ...props }: React.ComponentProps<'td'>) {
   return (
     <td
       data-slot="table-cell"
-      className={cn(
-        'p-4 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0',
-        className
-      )}
+      className={cn('p-4 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0', className)}
       {...props}
     />
   );
 }
 
 export { Table, TableHeader, TableBody, TableRow, TableHead, TableCell };
-

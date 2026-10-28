@@ -49,4 +49,3 @@ describe('Swagger & OpenAPI Documentation Module', () => {
     );
   });
 });
-

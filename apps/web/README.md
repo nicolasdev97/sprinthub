@@ -41,14 +41,14 @@ apps/web/src/
 
 Inside `src/features/<feature-name>/`:
 
-| Layer Folder | Convention | Example Files |
-| :--- | :--- | :--- |
-| `context/` | Singular | `WorkspaceContext.tsx` |
-| `hook/` | Singular | `project.hook.ts`, `task.hook.ts` |
-| `service/` | Singular | `project.service.ts`, `task.service.ts` |
-| `schema/` | Singular | `create-task.schema.ts`, `update-project.schema.ts` |
-| `types/` | Plural | `project.type.ts`, `task.type.ts` |
-| `components/` | Plural | `ProjectCard.tsx`, `TaskKanbanBoard.tsx` |
+| Layer Folder  | Convention | Example Files                                       |
+| :------------ | :--------- | :-------------------------------------------------- |
+| `context/`    | Singular   | `WorkspaceContext.tsx`                              |
+| `hook/`       | Singular   | `project.hook.ts`, `task.hook.ts`                   |
+| `service/`    | Singular   | `project.service.ts`, `task.service.ts`             |
+| `schema/`     | Singular   | `create-task.schema.ts`, `update-project.schema.ts` |
+| `types/`      | Plural     | `project.type.ts`, `task.type.ts`                   |
+| `components/` | Plural     | `ProjectCard.tsx`, `TaskKanbanBoard.tsx`            |
 
 ---
 
@@ -56,7 +56,7 @@ Inside `src/features/<feature-name>/`:
 
 ### Application Routes
 
-- `/` – Marketing Landing Page (swaps to *"Open Your Workspace"* when authenticated).
+- `/` – Marketing Landing Page (swaps to _"Open Your Workspace"_ when authenticated).
 - `/login` & `/register` – Authentication gateway with instant redirect to `/dashboard`.
 - `/dashboard` – Centralized Personal Dashboard (Assigned to You, Needs Attention, Due This Week, Active Projects, Workload & Health).
 - `/projects` – Global Projects Hub across all workspaces.

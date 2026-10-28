@@ -24,10 +24,7 @@ describe('Workspaces & RBAC Integration Tests (/api/workspaces)', () => {
         description: 'Core development workspace',
       };
 
-      const response = await request(app)
-        .post('/api/workspaces')
-        .set(authHeader)
-        .send(payload);
+      const response = await request(app).post('/api/workspaces').set(authHeader).send(payload);
 
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty('id');
@@ -48,9 +45,7 @@ describe('Workspaces & RBAC Integration Tests (/api/workspaces)', () => {
     });
 
     it('should return 401 if request is unauthenticated', async () => {
-      const response = await request(app)
-        .post('/api/workspaces')
-        .send({ name: 'Anonymous WS' });
+      const response = await request(app).post('/api/workspaces').send({ name: 'Anonymous WS' });
 
       expect(response.status).toBe(401);
     });
@@ -77,9 +72,7 @@ describe('Workspaces & RBAC Integration Tests (/api/workspaces)', () => {
       const wsA = await createTestWorkspace(userA.user.id, 'Workspace A');
       await createTestWorkspace(userB.user.id, 'Workspace B');
 
-      const response = await request(app)
-        .get('/api/workspaces')
-        .set(userA.authHeader);
+      const response = await request(app).get('/api/workspaces').set(userA.authHeader);
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
@@ -220,4 +213,3 @@ describe('Workspaces & RBAC Integration Tests (/api/workspaces)', () => {
     });
   });
 });
-

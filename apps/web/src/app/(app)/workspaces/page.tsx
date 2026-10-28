@@ -17,4 +17,3 @@ export default async function WorkspacesPage({ searchParams }: WorkspacesPagePro
 
   return <WorkspacesListView initialCreateOpen={initialCreateOpen} />;
 }
-

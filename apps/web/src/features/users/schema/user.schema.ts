@@ -15,4 +15,3 @@ export function createDeleteUserConfirmSchema(expectedFullName: string) {
 export type DeleteUserConfirmFormValues = {
   confirmationName: string;
 };
-

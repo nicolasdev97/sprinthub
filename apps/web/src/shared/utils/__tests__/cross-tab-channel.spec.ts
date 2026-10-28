@@ -8,13 +8,17 @@ describe('crossTabSync manager', () => {
     expect(typeof unsubscribe).toBe('function');
 
     // Manually trigger notification via notifyListeners method
-    (crossTabSync as any).notifyListeners({ type: 'AUTH_LOGOUT' });
+    (
+      crossTabSync as unknown as { notifyListeners: (msg: { type: string }) => void }
+    ).notifyListeners({ type: 'AUTH_LOGOUT' });
     expect(listener).toHaveBeenCalledWith({ type: 'AUTH_LOGOUT' });
 
     unsubscribe();
     listener.mockClear();
 
-    (crossTabSync as any).notifyListeners({ type: 'AUTH_LOGOUT' });
+    (
+      crossTabSync as unknown as { notifyListeners: (msg: { type: string }) => void }
+    ).notifyListeners({ type: 'AUTH_LOGOUT' });
     expect(listener).not.toHaveBeenCalled();
   });
 
@@ -24,4 +28,3 @@ describe('crossTabSync manager', () => {
     }).not.toThrow();
   });
 });
-

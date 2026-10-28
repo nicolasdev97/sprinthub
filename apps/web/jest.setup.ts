@@ -13,8 +13,8 @@ if (typeof globalThis.BroadcastChannel === 'undefined') {
 
     postMessage(_data: unknown) {}
     close() {}
-    addEventListener(_event: string, _callback: Function) {}
-    removeEventListener(_event: string, _callback: Function) {}
+    addEventListener(_event: string, _callback: EventListenerOrEventListenerObject) {}
+    removeEventListener(_event: string, _callback: EventListenerOrEventListenerObject) {}
     dispatchEvent(_event: Event): boolean {
       return true;
     }
@@ -22,4 +22,3 @@ if (typeof globalThis.BroadcastChannel === 'undefined') {
 
   globalThis.BroadcastChannel = MockBroadcastChannel as unknown as typeof BroadcastChannel;
 }
-

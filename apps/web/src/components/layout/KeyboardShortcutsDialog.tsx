@@ -56,10 +56,7 @@ const SHORTCUT_SECTIONS: ShortcutSection[] = [
   },
 ];
 
-export function KeyboardShortcutsDialog({
-  open,
-  onOpenChange,
-}: KeyboardShortcutsDialogProps) {
+export function KeyboardShortcutsDialog({ open, onOpenChange }: KeyboardShortcutsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md p-0 overflow-hidden">
@@ -86,15 +83,15 @@ export function KeyboardShortcutsDialog({
 
                 <div className="rounded-lg border border-border/70 bg-card divide-y divide-border/50">
                   {section.items.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between px-3 py-2 text-xs"
-                    >
+                    <div key={idx} className="flex items-center justify-between px-3 py-2 text-xs">
                       <span className="text-muted-foreground">{item.description}</span>
                       <div className="flex items-center gap-1 shrink-0 ml-2">
                         {item.keys.map((k, kIdx) =>
                           k === 'then' || k === 'or' ? (
-                            <span key={kIdx} className="text-[10px] text-muted-foreground/60 px-0.5">
+                            <span
+                              key={kIdx}
+                              className="text-[10px] text-muted-foreground/60 px-0.5"
+                            >
                               {k}
                             </span>
                           ) : (
@@ -125,4 +122,3 @@ export function KeyboardShortcutsDialog({
     </Dialog>
   );
 }
-

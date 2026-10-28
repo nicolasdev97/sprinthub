@@ -260,9 +260,7 @@ export function CreateWorkspaceDialog({
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>
-                    Must be unique and up to 100 characters.
-                  </FormDescription>
+                  <FormDescription>Must be unique and up to 100 characters.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -302,7 +300,8 @@ export function CreateWorkspaceDialog({
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Invite teammates by email to collaborate in this workspace immediately upon creation.
+                Invite teammates by email to collaborate in this workspace immediately upon
+                creation.
               </p>
 
               {/* Member input row */}
@@ -347,9 +346,7 @@ export function CreateWorkspaceDialog({
                 </Button>
               </div>
 
-              {memberInputError && (
-                <p className="text-xs text-destructive">{memberInputError}</p>
-              )}
+              {memberInputError && <p className="text-xs text-destructive">{memberInputError}</p>}
 
               {/* Added members list */}
               {pendingMembers.length > 0 && (
@@ -406,4 +403,3 @@ export function CreateWorkspaceDialog({
     </Dialog>
   );
 }
-

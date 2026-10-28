@@ -42,7 +42,7 @@ export function sanitizeInputs(req: Request, _res: Response, next: NextFunction)
     // In Express 5, req.query is a getter; mutate properties directly instead of reassigning req.query
     if (req.query && typeof req.query === 'object') {
       for (const [key, val] of Object.entries(req.query)) {
-        req.query[key] = sanitizeDeep(val, key) as any;
+        req.query[key] = sanitizeDeep(val, key) as Request['query'][string];
       }
     }
 

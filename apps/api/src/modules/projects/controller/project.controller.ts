@@ -1,28 +1,16 @@
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
 
-import {
-  ProjectParams,
-  WorkspaceProjectParams,
-  ProjectFilterParams,
-} from "../types";
+import { ProjectParams, WorkspaceProjectParams, ProjectFilterParams } from '../types';
 
-import {
-  ArchiveProjectDto,
-  CreateProjectDto,
-  UpdateProjectDto,
-} from "../dto";
-import { ProjectService } from "../service";
+import { ArchiveProjectDto, CreateProjectDto, UpdateProjectDto } from '../dto';
+import { ProjectService } from '../service';
 
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
   async createProject(
-    req: Request<
-      WorkspaceProjectParams,
-      unknown,
-      Omit<CreateProjectDto, "workspaceId">
-    >,
-    res: Response,
+    req: Request<WorkspaceProjectParams, unknown, Omit<CreateProjectDto, 'workspaceId'>>,
+    res: Response
   ) {
     const { workspaceId } = req.params;
     const userId = req.user.userId;
@@ -39,18 +27,14 @@ export class ProjectController {
 
   async getProjects(
     req: Request<WorkspaceProjectParams, unknown, unknown, ProjectFilterParams>,
-    res: Response,
+    res: Response
   ) {
     const { workspaceId } = req.params;
     const userId = req.user.userId;
 
     const filters = req.validatedQuery as ProjectFilterParams;
 
-    const projects = await this.projectService.getProjects(
-      workspaceId,
-      userId,
-      filters,
-    );
+    const projects = await this.projectService.getProjects(workspaceId, userId, filters);
 
     res.status(200).json(projects);
   }
@@ -64,18 +48,11 @@ export class ProjectController {
     res.status(200).json(project);
   }
 
-  async updateProject(
-    req: Request<ProjectParams, unknown, UpdateProjectDto>,
-    res: Response,
-  ) {
+  async updateProject(req: Request<ProjectParams, unknown, UpdateProjectDto>, res: Response) {
     const { projectId } = req.params;
     const userId = req.user.userId;
 
-    const project = await this.projectService.updateProject(
-      projectId,
-      userId,
-      req.body,
-    );
+    const project = await this.projectService.updateProject(projectId, userId, req.body);
 
     res.status(200).json(project);
   }
@@ -89,18 +66,11 @@ export class ProjectController {
     res.status(204).send();
   }
 
-  async archiveProject(
-    req: Request<ProjectParams, unknown, ArchiveProjectDto>,
-    res: Response,
-  ) {
+  async archiveProject(req: Request<ProjectParams, unknown, ArchiveProjectDto>, res: Response) {
     const { projectId } = req.params;
     const userId = req.user.userId;
 
-    const project = await this.projectService.archiveProject(
-      projectId,
-      userId,
-      req.body,
-    );
+    const project = await this.projectService.archiveProject(projectId, userId, req.body);
 
     res.status(200).json(project);
   }

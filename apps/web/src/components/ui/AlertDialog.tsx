@@ -15,10 +15,7 @@ function AlertDialogTrigger({ ...props }: AlertDialogPrimitive.Trigger.Props) {
   return <AlertDialogPrimitive.Trigger data-slot="alert-dialog-trigger" {...props} />;
 }
 
-function AlertDialogOverlay({
-  className,
-  ...props
-}: AlertDialogPrimitive.Backdrop.Props) {
+function AlertDialogOverlay({ className, ...props }: AlertDialogPrimitive.Backdrop.Props) {
   return (
     <AlertDialogPrimitive.Backdrop
       data-slot="alert-dialog-overlay"
@@ -31,10 +28,7 @@ function AlertDialogOverlay({
   );
 }
 
-function AlertDialogContent({
-  className,
-  ...props
-}: AlertDialogPrimitive.Popup.Props) {
+function AlertDialogContent({ className, ...props }: AlertDialogPrimitive.Popup.Props) {
   return (
     <AlertDialogPrimitive.Portal>
       <AlertDialogOverlay />
@@ -70,10 +64,7 @@ function AlertDialogFooter({ className, ...props }: React.ComponentProps<'div'>)
   );
 }
 
-function AlertDialogTitle({
-  className,
-  ...props
-}: AlertDialogPrimitive.Title.Props) {
+function AlertDialogTitle({ className, ...props }: AlertDialogPrimitive.Title.Props) {
   return (
     <AlertDialogPrimitive.Title
       data-slot="alert-dialog-title"
@@ -83,10 +74,7 @@ function AlertDialogTitle({
   );
 }
 
-function AlertDialogDescription({
-  className,
-  ...props
-}: AlertDialogPrimitive.Description.Props) {
+function AlertDialogDescription({ className, ...props }: AlertDialogPrimitive.Description.Props) {
   return (
     <AlertDialogPrimitive.Description
       data-slot="alert-dialog-description"
@@ -96,10 +84,7 @@ function AlertDialogDescription({
   );
 }
 
-function AlertDialogCancel({
-  className,
-  ...props
-}: AlertDialogPrimitive.Close.Props) {
+function AlertDialogCancel({ className, ...props }: AlertDialogPrimitive.Close.Props) {
   return (
     <AlertDialogPrimitive.Close
       data-slot="alert-dialog-cancel"
@@ -109,10 +94,7 @@ function AlertDialogCancel({
   );
 }
 
-function AlertDialogAction({
-  className,
-  ...props
-}: React.ComponentProps<'button'>) {
+function AlertDialogAction({ className, ...props }: React.ComponentProps<'button'>) {
   return (
     <button
       type="button"
@@ -134,4 +116,3 @@ export {
   AlertDialogCancel,
   AlertDialogAction,
 };
-

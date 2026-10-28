@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const updateWorkspaceSchema = z
   .object({
@@ -6,10 +6,10 @@ export const updateWorkspaceSchema = z
     description: z
       .string()
       .trim()
-      .max(500, "Workspace description must not exceed 500 characters")
+      .max(500, 'Workspace description must not exceed 500 characters')
       .nullable()
       .optional(),
   })
   .refine((data) => data.name !== undefined || data.description !== undefined, {
-    message: "At least one field is required",
+    message: 'At least one field is required',
   });

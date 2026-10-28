@@ -15,8 +15,12 @@ describe('deletedEntities registry', () => {
   it('should check if a queryKey contains deleted entities', () => {
     deletedEntities.markDeleted('workspace-123');
 
-    expect(deletedEntities.isQueryKeyDeleted(['workspaces', 'workspace-123', 'projects'])).toBe(true);
-    expect(deletedEntities.isQueryKeyDeleted(['workspaces', 'workspace-active', 'projects'])).toBe(false);
+    expect(deletedEntities.isQueryKeyDeleted(['workspaces', 'workspace-123', 'projects'])).toBe(
+      true
+    );
+    expect(deletedEntities.isQueryKeyDeleted(['workspaces', 'workspace-active', 'projects'])).toBe(
+      false
+    );
   });
 
   it('should support parent-child cascade unmarking', () => {

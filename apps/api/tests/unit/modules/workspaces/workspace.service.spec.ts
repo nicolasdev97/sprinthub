@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { WorkspaceRole } from '@prisma/client';
 import { WorkspaceService } from '../../../../src/modules/workspaces/service/workspace.service';
-import { WorkspaceRepository } from '../../../../src/modules/workspaces/repository';
-import { NotificationService } from '../../../../src/modules/notifications';
+
 import { eventsService } from '../../../../src/modules/events';
 
 vi.mock('../../../../src/modules/events', () => ({
@@ -44,7 +43,10 @@ describe('WorkspaceService', () => {
 
   describe('createWorkspace', () => {
     it('should throw 409 if workspace name already exists', async () => {
-      mockWorkspaceRepository.getWorkspaceByName.mockResolvedValue({ id: 'ws-1', name: 'Dev Team' });
+      mockWorkspaceRepository.getWorkspaceByName.mockResolvedValue({
+        id: 'ws-1',
+        name: 'Dev Team',
+      });
 
       await expect(
         workspaceService.createWorkspace({ name: 'Dev Team' }, 'usr-1')

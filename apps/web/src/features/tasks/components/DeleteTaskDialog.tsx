@@ -83,15 +83,13 @@ export function DeleteTaskDialog({
           </div>
           <AlertDialogDescription>
             Are you sure you want to delete{' '}
-            <span className="font-semibold text-foreground">{task.title}</span>? This
-            action cannot be undone.
+            <span className="font-semibold text-foreground">{task.title}</span>? This action cannot
+            be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={deleteTaskMutation.isPending}>
-            Cancel
-          </AlertDialogCancel>
+          <AlertDialogCancel disabled={deleteTaskMutation.isPending}>Cancel</AlertDialogCancel>
           <Button
             type="button"
             variant="destructive"
@@ -112,4 +110,3 @@ export function DeleteTaskDialog({
     </AlertDialog>
   );
 }
-

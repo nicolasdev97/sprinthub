@@ -9,4 +9,3 @@ export async function truncateDatabase(): Promise<void> {
 export async function disconnectDatabase(): Promise<void> {
   await prisma.$disconnect();
 }
-

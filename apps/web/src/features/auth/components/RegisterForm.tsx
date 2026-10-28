@@ -110,9 +110,7 @@ export function RegisterForm() {
   return (
     <Card className="w-full max-w-md border-border shadow-sm">
       <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl font-bold tracking-tight">
-          Create your account
-        </CardTitle>
+        <CardTitle className="text-2xl font-bold tracking-tight">Create your account</CardTitle>
         <CardDescription>
           Get started with SprintHub to manage workspaces, projects, and tasks
         </CardDescription>
@@ -131,9 +129,7 @@ export function RegisterForm() {
           <Alert variant="success">
             <CheckCircle2 className="size-4" />
             <AlertTitle>Account created</AlertTitle>
-            <AlertDescription>
-              Setting up your session and redirecting...
-            </AlertDescription>
+            <AlertDescription>Setting up your session and redirecting...</AlertDescription>
           </Alert>
         )}
 
@@ -224,11 +220,7 @@ export function RegisterForm() {
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                       title={showPassword ? 'Hide password' : 'Show password'}
                     >
-                      {showPassword ? (
-                        <Eye className="size-4" />
-                      ) : (
-                        <EyeOff className="size-4" />
-                      )}
+                      {showPassword ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                     </button>
                   </div>
                   <FormMessage />
@@ -281,12 +273,7 @@ export function RegisterForm() {
               )}
             />
 
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full"
-              disabled={isSubmitting}
-            >
+            <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
@@ -314,4 +301,3 @@ export function RegisterForm() {
     </Card>
   );
 }
-

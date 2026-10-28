@@ -1,4 +1,12 @@
-.next
 node_modules
+.next
+out
+build
 coverage
-dist
+playwright-report
+test-results
+next-env.d.ts
+.agents
+.claude
+.windsurf
+package-lock.json

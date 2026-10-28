@@ -4,7 +4,8 @@ import { sanitizeText, sanitizeHtml, normalizeEmail } from '../../../../src/shar
 describe('Sanitizer Utilities', () => {
   describe('sanitizeText', () => {
     it('should strip HTML and XML tags from string', () => {
-      const malicious = '<script>alert("XSS")</script>Hello <b>World</b><img src=x onerror=alert(1)>';
+      const malicious =
+        '<script>alert("XSS")</script>Hello <b>World</b><img src=x onerror=alert(1)>';
       const clean = sanitizeText(malicious);
       expect(clean).toBe('alert("XSS")Hello World');
       expect(clean).not.toContain('<');
@@ -29,7 +30,8 @@ describe('Sanitizer Utilities', () => {
 
   describe('sanitizeHtml', () => {
     it('should strip dangerous tags including their body', () => {
-      const input = '<p>Normal text</p><script>alert("hack")</script><iframe src="evil.com"></iframe>';
+      const input =
+        '<p>Normal text</p><script>alert("hack")</script><iframe src="evil.com"></iframe>';
       const result = sanitizeHtml(input);
       expect(result).not.toContain('<script>');
       expect(result).not.toContain('alert("hack")');
@@ -38,7 +40,8 @@ describe('Sanitizer Utilities', () => {
     });
 
     it('should strip inline event handlers', () => {
-      const input = '<div onclick="doEvil()" onmouseover=\'stealCookies()\' onerror=alert(1)>Click me</div>';
+      const input =
+        '<div onclick="doEvil()" onmouseover=\'stealCookies()\' onerror=alert(1)>Click me</div>';
       const result = sanitizeHtml(input);
       expect(result).not.toContain('onclick');
       expect(result).not.toContain('onmouseover');
