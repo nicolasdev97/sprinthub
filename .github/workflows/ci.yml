@@ -127,7 +127,6 @@ jobs:
       - test-backend
       - test-frontend
     env:
-      NODE_ENV: production
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sprinthub?schema=public
       NEXT_PUBLIC_API_URL: http://localhost:3001/api
       NEXT_PUBLIC_APP_URL: http://localhost:3000
@@ -142,7 +141,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies cleanly
-        run: npm ci
+        run: npm ci --include=dev
 
       - name: Build backend API (Prisma Generate + TypeScript)
         run: npm run build:api
