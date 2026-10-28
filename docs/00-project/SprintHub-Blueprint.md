@@ -8,10 +8,10 @@
 | ---------------- | --------------- |
 | **Document**     | Blueprint       |
 | **Project**      | SprintHub       |
-| **Version**      | 1.0             |
+| **Version**      | 1.1             |
 | **Status**       | Approved        |
 | **Owner**        | Nicolás Palacio |
-| **Last Updated** | July 2026       |
+| **Last Updated** | September 2026  |
 
 ---
 
@@ -80,10 +80,10 @@ SprintHub aims to showcase how a modern SaaS application should be designed, doc
 
 The application should demonstrate:
 
-- Clean Architecture principles
-- Modular application design
-- Scalable backend architecture
+- Modular monolith architecture
+- Layered backend architecture
 - Feature-based frontend architecture
+- Scalable backend architecture
 - Professional documentation
 - Security best practices
 - Automated testing
@@ -133,7 +133,7 @@ SprintHub focuses on project management for small teams.
 The platform allows authenticated users to:
 
 - Create workspaces.
-- Invite collaborators.
+- Add members.
 - Create projects.
 - Manage tasks.
 - Assign responsibilities.
@@ -147,6 +147,18 @@ The project intentionally prioritizes software quality over feature quantity.
 # 5. MVP Scope
 
 The Minimum Viable Product includes the essential functionality required for a complete project management workflow.
+
+## User Management & Profile
+
+- View personal profile information
+- Update first name and last name
+- Secure account deletion with confirmation check (blocking deletion if user owns active workspaces)
+
+## Theme & UI Customization
+
+- Dark mode and light mode switching
+- System color scheme preference auto-detection
+- Persistent theme choice across sessions
 
 ## Authentication
 
@@ -162,16 +174,43 @@ The Minimum Viable Product includes the essential functionality required for a c
 - Create workspace
 - Update workspace
 - Delete workspace
-- Invite members
+- View members
+- Add members
 - Remove members
 - Manage member roles
+- Transfer workspace ownership
+
+### Workspace Search and Sorting
+
+Users can search workspaces by their `name`.
+
+Workspace listing supports:
+
+- **Search:** Matches only the workspace `name`.
+- **Sorting:** By `name` or `createdAt`.
+- **Sort order:** `asc` or `desc`.
+- **Filters:** Not supported, since workspaces do not have filterable attributes.
 
 ## Project Management
 
 - Create project
 - Update project
 - Archive project
+- Unarchive project
 - Delete project
+
+### Project Search and Filtering
+
+Users can search projects by their `name`.
+
+Project listing supports:
+
+- **Search:** Matches only the project `name`.
+- **Filters:**
+  - `status`: `PLANNING`, `ACTIVE`, or `COMPLETED`.
+  - `archived`: `true` or `false`.
+- **Sorting:** By `name` or `createdAt`.
+- **Sort order:** `asc` or `desc`.
 
 ## Task Management
 
@@ -179,9 +218,49 @@ The Minimum Viable Product includes the essential functionality required for a c
 - Update task
 - Delete task
 - Assign users
+- Unassign users
 - Change status
 - Set priority
 - Due dates
+
+### Task Search and Filtering
+
+Users can search tasks by their `title`.
+
+Task listing supports:
+
+- **Search:** Matches only the task `title`.
+- **Filters:**
+  - `status`: `BACKLOG`, `TODO`, `IN_PROGRESS`, `REVIEW`, or `DONE`.
+  - `priority`: `LOW`, `MEDIUM`, `HIGH`, or `CRITICAL`.
+  - `assigneeId`: Filter tasks assigned to a specific user.
+  - `dueDate`: Filter tasks by due date.
+- **Sorting:** By `createdAt`, `dueDate`, or `priority`.
+- **Sort order:** `asc` or `desc`.
+
+## Notifications
+
+The MVP includes in-application notifications for:
+
+- Users being added to a workspace.
+- New project creation within a workspace.
+- Task assignments.
+- Task status changes.
+- Task priority changes.
+
+Notification recipients depend on the event:
+
+- **Users added to a workspace:** The added user receives the notification.
+- **Project creation:** All members of the workspace receive the notification.
+- **Task assignment:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
+- **Task status changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
+- **Task priority changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
+
+## Real-Time & Multi-Tab Synchronization
+
+- Live entity mutation streaming via Server-Sent Events (SSE) for workspaces, projects, tasks, and notifications.
+- Cross-tab session lifecycle synchronization (instant logout propagation, profile sync, and query invalidation).
+- Background notification polling and window-focus cache revalidation.
 
 ## Dashboard
 
@@ -214,8 +293,7 @@ The following features are intentionally excluded from the MVP and may be introd
 ## Notifications
 
 - Email notifications
-- Push notifications
-- Real-time notifications
+- Push notifications (Web/Mobile)
 
 ## Integrations
 
@@ -257,9 +335,12 @@ The system shall allow users to:
 - Create workspaces.
 - Update workspace information.
 - Delete workspaces.
-- Invite members.
+- View workspace members.
+- Add members.
 - Remove members.
 - Assign member roles.
+- Search workspaces by name.
+- Sort workspaces by name or creation date.
 
 Supported roles include:
 
@@ -277,6 +358,10 @@ The system shall allow authorized users to:
 - Update project information.
 - Archive projects.
 - Delete projects.
+- Search projects by name.
+- Filter projects by status.
+- Filter projects by archived status.
+- Sort projects by name or creation date.
 
 Each project belongs to exactly one workspace.
 
@@ -290,10 +375,36 @@ The system shall allow users to:
 - Update tasks.
 - Delete tasks.
 - Assign tasks.
+- Unassign tasks.
 - Change task status.
 - Change task priority.
 - Set due dates.
-- Move tasks between projects.
+- Search tasks by title.
+- Filter tasks by status.
+- Filter tasks by priority.
+- Filter tasks by assignee.
+- Filter tasks by due date.
+- Sort tasks by creation date, due date, or priority.
+
+---
+
+## Notifications
+
+The system shall provide in-application notifications for the following events:
+
+- Users being added to a workspace.
+- New project creation within a workspace.
+- Task assignments.
+- Task status changes.
+- Task priority changes.
+
+Notification recipients shall depend on the event:
+
+- **Users added to a workspace:** The added user shall receive the notification.
+- **Project creation:** All members of the workspace shall receive the notification.
+- **Task assignment:** Only the user assigned to the task shall receive the notification. If the task has no assignee, no notification shall be generated.
+- **Task status changes:** Only the user assigned to the task shall receive the notification. If the task has no assignee, no notification shall be generated.
+- **Task priority changes:** Only the user assigned to the task shall receive the notification. If the task has no assignee, no notification shall be generated.
 
 ---
 
@@ -545,40 +656,20 @@ src/
 ├── app/
 ├── components/
 ├── features/
-├── hooks/
 ├── lib/
 ├── providers/
 ├── services/
-├── styles/
-├── types/
-├── utils/
-└── middleware.ts
+└── shared/
 ```
 
-Each feature owns its own:
+Each feature encapsulates the internal directories it requires (created on demand rather than enforcing empty folders):
 
-- Components
+- Context (when feature-scoped state is required, e.g., `auth`)
 - Hooks
 - Services
-- Schemas
 - Types
-- Utilities
-
-Example:
-
-```text
-features/
-
-tasks/
-
-├── api/
-├── components/
-├── hooks/
-├── schemas/
-├── services/
-├── types/
-└── utils/
-```
+- Components (introduced with UI views)
+- Schemas (introduced with client-side form validation)
 
 ## Frontend Principles
 
@@ -663,10 +754,7 @@ Example response:
 ```json
 {
   "success": false,
-  "error": {
-    "code": "RESOURCE_NOT_FOUND",
-    "message": "Project not found."
-  }
+  "message": "Project not found"
 }
 ```
 
@@ -704,8 +792,7 @@ Notifications should be:
 Future versions may include:
 
 - Email notifications
-- Push notifications
-- Real-time notifications
+- Push notifications (Web/Mobile)
 
 ---
 
@@ -764,39 +851,43 @@ Examples:
 GET    /api/workspaces
 POST   /api/workspaces
 
-GET    /api/projects
-POST   /api/projects
+GET    /api/workspaces/{workspaceId}/projects
+POST   /api/workspaces/{workspaceId}/projects
+GET    /api/projects/{projectId}
+PATCH  /api/projects/{projectId}
+DELETE /api/projects/{projectId}
 
-GET    /api/tasks
-POST   /api/tasks
+GET    /api/projects/{projectId}/tasks
+POST   /api/projects/{projectId}/tasks
+GET    /api/tasks/{taskId}
 PATCH  /api/tasks/{taskId}
 DELETE /api/tasks/{taskId}
 ```
 
 ## Response Format
 
-Successful responses follow a standardized structure.
+SprintHub follows standard REST response conventions. Successful operations return the resource or collection directly using appropriate HTTP status codes (`200 OK`, `201 Created`, or `204 No Content` with an empty body), while user-facing success notifications are handled by the frontend UI.
 
-Example:
+### Success Response
+
+Successful responses return the resource or collection directly as JSON:
 
 ```json
 {
-  "success": true,
-  "data": {}
+  "id": "uuid",
+  "name": "Example",
+  "description": "Example description"
 }
 ```
 
-Error responses follow the same structure.
+### Error Response
 
-Example:
+Errors are returned using the application's standardized error structure:
 
 ```json
 {
   "success": false,
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Validation failed."
-  }
+  "message": "Project not found"
 }
 ```
 
@@ -833,9 +924,10 @@ feature/*
 | `develop`    | Integration branch         |
 | `feature/*`  | New features               |
 | `fix/*`      | Bug fixes                  |
-| `hotfix/*`   | Production fixes           |
-| `docs/*`     | Documentation updates      |
 | `refactor/*` | Internal code improvements |
+| `docs/*`     | Documentation updates      |
+| `chore/*`    | Maintenance tasks          |
+| `hotfix/*`   | Production fixes           |
 
 ## Commit Convention
 
@@ -848,7 +940,7 @@ feat(auth): add login endpoint
 
 feat(tasks): implement task assignment
 
-fix(projects): validate duplicate project names
+fix(projects): validate unique project names
 
 refactor(api): simplify error handling
 
@@ -907,7 +999,6 @@ Examples include:
 
 Recommended tools:
 
-- Vitest
 - Jest
 
 ---
@@ -922,6 +1013,10 @@ Examples include:
 - Database operations
 - Authentication flow
 - Repository interactions
+
+Recommended tool:
+
+- Jest
 
 ---
 
@@ -964,8 +1059,8 @@ SprintHub uses GitHub Actions to automate quality assurance and deployment proce
 Every Pull Request should automatically execute:
 
 1. Install dependencies
-2. Type checking
-3. Linting
+2. Linting
+3. Type checking
 4. Unit tests
 5. Build verification
 
@@ -996,8 +1091,8 @@ Production deployments should only occur after:
 Deployment targets may include:
 
 - Vercel (Frontend)
-- Railway / Render (Backend)
-- Supabase / Neon PostgreSQL (Database)
+- Render (Backend)
+- PostgreSQL (Database)
 
 ---
 
@@ -1036,7 +1131,6 @@ Strategies include:
 
 - Database indexing
 - Optimized SQL queries
-- Efficient pagination
 - Request validation
 - Connection pooling
 - Asynchronous processing where appropriate
@@ -1098,11 +1192,11 @@ All documentation is written in Markdown and stored within the project repositor
 
 # 23. Deployment Strategy
 
-SprintHub follows a containerized deployment approach.
+SprintHub uses cloud platforms for production deployment and Docker for local development and testing.
 
 ## Frontend
 
-Recommended deployment:
+Deployment:
 
 - Vercel
 
@@ -1110,34 +1204,31 @@ Recommended deployment:
 
 ## Backend
 
-Recommended deployment:
+Deployment:
 
-- Railway
 - Render
 
 ---
 
 ## Database
 
-Recommended providers:
+Provider:
 
 - PostgreSQL
-- Supabase PostgreSQL
-- Neon PostgreSQL
 
 ---
 
-## Containerization
+## Local Development Environment
 
-The application uses Docker for consistent development and deployment environments.
+SprintHub uses Docker to provide a consistent local development environment and to run the application locally.
 
-Services include:
+The Docker environment includes:
 
 - Frontend
 - Backend
-- PostgreSQL
+- PostgreSQL database
 
-Additional infrastructure components, such as Redis, may be introduced in future versions as application requirements evolve.
+Docker allows the application and its required services to be run locally using a consistent and reproducible environment.
 
 ---
 
@@ -1152,7 +1243,6 @@ Examples include:
 - Database connection strings
 - JWT secrets
 - API keys
-- OAuth credentials
 
 ---
 
@@ -1195,8 +1285,7 @@ These components are intentionally excluded from the MVP but can be incorporated
 
 SprintHub is designed to evolve from a portfolio-quality application into a production-ready SaaS platform by maintaining:
 
-- Clean Architecture
-- Modular Design
+- Modular and layered architecture
 - Comprehensive Documentation
 - Automated Testing
 - Secure Development Practices

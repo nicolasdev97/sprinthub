@@ -9,11 +9,11 @@
 | **Document**        | ADR-004                                                      |
 | **Title**           | Use JWT Access Tokens with Refresh Tokens for Authentication |
 | **Project**         | SprintHub                                                    |
-| **Version**         | 1.0                                                          |
+| **Version**         | 1.1                                                          |
 | **Status**          | Approved                                                     |
 | **Owner**           | Nicolás Palacio                                              |
 | **Decision Makers** | SprintHub Architecture Team                                  |
-| **Last Updated**    | July 2026                                                    |
+| **Last Updated**    | September 2026                                               |
 
 ---
 
@@ -197,7 +197,7 @@ The authentication lifecycle is illustrated below.
 User
     │
     ▼
-POST /auth/login
+POST /api/auth/login
     │
     ▼
 Validate Credentials
@@ -207,27 +207,27 @@ Generate Access Token
 +
 Generate Refresh Token
     │
-    ▼
-Return Access Token
+    ├───────────────► Return Access Token
     │
-    ▼
-Store Refresh Token
-(HttpOnly Secure Cookie)
-    │
-    ▼
-Authenticated Requests
-    │
-    ▼
-Access Token Expires
-    │
-    ▼
-POST /auth/refresh
-    │
-    ▼
-Issue New Access Token
-    │
-    ▼
-Continue Session
+    └───────────────► Store Refresh Token
+                      (HttpOnly Secure Cookie)
+                      +
+                      Persist token hash in database
+                      │
+                      ▼
+                  Authenticated Requests
+                      │
+                      ▼
+                  Access Token Expires
+                      │
+                      ▼
+                  POST /api/auth/refresh
+                      │
+                      ▼
+                  Issue New Access Token
+                      │
+                      ▼
+                  Continue Session
 ```
 
 This approach combines short-lived Access Tokens with long-lived Refresh Tokens to provide both security and a seamless user experience.
@@ -273,10 +273,12 @@ SprintHub intentionally avoids storing authentication tokens in Local Storage or
 
 Instead:
 
-| Token         | Storage                | Expiration |
-| ------------- | ---------------------- | ---------- |
-| Access Token  | Client memory          | 15 minutes |
-| Refresh Token | HttpOnly Secure Cookie | 7 days     |
+| Token         | Client Storage         | Server Storage                         | Expiration |
+| ------------- | ---------------------- | -------------------------------------- | ---------- |
+| Access Token  | Client memory          | Not persisted                          | 15 minutes |
+| Refresh Token | HttpOnly Secure Cookie | Cryptographic hash (`tokenHash`) in DB | 7 days     |
+
+The server never persists the plain Refresh Token. Only its cryptographic hash (`tokenHash`) is stored in the database.
 
 ### Benefits
 
@@ -317,34 +319,38 @@ All production traffic is encrypted using HTTPS.
 
 ## Token Revocation
 
-Refresh Tokens may be revoked:
+Refresh Tokens are revoked during logout by deleting the active `RefreshToken` record from the database and clearing the `HttpOnly` cookie, rather than maintaining a soft-revocation timestamp.
 
-- During logout.
-- After password changes.
-- Following suspicious activity (future enhancement).
-- By administrators (future enhancement).
+Additional revocation scenarios may be considered in future versions if required by the product.
+
+---
+
+## Token Refresh & Rotation Strategy
+
+In the MVP, SprintHub implements **token renewal without active rotation**:
+
+- When `POST /api/auth/refresh` is called, the existing Refresh Token is validated against the database.
+- If valid and not expired, a new short-lived Access Token (15 minutes) is generated and returned directly: `{ "accessToken": string }`.
+- The existing Refresh Token remains valid in its `HttpOnly` cookie for the duration of its 7-day lifespan.
+- **Refresh Token Rotation (RTR)** (invalidating the old refresh token and issuing a brand-new one on every refresh request) is planned as a future post-MVP security enhancement to avoid race conditions with concurrent client requests in the initial release.
 
 ---
 
 ## Brute Force Protection
 
-Authentication endpoints are protected through rate limiting.
+Authentication endpoints are protected through the API rate limiting policy.
 
-Example policy:
-
-- Maximum of **5 login attempts per minute per IP**.
+The specific rate limits are defined in the API Design Specification.
 
 ---
 
-## CSRF Protection
+## Cookie Security
 
 Refresh Tokens stored in cookies use:
 
-- HttpOnly
-- Secure
-- SameSite=Strict
-
-Future versions may incorporate dedicated CSRF tokens for additional protection.
+- `HttpOnly`
+- `Secure` (enabled in production over HTTPS)
+- `SameSite=None` in production (to support cross-origin requests between Vercel and Render) and `SameSite=Lax` in local development
 
 ---
 
@@ -358,10 +364,13 @@ The authentication strategy influences several architectural components.
 
 The `RefreshToken` entity stores:
 
+- `id`
+- `userId` (User reference)
 - `tokenHash`
-- User reference
-- Expiration timestamp
-- Revocation timestamp
+- `expiresAt` (Expiration timestamp)
+- `createdAt` (Creation timestamp)
+
+The plain Refresh Token is not persisted, and revoked tokens are deleted directly from the table.
 
 ---
 
@@ -369,6 +378,7 @@ The `RefreshToken` entity stores:
 
 Authentication middleware is responsible for:
 
+- Extracting the Access Token from the `Authorization: Bearer <access_token>` header.
 - JWT signature validation.
 - Token expiration validation.
 - User identity verification.
@@ -386,8 +396,8 @@ Authorization middleware enforces:
 The frontend:
 
 - Stores Access Tokens only in memory.
-- Relies on HttpOnly cookies for Refresh Tokens.
-- Automatically renews expired Access Tokens through the refresh endpoint.
+- Relies on the HttpOnly Secure Cookie for the Refresh Token.
+- Uses `POST /api/auth/refresh` to obtain a new Access Token when the current Access Token expires.
 
 ---
 
@@ -411,7 +421,7 @@ Adopting JWT Access Tokens with Refresh Tokens establishes a secure, scalable, a
 
 - Increased implementation complexity.
 - Refresh Token lifecycle management.
-- Token rotation and revocation logic.
+- Token revocation logic.
 - Cookie configuration across environments.
 
 These trade-offs are acceptable given SprintHub's architectural and security objectives.
@@ -439,10 +449,11 @@ The authentication layer should follow these conventions:
 - Sign JWTs using a strong secret.
 - Access Token lifetime: **15 minutes**.
 - Refresh Token lifetime: **7 days**.
-- Store Refresh Tokens as **cryptographic hashes (`tokenHash`)** in the database.
-- Never persist plain Refresh Tokens.
+- Store the Refresh Token in an **HttpOnly Secure Cookie** on the client side.
+- Store only the cryptographic hash (`tokenHash`) of the Refresh Token in the database.
+- Never persist the plain Refresh Token in the database.
 - Never store Access Tokens in Local Storage or Session Storage.
-- Protect the refresh endpoint against abuse through rate limiting.
+- Protect `POST /api/auth/refresh` against abuse through rate limiting.
 - Apply authentication middleware to every protected route.
 - Enforce RBAC after successful authentication.
 

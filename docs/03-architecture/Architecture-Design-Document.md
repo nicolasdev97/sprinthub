@@ -8,10 +8,10 @@
 | ---------------- | ---------------------------------- |
 | **Document**     | Architecture Design Document (ADD) |
 | **Project**      | SprintHub                          |
-| **Version**      | 1.0                                |
+| **Version**      | 1.1                                |
 | **Status**       | Approved                           |
 | **Owner**        | Nicolás Palacio                    |
-| **Last Updated** | July 2026                          |
+| **Last Updated** | September 2026                     |
 
 ---
 
@@ -33,7 +33,7 @@
 14. Global Error Handling Architecture
 15. Notification Architecture
 16. External Integrations
-17. Architectural Decision
+17. Architectural Decisions
 18. Infrastructure Architecture
 19. Docker Strategy
 20. CI/CD Architecture
@@ -191,14 +191,15 @@ Future modules may include:
 - Comments
 - Mentions
 - Activity Timeline
-- File Uploads
-- Attachments
-- Productivity Reports
+- File Attachments
+- Labels
+- Custom Fields
+- Time Tracking
+- Sprint Planning
+- Task Dependencies
+- Advanced Reporting
 - Team Analytics
-- Live Updates
-- Presence Indicators
-- Automatic Task Suggestions
-- Productivity Insights
+- Real-Time Collaboration
 
 These additions should not require significant architectural redesign.
 
@@ -236,7 +237,6 @@ Design strategies include:
 - Query optimization
 - Lazy loading
 - Code splitting
-- Efficient pagination
 
 Future infrastructure improvements may include distributed caching to further optimize application performance.
 
@@ -278,7 +278,7 @@ SprintHub has been designed to scale as new features and infrastructure requirem
 The architecture supports:
 
 - Modular business features
-- Independent services
+- Independent modules
 - Future distributed caching
 - Additional infrastructure components
 
@@ -377,7 +377,7 @@ Security is integrated into every architectural layer rather than being treated 
 
 The backend exposes well-defined REST APIs that act as the communication contract between the frontend and backend.
 
-This separation also enables future integrations with mobile applications and third-party clients.
+This separation enables the frontend and backend to evolve independently and provides a foundation for future integrations with mobile applications and third-party clients.
 
 ---
 
@@ -398,8 +398,9 @@ External services are incorporated only when required.
 ## External Actors
 
 - End Users
-- Developers
-- Administrators
+- Workspace Owners
+- Workspace Administrators
+- Workspace Members
 
 ---
 
@@ -544,38 +545,82 @@ The frontend is organized around business domains rather than technical layers, 
 
 ## Architectural Style
 
-The frontend follows a Feature-Based Modular Architecture.
+The frontend follows a Feature-Based Modular Architecture adhering strictly to ADR-006 and the Developer Guide naming conventions:
 
-Each feature owns its own:
+- **Single-artifact layer folders (singular):** hook/, service/, schema/, context/
+- **Collection layer folders (plural):** components/, ypes/
+- **File naming standards:** <kebab-case>.<role>.ts (e.g., project.hook.ts, ask.service.ts, create-task.schema.ts, project.type.ts)
+- **React Components:** PascalCase.tsx
 
-- Components
-- Hooks
-- Services
-- Schemas
-- Types
-- Utilities
+Each feature encapsulates only the internal layers it requires on demand:
+
+- context/ (feature-scoped state, e.g., uth, workspaces)
+- hook/ (custom React hooks integrating TanStack Query)
+- service/ (API client abstraction)
+- schema/ (client-side Zod validation schemas)
+- ypes/ (TypeScript domain definitions and DTO mappings)
+- components/ (view-level and modular presentational UI components)
 
 ---
 
 ## High-Level Structure
 
-```text
+`	ext
 apps/
-
 └── web/
     └── src/
-        ├── app/
-        ├── components/
-        ├── features/
-        ├── hooks/
-        ├── lib/
-        ├── providers/
-        ├── services/
-        ├── styles/
-        ├── types/
-        ├── utils/
-        └── middleware.ts
-```
+        ├── app/             # Next.js App Router (pages, layouts, and route groups)
+        ├── components/      # Shared presentation UI (shadcn/ui primitives, layout wrappers)
+        ├── features/        # Business feature modules (auth, dashboard, workspaces, projects, tasks, notifications)
+        ├── lib/             # Third-party utility client instances (TanStack Query client)
+        ├── providers/       # Top-level React Context providers (Query, Auth, Theme, Workspace)
+        ├── services/        # Base HTTP client with Axios interceptors and token refresh
+        └── shared/          # Cross-cutting error normalization, formatters, and utility functions
+`
+
+---
+
+## Application Route Map
+
+The application routes are organized under Next.js Route Groups:
+
+| Route Path                                                    | Route Type | Purpose                                                            |
+| :------------------------------------------------------------ | :--------- | :----------------------------------------------------------------- |
+| /                                                             | Static     | Marketing landing page with dynamic session-aware CTA              |
+| /(auth)/login                                                 | Dynamic    | User authentication and session establishment                      |
+| /(auth)/register                                              | Dynamic    | New account registration                                           |
+| /(app)/dashboard                                              | Static     | Centralized Personal Dashboard (cross-workspace metrics & tasks)   |
+| /(app)/workspaces                                             | Dynamic    | Workspaces Hub (workspace management and cards)                    |
+| /(app)/workspaces/[workspaceId]/projects                      | Dynamic    | Workspace Projects Overview and workspace metrics                  |
+| /(app)/workspaces/[workspaceId]/projects/[projectId]/tasks    | Dynamic    | Interactive Sprint Board (Kanban & Table Views, deep-link drawer)  |
+| /(app)/workspaces/[workspaceId]/projects/[projectId]/settings | Dynamic    | Project settings, lifecycle management, and danger zone            |
+| /(app)/workspaces/[workspaceId]/settings                      | Dynamic    | Workspace members, invitation management, and danger zone          |
+| /(app)/projects                                               | Static     | Global Projects Hub (cross-workspace project search & filters)     |
+| /(app)/tasks                                                  | Static     | Global Tasks Hub (cross-workspace task search & cascading filters) |
+| /(app)/profile                                                | Static     | User profile management and active workspace memberships           |
+
+---
+
+## Contextual Navigation & State Deep-Linking
+
+SprintHub enforces predictable spatial hierarchy and zero dead-ends through URL-driven contracts:
+
+1. **Contextual Back Navigation (?from=):**
+   - When navigating from /dashboard, /projects, or /tasks into workspace boards or settings, the originating route is forwarded via query parameters (e.g. ?from=dashboard or ?from=projects).
+   - The destination view dynamically adapts its back button (Back to Dashboard, Back to Projects Hub, Back to Tasks Hub, Back to <Workspace>) ensuring the user returns to their exact starting point.
+
+2. **Task Drawer Deep-Linking (?taskId=):**
+   - Task selection triggers URL synchronization (?taskId=<id>) without page reloads.
+   - Closing the drawer cleanses the query string while preserving origin parameters (?from=).
+   - Enables direct sharing and bookmarking of specific task modals across team members.
+
+3. **Resilient Missing Resource Handling:**
+   - When a requested resource (workspace, project, or task) is deleted or not found, views render a unified `<NotFoundState>` with contextual recovery navigation, preventing broken layouts or blank screens upon concurrent deletions.
+
+4. **Edge Route Protection & Real-Time Concurrency:**
+   - Next.js Edge Middleware (`middleware.ts`) guards private paths (`/dashboard`, `/workspaces`, `/projects`, `/tasks`, `/profile`) against unauthenticated access and open redirect exploits.
+   - Declarative `<Can>` component and `useHasPermission` hook synchronize role-based UI capabilities on the client.
+   - `RealtimeEventsProvider` connects to SSE and bridges cross-tab state via `BroadcastChannel` to keep task boards, member tables, and modals live.
 
 ---
 
@@ -631,9 +676,13 @@ PostgreSQL
 Responsible for:
 
 - Receiving HTTP requests.
-- Validating request format.
+- Passing validated request data to application services.
 - Calling application services.
 - Returning HTTP responses.
+
+### Validation
+
+Request validation is handled through dedicated validation middleware using Zod schemas before requests reach the application services.
 
 ---
 
@@ -645,6 +694,10 @@ Responsible for:
 - Authorization.
 - Workflow orchestration.
 - Transaction coordination.
+
+The Service Layer is also responsible for enforcing domain-specific business rules, including task lifecycle rules.
+
+For example, when a task changes from `DONE` to another status, its `completedAt` value must be reset to `null`.
 
 ---
 
@@ -702,11 +755,48 @@ Detailed entity definitions, relationships, constraints, and indexes are documen
 
 The data model enforces:
 
-- Primary keys
-- Foreign keys
-- Unique constraints
-- Cascade rules
-- Database indexes
+- Primary keys.
+- Foreign keys.
+- Unique constraints.
+- Referential integrity rules.
+- Cascade deletion rules.
+- Nullable relationships where required.
+- Database indexes for frequently queried foreign keys.
+
+The database also enforces uniqueness rules for workspace membership relationships and entity names according to the application requirements.
+
+### Referential Integrity
+
+The database enforces the following deletion behavior:
+
+- Deleting a workspace deletes its workspace memberships and projects.
+- Deleting a project deletes its tasks.
+- Deleting a user deletes their workspace memberships, notifications, and refresh tokens.
+- If a user assigned to a task is deleted, the task remains and its `assigneeId` is set to `null`.
+
+### Default Values
+
+The database defines the following default values:
+
+- `WorkspaceMember.role` defaults to `MEMBER`.
+- `Notification.isRead` defaults to `false`.
+- `Project.archived` defaults to `false`.
+- UUID primary keys are generated automatically.
+- `createdAt` timestamps are generated automatically.
+- `updatedAt` timestamps are automatically updated when records change.
+
+### Database Indexes
+
+Indexes are defined for frequently queried foreign key fields:
+
+- `Workspace.ownerId`
+- `WorkspaceMember.userId`
+- `Project.workspaceId`
+- `Task.projectId`
+- `Notification.userId`
+- `RefreshToken.userId`
+
+These indexes support common lookup and relationship queries while maintaining the relational integrity of the database.
 
 ---
 
@@ -732,21 +822,75 @@ The API should be:
 
 ## Resource Structure
 
+SprintHub combines hierarchical collection routes (for scoped creation and listing) with shallow single-resource routes (for direct UUID-based operations):
+
 ```text
+/api/health
 /api/auth
+/api/users
 /api/workspaces
-/api/projects
-/api/tasks
+/api/workspaces/{workspaceId}/members
+/api/workspaces/{workspaceId}/projects
+/api/workspaces/{workspaceId}/dashboard
+/api/projects/{projectId}
+/api/projects/{projectId}/tasks
+/api/tasks/{taskId}
 /api/notifications
 ```
 
 ---
 
+## Search, Filtering and Sorting
+
+The API supports query-based search, filtering, and sorting for collection resources.
+
+### Workspaces
+
+Workspaces support:
+
+- Search by `name`.
+- Sorting by `name` or `createdAt`.
+- Sort order: `asc` or `desc`.
+
+Workspace filtering is not supported.
+
+### Projects
+
+Projects support:
+
+- Search by `name`.
+- Filtering by `status`.
+- Filtering by `archived`.
+- Sorting by `name` or `createdAt`.
+- Sort order: `asc` or `desc`.
+
+### Tasks
+
+Tasks support:
+
+- Search by `title`.
+- Filtering by `status`.
+- Filtering by `priority`.
+- Filtering by `assigneeId`.
+- Filtering by `dueDate`.
+- Sorting by `createdAt`, `dueDate`, or `priority`.
+- Sort order: `asc` or `desc`.
+
+Search is limited to the primary name field of each resource.
+
+---
+
 ## Response Standardization
 
-All endpoints return a consistent response structure for both successful and failed operations.
+All endpoints follow consistent REST response conventions:
 
-Detailed endpoint specifications are documented in the **API Design Specification (ADS)**.
+- **Successful queries (`200 OK`)** return the resource object or collection array directly (`[]` when empty), without wrapping payloads in a `success` or `message` envelope.
+- **Resource creations (`201 Created`)** and **updates (`200 OK`)** return the created or updated entity directly.
+- **Deletions (`DELETE`)** and **session logout (`POST /api/auth/logout`)** return `204 No Content` with an empty body.
+- **User-facing success messages** are generated and localized by the Frontend UI layer.
+- **Error responses (`4xx` / `5xx`)** are handled centrally by the Global Error Handler to ensure a predictable `{ "success": false, "message": string }` structure across the API.
+
+Detailed endpoint specifications and response contracts are documented in the **API Design Specification (ADS)**.
 
 ---
 
@@ -782,7 +926,7 @@ Characteristics:
 
 - JWT
 - Short-lived
-- Sent through the Authorization header
+- Sent through the `Authorization` header (`Bearer` scheme)
 - Used for authenticated API requests
 
 ---
@@ -810,6 +954,18 @@ Supported roles:
 
 Authorization rules are enforced within the Service Layer.
 
+### Task Authorization Matrix
+
+| Operation                     | Allowed Roles / Actors                                                      | Authorization & IDOR Policy                                                           |
+| :---------------------------- | :-------------------------------------------------------------------------- | :------------------------------------------------------------------------------------ |
+| **Create Task**               | `OWNER`, `ADMIN`, `MEMBER`                                                  | Must be an active member of the project's workspace; project cannot be archived       |
+| **Read Tasks / Task Details** | `OWNER`, `ADMIN`, `MEMBER`                                                  | Must be an active member of the project's workspace (prevents cross-tenant IDOR)      |
+| **Update Task Details**       | `OWNER`, `ADMIN`, `MEMBER`                                                  | Must be an active member of the project's workspace; project cannot be archived       |
+| **Delete Task**               | Task Creator (`task.createdById === userId`) OR Workspace `OWNER` / `ADMIN` | Members cannot delete tasks created by other users (`403 Forbidden`)                  |
+| **Assign / Unassign Task**    | Workspace `OWNER`, `ADMIN` strictly                                         | Workspace members receive `403 Forbidden`; target assignee must be a workspace member |
+| **Update Task Status**        | `OWNER`, `ADMIN`, `MEMBER`                                                  | Must be an active member of the project's workspace; project cannot be archived       |
+| **Update Task Priority**      | `OWNER`, `ADMIN`, `MEMBER`                                                  | Must be an active member of the project's workspace; project cannot be archived       |
+
 ---
 
 # 13. Security Architecture
@@ -822,15 +978,17 @@ Security is integrated across every architectural layer.
 
 SprintHub implements:
 
-- JWT Authentication
-- Refresh Token Authentication
-- Password Hashing
-- Role-Based Access Control (RBAC)
-- Input Validation
-- Secure HTTP Cookies
-- Helmet
-- CORS
-- Rate Limiting
+- JWT Authentication (in-memory access tokens)
+- Refresh Token Authentication (`HttpOnly`, `SameSite=Lax`, `Secure` cookies)
+- Next.js Edge Middleware route protection with Open Redirect defense
+- Client-side declarative RBAC guards (`<Can>`, `useHasPermission`)
+- Password Hashing (bcrypt)
+- Role-Based Access Control (RBAC) in API middleware
+- Input Validation (Zod)
+- Deep Input Sanitization & XSS cleansing
+- Helmet security headers
+- CORS origin whitelisting
+- Rate Limiting per IP
 
 ---
 
@@ -909,10 +1067,7 @@ Example:
 ```json
 {
   "success": false,
-  "error": {
-    "code": "RESOURCE_NOT_FOUND",
-    "message": "Project not found."
-  }
+  "message": "Project not found."
 }
 ```
 
@@ -926,11 +1081,21 @@ SprintHub provides a centralized notification mechanism for user-facing events.
 
 ## MVP Notifications
 
-The MVP supports in-application notifications for:
+The MVP supports in-application notifications for the following events:
 
 - Workspace invitations.
+- Project creation within a workspace.
 - Task assignments.
 - Task status changes.
+- Task priority changes.
+
+Notification recipients depend on the type of event:
+
+- **Workspace invitations:** The invited user receives the notification.
+- **Project creation:** All members of the workspace receive the notification.
+- **Task assignment:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
+- **Task status changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
+- **Task priority changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
 
 ---
 
@@ -954,13 +1119,61 @@ User Interface
 
 ---
 
+## Real-Time Synchronization Architecture (3-Layer Model)
+
+SprintHub implements a defense-in-depth 3-layer synchronization architecture ensuring zero stale states across browser tabs and concurrent users:
+
+```text
+[ Client Layer 1: Cross-Tab Channel ]
+  BroadcastChannel API + localStorage fallback
+  (Instant Tab-to-Tab Logout, Profile Sync, Query Invalidation)
+              |
+[ Client Layer 2: Reactive TanStack Query Hygiene ]
+  refetchOnWindowFocus: true
+  staleTime: 5s
+  Silent background polling (15s for Notifications)
+              |
+[ Server & Client Layer 3: Server-Sent Events (SSE) ]
+  GET /api/events (SSE Stream)
+  EventsService (Pub/Sub Client Registry + 25s Keepalive)
+  Mutation Broadcasts: TASK_MUTATED, PROJECT_MUTATED, WORKSPACE_MUTATED, NOTIFICATION_CREATED
+  RealtimeEventsProvider -> Automatic Query Cache Invalidation
+```
+
+### Layer 1: Client Cross-Tab Broadcast Channel
+
+- **Mechanism:** Standard `BroadcastChannel('sprinthub_cross_tab_sync')` with `window.addEventListener('storage')` fallback for legacy or isolated contexts.
+- **Event Types:** `AUTH_LOGOUT`, `AUTH_LOGIN`, `AUTH_USER_UPDATED`, `QUERY_INVALIDATE`.
+- **Purpose:** Solves the stateless JWT vulnerability where logging out or updating user data in Tab A left stale credentials and states in Tab B. Additionally, mutation hooks across workspaces, projects, and tasks emit `QUERY_INVALIDATE` messages upon mutation success to immediately synchronize sibling browser tabs without waiting for window focus.
+
+### Layer 2: Reactive Data Hygiene
+
+- **Window Focus Refetch:** Automatically revalidates active queries when the user returns to the tab.
+- **Controlled Stale Time:** Set to 5 seconds to eliminate unnecessary query churn while preventing stale screens.
+- **Background Notification Polling:** 15-second background interval that pauses when window is inactive.
+
+### Layer 3: Server-Sent Events (SSE) Engine
+
+- **Endpoint:** `GET /api/events?token=<accessToken>` with `text/event-stream`, `no-cache`, and `X-Accel-Buffering: no`.
+- **Event Registry:** In-memory client connection pool managing active Response streams by `userId`.
+- **Heartbeat:** 25-second keepalive timer preventing proxy/NAT idle disconnects.
+- **Event Payloads & Cascading Invalidation:** Lightweight JSON envelopes containing entity identifiers and action types. The client `RealtimeEventsProvider` applies cascading cache invalidations:
+  - `WORKSPACE_MUTATED`: Invalidates `['workspaces']`, `['workspace', workspaceId]`, `['workspace-members', workspaceId]`, `['projects', workspaceId]`, `['tasks']`, `['dashboard']`.
+  - `PROJECT_MUTATED`: Invalidates `['projects']`, `['project', projectId]`, `['tasks']`, `['dashboard']`.
+  - `TASK_MUTATED`: Invalidates `['tasks']`, `['task', taskId]`, `['dashboard']`.
+  - `NOTIFICATION_CREATED`: Invalidates `['notifications']`.
+
+---
+
 ## Future Enhancements
 
 Future releases may introduce:
 
 - Email notifications.
-- Push notifications.
-- Real-time notifications.
+
+- Push notifications (Web/Mobile).
+
+- Granular notification preferences and digests.
 
 These capabilities are intentionally excluded from the MVP.
 
@@ -974,12 +1187,13 @@ SprintHub has been designed to support external integrations while keeping the M
 
 ## Current Integrations
 
-The MVP currently integrates with:
+The MVP currently integrates with the following external platforms and services:
 
-- PostgreSQL
-- GitHub Actions
-- Vercel
-- Render
+- Vercel for frontend deployment.
+- Render for backend deployment.
+- GitHub Actions for CI/CD automation.
+
+PostgreSQL is used as the primary database and Docker is used for local development and testing. These are infrastructure components rather than external product integrations.
 
 ---
 
@@ -1000,16 +1214,16 @@ Future versions may integrate with:
 
 The following high-level decisions define the architectural foundation of SprintHub.
 
-| Decision               | Rationale                                               |
-| ---------------------- | ------------------------------------------------------- |
-| Modular Monolith       | Simplifies development while remaining scalable.        |
-| Feature-Based Frontend | Improves modularity and maintainability.                |
-| Layered Backend        | Separates business logic from infrastructure concerns.  |
-| PostgreSQL             | Reliable relational database with strong consistency.   |
-| Prisma ORM             | Type-safe database access and migrations.               |
-| JWT Authentication     | Stateless authentication for REST APIs.                 |
-| RBAC                   | Flexible authorization model for workspace permissions. |
-| Docker                 | Consistent development and deployment environments.     |
+| Decision               | Rationale                                                               |
+| ---------------------- | ----------------------------------------------------------------------- |
+| Modular Monolith       | Simplifies development while remaining scalable.                        |
+| Feature-Based Frontend | Improves modularity and maintainability.                                |
+| Layered Backend        | Separates business logic from infrastructure concerns.                  |
+| PostgreSQL             | Reliable relational database with strong consistency.                   |
+| Prisma ORM             | Type-safe database access and migrations.                               |
+| JWT Authentication     | Stateless authentication for REST APIs.                                 |
+| RBAC                   | Flexible authorization model for workspace permissions.                 |
+| Docker                 | Consistent and reproducible local development and testing environments. |
 
 Detailed architectural decisions are documented individually in the project's Architecture Decision Records (ADRs).
 
@@ -1040,11 +1254,13 @@ PostgreSQL
 
 ## Supporting Services
 
-The MVP infrastructure includes:
+The MVP development and delivery infrastructure includes:
 
 - Docker
 - Docker Compose
 - GitHub Actions
+
+Docker and Docker Compose are used for local development and testing, while GitHub Actions is used for continuous integration and deployment automation.
 
 ---
 
@@ -1063,7 +1279,9 @@ These components are reserved for future scalability improvements and are not pa
 
 # 19. Docker Strategy
 
-SprintHub uses Docker to provide consistent development and deployment environments.
+SprintHub uses Docker to provide a consistent and reproducible local development and testing environment.
+
+Docker is not used as the production deployment platform. Production deployments are handled by Vercel for the frontend and Render for the backend.
 
 ---
 
@@ -1071,32 +1289,35 @@ SprintHub uses Docker to provide consistent development and deployment environme
 
 Docker is used to:
 
-- Standardize development environments.
+- Standardize local development environments.
 - Simplify onboarding.
-- Ensure deployment consistency.
+- Ensure consistent local dependencies.
+- Provide reproducible development and testing environments.
 - Reduce environment-specific issues.
 
 ---
 
 ## MVP Services
 
-The initial Docker Compose configuration includes:
+The Docker Compose environment includes:
 
-- Frontend
-- Backend
-- PostgreSQL
+- Frontend (Next.js container)
+- Backend (Express API container)
+- PostgreSQL (Database container on port `5432` with persistent volume `postgres_data`)
+
+These services support both running the entire application stack in containers for zero-setup evaluation, and isolating the database container while running applications on the host for active development.
 
 ---
 
-## Future Services
+## Production Deployment
 
-Additional services may be incorporated in future versions as infrastructure requirements evolve.
+Docker is not the production deployment platform for the MVP.
 
-Examples include:
+Production services are deployed independently:
 
-- Distributed caching
-- Background workers
-- Queue processing
+- Frontend → Vercel
+- Backend → Render
+- Database → PostgreSQL
 
 ---
 
@@ -1163,11 +1384,11 @@ Users
    ▼
 Frontend (Vercel)
    │
-REST API
-   │
+   │ REST API
    ▼
 Backend (Render)
    │
+   │ Prisma
    ▼
 PostgreSQL
 ```
@@ -1194,7 +1415,6 @@ Examples include:
 - Database connection strings.
 - JWT secrets.
 - API keys.
-- OAuth credentials.
 
 No secrets are stored in the source code repository.
 
@@ -1224,7 +1444,6 @@ Backend performance is achieved through:
 
 - Optimized database queries.
 - Proper indexing.
-- Pagination.
 - Efficient validation.
 - Connection pooling.
 
@@ -1292,12 +1511,9 @@ The application records:
 
 ## Health Checks
 
-Health endpoints verify:
+Health endpoints (`GET /api/health` and `GET /health`) provide a lightweight liveness check verifying API availability and service status without querying the database on every probe.
 
-- API availability.
-- Database connectivity.
-
-Future infrastructure components may expose additional health checks as they are introduced.
+Future infrastructure components may expose additional readiness checks as they are introduced.
 
 ---
 
@@ -1313,13 +1529,13 @@ Future versions may integrate external monitoring platforms and alerting service
 
 The following architectural trade-offs were intentionally accepted.
 
-| Decision               | Benefit                                    | Trade-off                                                 |
-| ---------------------- | ------------------------------------------ | --------------------------------------------------------- |
-| Modular Monolith       | Simpler development and deployment         | Less isolation than microservices                         |
-| REST API               | Broad compatibility and simplicity         | No real-time communication in the MVP                     |
-| PostgreSQL             | Strong consistency and relational modeling | Vertical scaling limits compared to distributed databases |
-| Feature-Based Frontend | High maintainability                       | Requires consistent architectural discipline              |
-| Layered Backend        | Clear separation of responsibilities       | Additional abstraction compared to simpler designs        |
+| Decision               | Benefit                                                            | Trade-off                                                                                        |
+| ---------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| Modular Monolith       | Simpler development and deployment                                 | Less isolation than microservices                                                                |
+| REST API + SSE         | Broad compatibility, simplicity, and unidirectional push streaming | No bidirectional socket channel in MVP (unidirectional SSE used for mutations and notifications) |
+| PostgreSQL             | Strong consistency and relational modeling                         | Vertical scaling limits compared to distributed databases                                        |
+| Feature-Based Frontend | High maintainability                                               | Requires consistent architectural discipline                                                     |
+| Layered Backend        | Clear separation of responsibilities                               | Additional abstraction compared to simpler designs                                               |
 
 ---
 

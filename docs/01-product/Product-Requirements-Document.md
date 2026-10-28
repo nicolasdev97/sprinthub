@@ -8,10 +8,10 @@
 | ---------------- | ----------------------------------- |
 | **Document**     | Product Requirements Document (PRD) |
 | **Project**      | SprintHub                           |
-| **Version**      | 1.0                                 |
+| **Version**      | 1.1                                 |
 | **Status**       | Approved                            |
 | **Owner**        | Nicolás Palacio                     |
-| **Last Updated** | July 2026                           |
+| **Last Updated** | September 2026                      |
 
 ---
 
@@ -229,22 +229,80 @@ The MVP includes:
 
 ## Workspace Management
 
-The MVP supports:
+The system shall allow users to:
 
-- Create workspace.
-- Update workspace.
-- Delete workspace.
+- Create workspaces.
+- Update workspace information.
+- Delete workspaces.
+- View workspace members.
 - Invite members.
+- Remove members.
+- Assign member roles.
+- Transfer workspace ownership to an existing member (reassigning current owner to ADMIN).
+- Search workspaces by name.
+- Sort workspaces by name or creation date.
+
+Workspace names must be unique.
+
+Supported roles include:
+
+- OWNER
+- ADMIN
+- MEMBER
+
+### Workspace Search and Sorting
+
+Users can search workspaces by their `name`.
+
+Workspace listing supports:
+
+- **Search:** Matches only the workspace `name`.
+- **Sorting:** By `name` or `createdAt`.
+- **Sort order:** `asc` or `desc`.
+- **Filters:** Not supported, since workspaces do not have filterable attributes.
+
+### Workspace Information
+
+Workspaces include:
+
+- `name`: Required and unique.
+- `description`: Optional.
+- `createdAt`: Workspace creation timestamp.
+- `updatedAt`: Last workspace update timestamp.
+
+---
+
+---
+
+## User Profile & Account Management
+
+The system shall allow authenticated users to:
+
+- View their profile information (email, full name, avatar, account creation date).
+- Update their first name and last name.
+- Permanently delete their account by providing their exact full name as confirmation. If the user owns active workspaces, they must transfer ownership or delete those workspaces prior to account deletion.
+
+---
+
+## Theme & Appearance
+
+The system shall support:
+
+- Light theme and Dark theme toggle.
+- System color scheme auto-detection.
+- Persistent theme selection via local storage without screen flicker.
 
 ---
 
 ## Member Management
 
-Workspace administrators can:
+Workspace members can view the list of members belonging to their workspace.
 
-- Add members.
-- Remove members.
-- Manage member roles.
+Workspace administrators and owners can manage workspace members:
+
+- **Invite members:** Accessible to `OWNER` and `ADMIN`.
+- **Remove members:** Accessible to `OWNER` and `ADMIN` (administrators cannot remove other administrators; the workspace owner cannot be removed).
+- **Manage member roles:** Accessible exclusively to the workspace `OWNER`.
 
 Supported roles include:
 
@@ -256,37 +314,179 @@ Supported roles include:
 
 ## Project Management
 
-Users can:
+The system shall allow authorized users to:
 
 - Create projects.
 - Update project information.
 - Archive projects.
+- Unarchive projects.
 - Delete projects.
+- Search projects by name.
+- Filter projects by status.
+- Filter projects by archived status.
+- Sort projects by name or creation date.
+
+Each project belongs to exactly one workspace.
+
+Project names must be unique within their workspace.
+
+### Project Search and Filtering
+
+Users can search projects by their `name`.
+
+Project listing supports:
+
+- **Search:** Matches only the project `name`.
+- **Filters:**
+  - `status`: `PLANNING`, `ACTIVE`, or `COMPLETED`.
+  - `archived`: `true` or `false`.
+- **Sorting:** By `name` or `createdAt`.
+- **Sort order:** `asc` or `desc`.
+
+### Project Information
+
+Projects include:
+
+- `name`: Required and unique within the workspace.
+- `description`: Optional.
+- `status`: `PLANNING`, `ACTIVE`, or `COMPLETED`.
+- `archived`: Indicates whether the project is archived.
+- `createdAt`: Project creation timestamp.
+- `updatedAt`: Last project update timestamp.
 
 ---
 
 ## Task Management
 
-Users can:
+The system shall allow users to:
 
 - Create tasks.
 - Update tasks.
 - Delete tasks.
 - Assign tasks.
-- Update task status.
-- Set task priority.
-- Define due dates.
+- Unassign tasks.
+- Change task status.
+- Change task priority.
+- Set due dates.
+- Search tasks by title.
+- Filter tasks by status.
+- Filter tasks by priority.
+- Filter tasks by assignee.
+- Filter tasks by due date.
+- Sort tasks by creation date, due date, or priority.
+
+Task titles must be unique within their project.
+
+### Task Search and Filtering
+
+Users can search tasks by their `title`.
+
+Task listing supports:
+
+- **Search:** Matches only the task `title`.
+- **Filters:**
+  - `status`: `BACKLOG`, `TODO`, `IN_PROGRESS`, `REVIEW`, or `DONE`.
+  - `priority`: `LOW`, `MEDIUM`, `HIGH`, or `CRITICAL`.
+  - `assigneeId`: Filter tasks assigned to a specific user.
+  - `dueDate`: Filter tasks by due date.
+- **Sorting:** By `createdAt`, `dueDate`, or `priority`.
+- **Sort order:** `asc` or `desc`.
+
+### Task Information
+
+Tasks include:
+
+- `title`: Required and unique within the project.
+- `description`: Optional.
+- `status`: `BACKLOG`, `TODO`, `IN_PROGRESS`, `REVIEW`, or `DONE`.
+- `priority`: `LOW`, `MEDIUM`, `HIGH`, or `CRITICAL`.
+- `dueDate`: Optional task due date.
+- `completedAt`: Completion timestamp when the task is in the `DONE` status.
+- `createdAt`: Task creation timestamp.
+- `updatedAt`: Last task update timestamp.
+
+---
+
+## Workspace, Project and Task Rules
+
+### Name Uniqueness
+
+The following naming rules apply:
+
+- Workspace names must be unique.
+- Project names must be unique within their workspace.
+- Task titles must be unique within their project.
+
+### Deletion Rules
+
+The following deletion rules apply:
+
+- Deleting a workspace deletes all projects belonging to that workspace.
+- Deleting a project deletes all tasks belonging to that project.
+- A task can be permanently deleted by its creator, or by a workspace Owner or Administrator.
+- Deleting a user account requires explicit confirmation matching the user's full name (`firstName lastName`) and is only permitted if the user does not own any workspaces.
+- Deleting a user removes their workspace memberships, notifications, and refresh tokens according to the configured data integrity rules.
+- If a user is deleted, tasks assigned to that user remain and their assignment is cleared.
+
+### Task Completion Rules
+
+When a task changes from `DONE` to another status, its `completedAt` value must be reset to `null`.
+
+The `completedAt` field represents the completion state of the task and must only contain a completion timestamp when the task is in the `DONE` status.
 
 ---
 
 ## Dashboard
 
-The MVP dashboard provides:
+The application provides two complementary dashboard views:
 
-- Active projects.
-- Pending tasks.
-- Completed tasks.
-- Overdue tasks.
+### Personal Dashboard (/dashboard)
+
+The Personal Dashboard acts as the primary landing hub after authentication, consolidating workload and priorities across all workspaces in which the user is a member:
+
+- **Assigned to You:** Real-time count and prioritized list of pending tasks directly assigned to the current user.
+- **Needs Attention:** Immediate visibility into critical-priority tasks and overdue items requiring urgent intervention.
+- **Due This Week:** Proactive 7-day planning window highlighting upcoming commitments.
+- **Active Projects:** Aggregate count and quick-access cards for active sprint projects across workspaces.
+- **Workload & Health:** Analytic breakdown showing overall sprint completion rate (%), overdue risk counter, and high-priority task volume (Critical and High).
+- **Recent Projects:** Fast-navigation cards with workspace context badges and direct links to task boards.
+- **Interactive Deep-Linking:** Direct task drawer access preserving originating navigation context.
+
+### Workspace Dashboard (/workspaces/{workspaceId}/projects)
+
+Provides workspace-level operational visibility:
+
+- Active projects count.
+- Pending tasks count.
+- Completed tasks count.
+- Overdue tasks count.
+- Overall workspace task completion rate (%).
+
+---
+
+## Global Navigation Hubs
+
+To support cross-workspace workflows, SprintHub provides centralized hubs:
+
+- **Projects Hub (/projects):** Unified catalog of all projects across all user workspaces, featuring keyword search, workspace filtering, status filtering (PLANNING, ACTIVE, ON_HOLD, COMPLETED, CANCELLED), and archived project visibility.
+- **Tasks Hub (/tasks):** Cross-workspace task center with cascading workspace-to-project filters, assignment filters (Assigned to me, Created by me, Unassigned), status/priority filters, pagination, and direct task drawer deep-linking.
+
+---
+
+## Unified Not-Found & Deleted Resource Handling
+
+The application provides a consistent UX pattern across all modules when a resource is deleted or cannot be found:
+
+- **Contextual Header:** Displays the resource title (`Task Details`, `Project Details`, or `Workspace Details`) with an explanatory subtitle informing that the resource was removed or cannot be found.
+- **Actionable Not-Found State:** Presents a clear status card with an affirmative action allowing users to close the drawer or navigate back to the parent resource list.
+
+---
+
+## Productivity & Accessibility Tools
+
+- **Command Palette (Ctrl+K):** Global quick-search dialog allowing instant fuzzy jumping between the Dashboard, Workspaces, Projects, and Tasks without mouse dependency.
+- **Keyboard Shortcuts Dialog (?):** Global modal providing quick reference to all system-wide keyboard shortcuts.
+- **Contextual Back Navigation:** Intuitively preserves originating user context across hubs, dashboards, and boards via URL parameters (?from=).
 
 ---
 
@@ -294,11 +494,29 @@ The MVP dashboard provides:
 
 The MVP includes in-application notifications for:
 
+- Users being added to a workspace.
+- New project creation within a workspace.
 - Task assignments.
-- Workspace invitations.
 - Task status changes.
+- Task priority changes.
 
-Future notification channels such as email, push notifications, and real-time notifications are intentionally excluded from the MVP and are planned for future releases.
+Notification recipients depend on the event:
+
+- **Users added to a workspace:** The added user receives the notification.
+- **Project creation:** All members of the workspace receive the notification.
+- **Task assignment:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
+- **Task status changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
+- **Task priority changes:** Only the user assigned to the task receives the notification. If the task has no assignee, no notification is generated.
+
+### Real-Time & Multi-Tab Synchronization
+
+The platform includes a 3-layer real-time and cross-tab synchronization mechanism:
+
+- **Cross-Tab Local Synchronization:** Instant synchronization of user session logout, profile updates, and query invalidations across multiple browser tabs via `BroadcastChannel` (with `localStorage` event fallback).
+- **Server-Sent Events (SSE) Delivery:** Live real-time delivery of notifications and data mutation events (workspaces, projects, tasks) via `GET /api/events`, keeping active views in sync across connected clients without manual page refresh.
+- **Background Polling & Window Focus Refetch:** Active tabs silently poll for notifications in the background (`15s`), and window focus triggers automated revalidation of stale queries (`staleTime: 5s`).
+
+Third-party external notification delivery channels (such as transactional email and mobile push notifications) remain planned for post-MVP releases.
 
 ---
 
@@ -338,8 +556,10 @@ Future productivity enhancements include:
 Future notification capabilities include:
 
 - Email notifications.
-- Push notifications.
-- Real-time notifications.
+
+- Push notifications (Web Push and Mobile Push).
+
+- Granular notification preferences and digest summaries.
 
 ---
 
@@ -384,6 +604,8 @@ D[Create Project]
 E[Create Tasks]
 F[Assign Tasks]
 G[Track Progress]
+H[Search and Filter Work]
+I[Archive or Complete Work]
 
 A --> B
 B --> C
@@ -391,19 +613,9 @@ C --> D
 D --> E
 E --> F
 F --> G
+G --> H
+H --> I
 ```
-
-## Journey Summary
-
-A typical user will:
-
-1. Register an account.
-2. Create a workspace.
-3. Invite team members.
-4. Create a project.
-5. Add tasks.
-6. Assign responsibilities.
-7. Monitor project progress through the dashboard.
 
 ---
 
@@ -455,6 +667,8 @@ Assign Tasks
 Track Progress
     ↓
 Archive Project
+    ↓
+Unarchive Project
 ```
 
 ---
@@ -469,6 +683,8 @@ Assign User
 Update Status
     ↓
 Complete Task
+    ↓
+Unassign or Reassign User
 ```
 
 ---
@@ -484,8 +700,12 @@ The MVP is considered successful if users can:
 - Register and authenticate successfully.
 - Create and manage workspaces.
 - Collaborate with team members.
+- Search and sort workspaces.
 - Create and manage projects.
-- Create, assign, and complete tasks.
+- Search, filter, and sort projects.
+- Archive and unarchive projects.
+- Create, assign, unassign, and complete tasks.
+- Search, filter, and sort tasks.
 - Track project progress through the dashboard.
 
 ---
@@ -540,9 +760,12 @@ Deliverables include:
 
 - User authentication.
 - Workspace management.
+- Workspace search and sorting.
 - Member management.
 - Project management.
+- Project search, filtering, and sorting.
 - Task management.
+- Task search, filtering, and sorting.
 - Dashboard.
 - In-application notifications.
 
@@ -556,7 +779,7 @@ Future releases may introduce additional capabilities, including:
 - File attachments.
 - Email notifications.
 - Push notifications.
-- Real-time collaboration.
+- Live collaborative rich-text editing & cursor presence (WebSockets / CRDTs).
 - Calendar integrations.
 - Advanced reporting.
 - Performance optimizations.

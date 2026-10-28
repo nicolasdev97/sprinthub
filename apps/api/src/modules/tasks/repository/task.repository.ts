@@ -1,0 +1,149 @@
+import { prisma } from '../../../database/prisma';
+
+import { CreateTaskDto, UpdateTaskDto } from '../dto';
+import { TaskStatus, TaskPriority } from '@prisma/client';
+import { TaskFilterParams } from '../types';
+
+export class TaskRepository {
+  async createTask(data: CreateTaskDto) {
+    return prisma.task.create({
+      data,
+    });
+  }
+
+  async getTasks(projectId: string, filters?: TaskFilterParams) {
+    let dueDateFilter: { gte: Date; lte: Date } | undefined;
+
+    if (filters?.dueDate) {
+      const parsedDate = new Date(filters.dueDate);
+      const startOfDay = new Date(
+        Date.UTC(
+          parsedDate.getUTCFullYear(),
+          parsedDate.getUTCMonth(),
+          parsedDate.getUTCDate(),
+          0,
+          0,
+          0,
+          0
+        )
+      );
+      const endOfDay = new Date(
+        Date.UTC(
+          parsedDate.getUTCFullYear(),
+          parsedDate.getUTCMonth(),
+          parsedDate.getUTCDate(),
+          23,
+          59,
+          59,
+          999
+        )
+      );
+
+      dueDateFilter = {
+        gte: startOfDay,
+        lte: endOfDay,
+      };
+    }
+
+    return prisma.task.findMany({
+      where: {
+        projectId,
+        status: filters?.status,
+        priority: filters?.priority,
+        assigneeId: filters?.assigneeId,
+        ...(dueDateFilter && {
+          dueDate: dueDateFilter,
+        }),
+        ...(filters?.search && {
+          title: {
+            contains: filters.search,
+            mode: 'insensitive',
+          },
+        }),
+      },
+      orderBy: filters?.sortBy
+        ? {
+            [filters.sortBy]: filters.sortOrder ?? 'asc',
+          }
+        : undefined,
+    });
+  }
+
+  async getTaskById(id: string) {
+    return prisma.task.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        assignee: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
+  async getTaskByTitle(projectId: string, title: string) {
+    return prisma.task.findFirst({
+      where: {
+        projectId,
+        title,
+      },
+    });
+  }
+
+  async updateTask(id: string, data: UpdateTaskDto) {
+    return prisma.task.update({
+      where: {
+        id,
+      },
+      data,
+    });
+  }
+
+  async deleteTask(id: string) {
+    return prisma.task.delete({
+      where: {
+        id,
+      },
+    });
+  }
+
+  async assignTask(taskId: string, assigneeId: string | null) {
+    return prisma.task.update({
+      where: {
+        id: taskId,
+      },
+      data: {
+        assigneeId,
+      },
+    });
+  }
+
+  async updateTaskStatus(taskId: string, status: TaskStatus, completedAt: Date | null) {
+    return prisma.task.update({
+      where: {
+        id: taskId,
+      },
+      data: {
+        status,
+        completedAt,
+      },
+    });
+  }
+
+  async updateTaskPriority(taskId: string, priority: TaskPriority) {
+    return prisma.task.update({
+      where: {
+        id: taskId,
+      },
+      data: {
+        priority,
+      },
+    });
+  }
+}

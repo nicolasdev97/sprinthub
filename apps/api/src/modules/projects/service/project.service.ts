@@ -1,0 +1,196 @@
+import { WorkspaceRole } from '@prisma/client';
+
+import { AppError } from '../../../shared';
+import { ArchiveProjectDto, CreateProjectDto, UpdateProjectDto } from '../dto';
+import { ProjectRepository } from '../repository';
+import { WorkspaceService } from '../../workspaces';
+import { ProjectFilterParams } from '../types';
+import { NotificationService } from '../../notifications';
+import { eventsService } from '../../events';
+
+export class ProjectService {
+  constructor(
+    private readonly projectRepository: ProjectRepository,
+    private readonly workspaceService: WorkspaceService,
+    private readonly notificationService: NotificationService
+  ) {}
+
+  async createProject(data: CreateProjectDto, userId: string) {
+    const workspaceMember = await this.workspaceService.getWorkspaceMemberByUser(
+      data.workspaceId,
+      userId
+    );
+
+    if (
+      workspaceMember.role !== WorkspaceRole.OWNER &&
+      workspaceMember.role !== WorkspaceRole.ADMIN
+    ) {
+      throw new AppError('Forbidden', 403);
+    }
+
+    const existingProject = await this.projectRepository.getProjectByName(
+      data.workspaceId,
+      data.name
+    );
+
+    if (existingProject) {
+      throw new AppError('Project name already exists in this workspace', 409);
+    }
+
+    const project = await this.projectRepository.createProject(data);
+
+    const workspaceMembers = await this.workspaceService.getWorkspaceMembers(
+      data.workspaceId,
+      userId
+    );
+
+    await this.notificationService.createManyNotifications(
+      workspaceMembers.map((workspaceMember) => workspaceMember.user.id),
+      'Project created',
+      `Project "${project.name}" has been created in your workspace.<!--link:/workspaces/${data.workspaceId}/projects/${project.id}/tasks-->`
+    );
+
+    eventsService.broadcast({
+      type: 'PROJECT_MUTATED',
+      workspaceId: data.workspaceId,
+      projectId: project.id,
+      action: 'created',
+    });
+
+    return project;
+  }
+
+  async getProjects(workspaceId: string, userId: string, filters?: ProjectFilterParams) {
+    await this.workspaceService.getWorkspaceMemberByUser(workspaceId, userId);
+
+    return this.projectRepository.getProjects(workspaceId, filters);
+  }
+
+  async getProjectEntityById(projectId: string) {
+    const project = await this.projectRepository.getProjectById(projectId);
+
+    if (!project) {
+      throw new AppError('Project not found', 404);
+    }
+
+    return project;
+  }
+
+  async getProjectById(projectId: string, userId: string) {
+    const project = await this.getProjectEntityById(projectId);
+
+    await this.workspaceService.getWorkspaceMemberByUser(project.workspaceId, userId);
+
+    return project;
+  }
+
+  async updateProject(projectId: string, userId: string, data: UpdateProjectDto) {
+    const project = await this.getProjectEntityById(projectId);
+
+    const workspaceMember = await this.workspaceService.getWorkspaceMemberByUser(
+      project.workspaceId,
+      userId
+    );
+
+    if (
+      workspaceMember.role !== WorkspaceRole.OWNER &&
+      workspaceMember.role !== WorkspaceRole.ADMIN
+    ) {
+      throw new AppError('Forbidden', 403);
+    }
+
+    if (project.archived) {
+      throw new AppError('Archived projects cannot be updated', 400);
+    }
+
+    if (data.name) {
+      const existingProject = await this.projectRepository.getProjectByName(
+        project.workspaceId,
+        data.name
+      );
+
+      if (existingProject && existingProject.id !== projectId) {
+        throw new AppError('Project name already exists in this workspace', 409);
+      }
+    }
+
+    const updated = await this.projectRepository.updateProject(projectId, data);
+
+    eventsService.broadcast({
+      type: 'PROJECT_MUTATED',
+      workspaceId: project.workspaceId,
+      projectId,
+      action: 'updated',
+    });
+
+    return updated;
+  }
+
+  async deleteProject(projectId: string, userId: string) {
+    const project = await this.projectRepository.getProjectById(projectId);
+
+    if (!project) {
+      throw new AppError('Project not found', 404);
+    }
+
+    const workspaceMember = await this.workspaceService.getWorkspaceMemberByUser(
+      project.workspaceId,
+      userId
+    );
+
+    if (
+      workspaceMember.role !== WorkspaceRole.OWNER &&
+      workspaceMember.role !== WorkspaceRole.ADMIN
+    ) {
+      throw new AppError('Forbidden', 403);
+    }
+
+    await this.projectRepository.deleteProject(projectId);
+
+    eventsService.broadcast({
+      type: 'PROJECT_MUTATED',
+      workspaceId: project.workspaceId,
+      projectId,
+      action: 'deleted',
+    });
+  }
+
+  async archiveProject(projectId: string, userId: string, data: ArchiveProjectDto) {
+    const project = await this.projectRepository.getProjectById(projectId);
+
+    if (!project) {
+      throw new AppError('Project not found', 404);
+    }
+
+    const workspaceMember = await this.workspaceService.getWorkspaceMemberByUser(
+      project.workspaceId,
+      userId
+    );
+
+    if (
+      workspaceMember.role !== WorkspaceRole.OWNER &&
+      workspaceMember.role !== WorkspaceRole.ADMIN
+    ) {
+      throw new AppError('Forbidden', 403);
+    }
+
+    if (data.archived && project.archived) {
+      throw new AppError('Project is already archived', 400);
+    }
+
+    if (!data.archived && !project.archived) {
+      throw new AppError('Project is already unarchived', 400);
+    }
+
+    const archived = await this.projectRepository.archiveProject(projectId, data.archived);
+
+    eventsService.broadcast({
+      type: 'PROJECT_MUTATED',
+      workspaceId: project.workspaceId,
+      projectId,
+      action: 'archived',
+    });
+
+    return archived;
+  }
+}

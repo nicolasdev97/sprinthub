@@ -9,11 +9,11 @@
 | **Document**        | ADR-008                                    |
 | **Title**           | Adopt REST as the Primary API Architecture |
 | **Project**         | SprintHub                                  |
-| **Version**         | 1.0                                        |
+| **Version**         | 1.1                                        |
 | **Status**          | Approved                                   |
 | **Owner**           | Nicolás Palacio                            |
 | **Decision Makers** | SprintHub Architecture Team                |
-| **Last Updated**    | July 2026                                  |
+| **Last Updated**    | September 2026                             |
 
 ---
 
@@ -211,11 +211,11 @@ Core resources include:
 Examples:
 
 ```text
-GET    /projects
-POST   /projects
-GET    /projects/{id}
-PATCH  /projects/{id}
-DELETE /projects/{id}
+GET    /api/workspaces/{workspaceId}/projects
+POST   /api/workspaces/{workspaceId}/projects
+GET    /api/projects/{projectId}
+PATCH  /api/projects/{projectId}
+DELETE /api/projects/{projectId}
 ```
 
 This approach provides a predictable, standardized API that is easy to consume, document, maintain, and evolve.
@@ -235,13 +235,13 @@ Endpoints represent business resources rather than actions.
 Good:
 
 ```text
-GET /tasks
+GET /api/projects/{projectId}/tasks
 ```
 
 Bad:
 
 ```text
-GET /getTasks
+GET /api/getTasks
 ```
 
 ---
@@ -260,23 +260,25 @@ GET /getTasks
 
 ## Stateless Communication
 
-Each request contains all information required for processing.
+API requests are processed without relying on server-side application session state.
 
-The server does not maintain client session state. Authentication is handled using JWT Access Tokens.
+Authentication uses short-lived JWT Access Tokens, while Refresh Tokens are persisted as cryptographic hashes in the database to support session renewal and token revocation.
 
 ---
 
 ## Consistent Responses
 
-All endpoints follow a standardized response structure.
+API responses follow the response structures defined in the API Design Specification (ADS):
 
-Example:
+- **Successful operations** return the resource object (`200 OK` / `201 Created`) or resource array (`200 OK`, returning `[]` when empty) directly as JSON without wrapping in a `{ "success": true, "message": "..." }` envelope.
+- **Resource deletions (`DELETE`) and session termination (`POST /api/auth/logout`)** return `204 No Content` with an empty response body.
+- **Health check (`GET /api/health`)** returns `{ "success": true, "message": "SprintHub API is running" }`.
+- **Error responses (`4xx` / `5xx`)** follow a standardized structure across all endpoints:
 
 ```json
 {
-  "success": true,
-  "message": "Operation completed successfully.",
-  "data": {}
+  "success": false,
+  "message": "Descriptive error message"
 }
 ```
 
@@ -330,21 +332,23 @@ The REST API is documented using:
 - OpenAPI 3.x
 - Swagger UI
 
-The API Design Specification (ADS) remains the authoritative API reference.
+The API Design Specification (ADS) remains the authoritative API design reference.
+
+OpenAPI documentation must remain synchronized with the API implementation.
 
 ---
 
 ## Versioning
 
-SprintHub uses URI versioning.
+SprintHub exposes the API under the `/api` base path.
 
 Example:
 
 ```text
-/api/v1/projects
+/api/workspaces/{workspaceId}/projects
 ```
 
-Breaking changes require a new API version.
+Explicit API versioning may be introduced in the future if breaking changes require a new API version.
 
 ---
 
@@ -354,10 +358,8 @@ SprintHub follows REST best practices to improve API performance.
 
 Current strategies include:
 
-- Pagination.
 - Filtering.
 - Sorting.
-- Response compression (Gzip/Brotli).
 
 Future enhancements may include:
 
@@ -432,7 +434,7 @@ The API should follow these implementation conventions:
 - JSON request and response bodies.
 - Consistent response structure.
 - Standard HTTP status codes.
-- URI versioning (`/api/v1`).
+- API endpoints exposed under the `/api` base path.
 - OpenAPI 3.x documentation.
 - Authentication using JWT Access Tokens and Refresh Tokens.
 

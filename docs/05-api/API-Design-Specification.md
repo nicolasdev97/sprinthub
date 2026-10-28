@@ -8,10 +8,10 @@
 | ---------------- | ------------------------------ |
 | **Document**     | API Design Specification (ADS) |
 | **Project**      | SprintHub                      |
-| **Version**      | 1.0                            |
+| **Version**      | 1.1                            |
 | **Status**       | Approved                       |
 | **Owner**        | Nicolás Palacio                |
-| **Last Updated** | July 2026                      |
+| **Last Updated** | September 2026                 |
 
 ---
 
@@ -29,23 +29,24 @@
 10. HTTP Status Codes
 11. API Naming Conventions
 12. Authentication API
-13. Workspace API
-14. Project API
-15. Task API
-16. Notification API
-17. Health API
-18. Pagination Standards
-19. Filtering Standards
-20. Sorting Standards
-21. Search Standards
-22. Rate Limiting
-23. API Security
-24. API Versioning Strategy
-25. OpenAPI & Swagger
-26. API Best Practices
-27. Future API Evolution
-28. API Change Management
-29. Conclusion
+13. User API
+14. Workspace API
+15. Project API
+16. Task API
+17. Notification API
+18. Dashboard API
+19. Health API
+20. Filtering Standards
+21. Sorting Standards
+22. Search Standards
+23. Rate Limiting
+24. API Security
+25. API Versioning Strategy
+26. OpenAPI & Swagger
+27. API Best Practices
+28. Future API Evolution
+29. API Change Management
+30. Conclusion
 
 ---
 
@@ -126,11 +127,11 @@ Every request is stateless, and authentication information is included with ever
 
 ## Base URLs
 
-| Environment | Base URL                                   |
-| ----------- | ------------------------------------------ |
-| Development | `http://localhost:3001/api/v1`             |
-| Staging     | `https://staging-api.sprinthub.com/api/v1` |
-| Production  | `https://api.sprinthub.com/api/v1`         |
+| Environment | Base URL                              |
+| ----------- | ------------------------------------- |
+| Development | `http://localhost:3001/api`           |
+| Staging     | `<configured staging API URL>/api`    |
+| Production  | `<configured production API URL>/api` |
 
 ---
 
@@ -158,13 +159,13 @@ Endpoints represent resources rather than actions.
 ### Good
 
 ```text
-GET /projects
+GET /api/workspaces/{workspaceId}/projects
 ```
 
 ### Bad
 
 ```text
-GET /getProjects
+GET /api/getProjects
 ```
 
 ---
@@ -179,15 +180,15 @@ Every request contains all information required to process it.
 
 ## DP-03 – Predictable URLs
 
-URLs use nouns instead of verbs.
+URLs use nouns instead of verbs and reflect resource hierarchy for scoped collections.
 
 Examples:
 
 ```text
-/projects
-/tasks
-/workspaces
-/users
+/api/users/me
+/api/workspaces
+/api/workspaces/{workspaceId}/projects
+/api/projects/{projectId}/tasks
 ```
 
 ---
@@ -215,9 +216,9 @@ Resources always use:
 Examples:
 
 ```text
-/workspaces
-/projects
-/refresh-tokens
+/api/workspaces
+/api/workspaces/{workspaceId}/projects
+/api/projects/{projectId}/tasks
 ```
 
 ---
@@ -254,7 +255,7 @@ SprintHub protects private resources using JWT-based authentication together wit
 User
     │
     ▼
-POST /auth/login
+POST /api/auth/login
     │
     ▼
 Access Token
@@ -268,7 +269,7 @@ Authenticated Requests
 Access Token Expires
     │
     ▼
-POST /auth/refresh
+POST /api/auth/refresh
     │
     ▼
 New Access Token
@@ -298,7 +299,7 @@ New Access Token
 
 ## Protected Endpoints
 
-Protected endpoints require authentication.
+Protected endpoints require authentication via the `Authorization` header using the `Bearer` scheme.
 
 Example:
 
@@ -319,9 +320,9 @@ Authentication middleware validates:
 Examples:
 
 ```text
-POST /auth/register
-POST /auth/login
-POST /auth/refresh
+POST /api/auth/register
+POST /api/auth/login
+POST /api/auth/refresh
 ```
 
 ---
@@ -366,30 +367,17 @@ Authorization determines whether the authenticated user is allowed to perform th
 
 # 6. API Versioning
 
-Every endpoint is versioned.
+SprintHub exposes its API under the `/api` base path.
 
-Current version:
-
-```text
-/api/v1
-```
-
-Future versions:
+Current API base path:
 
 ```text
-/api/v2
+/api
 ```
+
+Future API versions may introduce explicit versioning if required by breaking changes.
 
 Versioning ensures backward compatibility while allowing the API to evolve.
-
----
-
-## Versioning Strategy
-
-| Change Type     | Strategy         |
-| --------------- | ---------------- |
-| Major changes   | New API version  |
-| Minor additions | Same API version |
 
 ---
 
@@ -417,7 +405,7 @@ Example:
 ```json
 {
   "title": "Implement login",
-  "priority": "HIGH",
+  "description": "Implement login for users",
   "dueDate": "2026-06-15"
 }
 ```
@@ -443,51 +431,42 @@ Invalid requests never reach business logic.
 
 # 8. Response Standards
 
-SprintHub returns a standardized response structure.
-
-The `message` field is optional and may be omitted for read-only operations such as GET requests.
+SprintHub follows standard REST response conventions using native HTTP status codes to indicate operation success. Successful responses return the requested resource or collection directly without wrapping payloads in a `success` or `message` envelope. User-facing feedback messages for successful operations are handled by the frontend presentation layer.
 
 ---
 
-## Successful Response
+## Single Resource Response (`200 OK` / `201 Created`)
+
+Endpoints that retrieve, create, or update a single resource return the JSON representation of the resource directly:
 
 ```json
 {
-  "success": true,
-  "message": "Operation completed successfully.",
-  "data": {}
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Platform Redesign",
+  "description": "Core frontend and backend modernization",
+  "status": "ACTIVE",
+  "archived": false,
+  "workspaceId": "3b241101-e2bb-4255-8caf-4136c566a962",
+  "createdAt": "2026-09-20T12:00:00.000Z",
+  "updatedAt": "2026-09-20T12:00:00.000Z"
 }
 ```
 
 ---
 
-## Collection Response
+## Collection Response (`200 OK`)
+
+Endpoints that retrieve a list of resources return a JSON array directly. If no records match the query, an empty array is returned:
 
 ```json
-{
-  "success": true,
-  "message": "Projects retrieved successfully.",
-  "data": [],
-  "pagination": {
-    "page": 1,
-    "pageSize": 20,
-    "totalItems": 45,
-    "totalPages": 3
-  }
-}
+[]
 ```
 
 ---
 
-## Empty Response
+## No Content Response (`204 No Content`)
 
-```json
-{
-  "success": true,
-  "message": "No tasks found.",
-  "data": []
-}
-```
+Operations that remove a resource (`DELETE`) or terminate a session (`POST /api/auth/logout`) return `HTTP 204 No Content` with an empty response body.
 
 ---
 
@@ -502,13 +481,7 @@ Every API error follows a consistent structure.
 ```json
 {
   "success": false,
-  "message": "Validation failed.",
-  "errors": [
-    {
-      "field": "email",
-      "message": "Email already exists."
-    }
-  ]
+  "message": "Validation failed"
 }
 ```
 
@@ -569,21 +542,26 @@ Resources use plural nouns.
 Examples:
 
 ```text
-/users
-/projects
-/tasks
-/workspaces
+/api/users
+/api/workspaces
+/api/projects
+/api/tasks
+/api/notifications
 ```
 
 ---
 
 ## Path Parameters
 
+Collection creation and listing are scoped under their parent resource, while single-resource operations use direct resource identifiers.
+
 Examples:
 
 ```text
-/projects/{projectId}
-/tasks/{taskId}
+/api/workspaces/{workspaceId}/projects
+/api/projects/{projectId}
+/api/projects/{projectId}/tasks
+/api/tasks/{taskId}
 ```
 
 ---
@@ -595,7 +573,7 @@ Query parameters use camelCase.
 Example:
 
 ```text
-/tasks?page=1&pageSize=20&status=TODO
+/api/projects/{projectId}/tasks?search=implement&status=TODO
 ```
 
 ---
@@ -623,9 +601,9 @@ The Authentication API manages user authentication and session lifecycle.
 
 ## Register
 
-| Method | Endpoint         |
-| ------ | ---------------- |
-| POST   | `/auth/register` |
+| Method | Endpoint             |
+| ------ | -------------------- |
+| POST   | `/api/auth/register` |
 
 ### Description
 
@@ -635,9 +613,9 @@ Creates a new user account.
 
 ## Login
 
-| Method | Endpoint      |
-| ------ | ------------- |
-| POST   | `/auth/login` |
+| Method | Endpoint          |
+| ------ | ----------------- |
+| POST   | `/api/auth/login` |
 
 ### Description
 
@@ -647,29 +625,74 @@ Authenticates a user and returns an Access Token together with a Refresh Token.
 
 ## Refresh Token
 
-| Method | Endpoint        |
-| ------ | --------------- |
-| POST   | `/auth/refresh` |
+| Method | Endpoint            |
+| ------ | ------------------- |
+| POST   | `/api/auth/refresh` |
 
 ### Description
 
-Generates a new Access Token using a valid Refresh Token.
+Generates a new Access Token using a valid Refresh Token supplied via the `refreshToken` `HttpOnly` cookie.
+
+In the MVP, refresh tokens are reusable across their 7-day lifetime and are not rotated upon each refresh request. The endpoint returns the new access token directly:
+
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
 
 ---
 
 ## Logout
 
-| Method | Endpoint       |
-| ------ | -------------- |
-| POST   | `/auth/logout` |
+| Method | Endpoint           |
+| ------ | ------------------ |
+| POST   | `/api/auth/logout` |
 
 ### Description
 
-Terminates the current authenticated session by invalidating the Refresh Token.
+Terminates the current authenticated session by deleting the persisted `RefreshToken` record from the database, clearing the `refreshToken` `HttpOnly` cookie, and returning `204 No Content`.
 
 ---
 
-# 13. Workspace API
+# 13. User API
+
+The User API manages the authenticated user's account.
+
+---
+
+## Endpoints
+
+| Method | Endpoint        | Description               |
+| ------ | --------------- | ------------------------- |
+| GET    | `/api/users/me` | Retrieve the current user |
+| PATCH  | `/api/users/me` | Update the current user   |
+| DELETE | `/api/users/me` | Delete the current user   |
+
+### Delete Account
+
+The `DELETE /api/users/me` endpoint allows an authenticated user to permanently delete their own account.
+
+A user can only delete their own account through this endpoint.
+
+#### Request Body
+
+```json
+{
+  "confirmationName": "Lionel Messi"
+}
+```
+
+#### Validation & Business Rules
+
+- `confirmationName` is required and must match the authenticated user's full name (`firstName` + `" "` + `lastName`). If it does not match, the API returns `400 Bad Request`.
+- A user cannot delete their account while owning one or more workspaces (`400 Bad Request`). Owned workspaces must be deleted first.
+- Tasks created by or assigned to the user are preserved within their projects; their corresponding relational foreign keys (`createdById`, `assigneeId`) are set to `null`.
+- On success, the endpoint returns `204 No Content`.
+
+---
+
+# 14. Workspace API
 
 The Workspace API manages collaborative workspaces and their members.
 
@@ -677,27 +700,112 @@ The Workspace API manages collaborative workspaces and their members.
 
 ## Endpoints
 
-| Method | Endpoint                    | Description                        |
-| ------ | --------------------------- | ---------------------------------- |
-| GET    | `/workspaces`               | Retrieve all accessible workspaces |
-| GET    | `/workspaces/{workspaceId}` | Retrieve a workspace               |
-| POST   | `/workspaces`               | Create a workspace                 |
-| PATCH  | `/workspaces/{workspaceId}` | Update a workspace                 |
-| DELETE | `/workspaces/{workspaceId}` | Delete a workspace                 |
+| Method | Endpoint                        | Description                        |
+| ------ | ------------------------------- | ---------------------------------- |
+| GET    | `/api/workspaces`               | Retrieve all accessible workspaces |
+| GET    | `/api/workspaces/{workspaceId}` | Retrieve a workspace               |
+| POST   | `/api/workspaces`               | Create a workspace                 |
+| PATCH  | `/api/workspaces/{workspaceId}` | Update a workspace                 |
+| DELETE | `/api/workspaces/{workspaceId}` | Delete a workspace                 |
+
+---
+
+### Create Workspace
+
+| Method | Endpoint          |
+| ------ | ----------------- |
+| POST   | `/api/workspaces` |
+
+#### Request Body
+
+```json
+{
+  "name": "Engineering Team",
+  "description": "Optional workspace description"
+}
+```
+
+- `name` is required (1-100 characters, unique platform-wide).
+- `description` is optional (nullable, max 500 characters).
+- Automatically assigns the authenticated user as `OWNER`.
+- Returns `201 Created` with the workspace object.
 
 ---
 
 ## Member Management
 
-| Method | Endpoint                                       | Description        |
-| ------ | ---------------------------------------------- | ------------------ |
-| POST   | `/workspaces/{workspaceId}/members`            | Invite a member    |
-| PATCH  | `/workspaces/{workspaceId}/members/{memberId}` | Update member role |
-| DELETE | `/workspaces/{workspaceId}/members/{memberId}` | Remove a member    |
+| Method | Endpoint                                           | Description                |
+| ------ | -------------------------------------------------- | -------------------------- |
+| GET    | `/api/workspaces/{workspaceId}/members`            | Retrieve workspace members |
+| POST   | `/api/workspaces/{workspaceId}/members`            | Invite a member            |
+| PATCH  | `/api/workspaces/{workspaceId}/members/{memberId}` | Update member role         |
+| DELETE | `/api/workspaces/{workspaceId}/members/{memberId}` | Remove a member            |
+| POST   | `/api/workspaces/{workspaceId}/transfer-ownership` | Transfer ownership         |
 
 ---
 
-# 14. Project API
+### Invite Member
+
+| Method | Endpoint                                |
+| ------ | --------------------------------------- |
+| POST   | `/api/workspaces/{workspaceId}/members` |
+
+#### Authorization & Rules
+
+- Accessible to workspace `OWNER` and `ADMIN`.
+- The invited user must exist in the system and cannot already be a member of the workspace (`409 Conflict`).
+- The `OWNER` role cannot be assigned (`400 Bad Request`).
+- Returns `201 Created` with the created membership record and triggers an in-app notification to the invited user.
+
+---
+
+### Update Member Role
+
+| Method | Endpoint                                           |
+| ------ | -------------------------------------------------- |
+| PATCH  | `/api/workspaces/{workspaceId}/members/{memberId}` |
+
+#### Authorization & Rules
+
+- Accessible strictly to the workspace `OWNER` (`403 Forbidden` for other roles).
+- The `OWNER` role cannot be assigned via role update (`400 Bad Request`).
+- The workspace owner's membership role cannot be altered (`403 Forbidden`).
+- Returns `200 OK` with the updated membership.
+
+---
+
+### Remove Member
+
+| Method | Endpoint                                           |
+| ------ | -------------------------------------------------- |
+| DELETE | `/api/workspaces/{workspaceId}/members/{memberId}` |
+
+#### Authorization & Rules
+
+- Accessible to workspace `OWNER` and `ADMIN`.
+- The workspace owner cannot be removed (`403 Forbidden`).
+- Administrators cannot remove other administrators (`403 Forbidden`); only the Owner can remove an Administrator.
+- Returns `204 No Content` on successful removal.
+
+---
+
+### Transfer Workspace Ownership
+
+| Method | Endpoint                                           |
+| ------ | -------------------------------------------------- |
+| POST   | `/api/workspaces/{workspaceId}/transfer-ownership` |
+
+#### Authorization & Rules
+
+- Accessible strictly to the workspace `OWNER` (`403 Forbidden` for other roles).
+- `newOwnerId` is required in the body and must belong to an active member of the workspace.
+- Ownership cannot be transferred to the current owner (`400 Bad Request`).
+- Upon transfer, the previous owner becomes an `ADMIN` and the recipient becomes the new `OWNER`.
+- Returns `200 OK` with the updated workspace entity.
+
+---
+
+# 15. Project API
 
 The Project API manages projects within workspaces.
 
@@ -705,29 +813,69 @@ The Project API manages projects within workspaces.
 
 ## Endpoints
 
-| Method | Endpoint                | Description        |
-| ------ | ----------------------- | ------------------ |
-| GET    | `/projects`             | Retrieve projects  |
-| GET    | `/projects/{projectId}` | Retrieve a project |
-| POST   | `/projects`             | Create a project   |
-| PATCH  | `/projects/{projectId}` | Update a project   |
-| DELETE | `/projects/{projectId}` | Delete a project   |
+| Method | Endpoint                                 | Description                    |
+| ------ | ---------------------------------------- | ------------------------------ |
+| GET    | `/api/workspaces/{workspaceId}/projects` | Retrieve projects              |
+| GET    | `/api/projects/{projectId}`              | Retrieve a project             |
+| POST   | `/api/workspaces/{workspaceId}/projects` | Create a project               |
+| PATCH  | `/api/projects/{projectId}`              | Update a project               |
+| PATCH  | `/api/projects/{projectId}/archive`      | Archive or unarchive a project |
+| DELETE | `/api/projects/{projectId}`              | Delete a project               |
+
+---
+
+### Create Project
+
+| Method | Endpoint                                 |
+| ------ | ---------------------------------------- |
+| POST   | `/api/workspaces/{workspaceId}/projects` |
+
+#### Request Body
+
+```json
+{
+  "name": "SprintHub Core",
+  "description": "Optional project description",
+  "status": "PLANNING"
+}
+```
+
+- `name` is required (unique within workspace).
+- `description` is optional (nullable, max 1000 characters).
+- `status` is required (`PLANNING`, `ACTIVE`, `COMPLETED`).
+- Requires workspace `OWNER` or `ADMIN` role.
+- Returns `201 Created` with the project object.
 
 ---
 
 ## Archive Project
 
-| Method | Endpoint                        |
-| ------ | ------------------------------- |
-| PATCH  | `/projects/{projectId}/archive` |
+| Method | Endpoint                            |
+| ------ | ----------------------------------- |
+| PATCH  | `/api/projects/{projectId}/archive` |
 
 ### Description
 
-Archives a project without permanently removing it.
+Archives or unarchives a project without permanently removing it.
+
+#### Request Body
+
+```json
+{
+  "archived": true
+}
+```
+
+#### Authorization & Validation Rules
+
+- `archived` is required (`boolean`).
+- Requires workspace `OWNER` or `ADMIN` role (`403 Forbidden` otherwise).
+- Returns `400 Bad Request` if attempting to archive an already archived project (`archived: true`) or unarchive an already active project (`archived: false`).
+- Returns `200 OK` with the updated project object.
 
 ---
 
-# 15. Task API
+# 16. Task API
 
 The Task API manages project tasks.
 
@@ -735,53 +883,134 @@ The Task API manages project tasks.
 
 ## Endpoints
 
-| Method | Endpoint          | Description     |
-| ------ | ----------------- | --------------- |
-| GET    | `/tasks`          | Retrieve tasks  |
-| GET    | `/tasks/{taskId}` | Retrieve a task |
-| POST   | `/tasks`          | Create a task   |
-| PATCH  | `/tasks/{taskId}` | Update a task   |
-| DELETE | `/tasks/{taskId}` | Delete a task   |
+| Method | Endpoint                          | Description     |
+| ------ | --------------------------------- | --------------- |
+| GET    | `/api/projects/{projectId}/tasks` | Retrieve tasks  |
+| GET    | `/api/tasks/{taskId}`             | Retrieve a task |
+| POST   | `/api/projects/{projectId}/tasks` | Create a task   |
+| PATCH  | `/api/tasks/{taskId}`             | Update a task   |
+| DELETE | `/api/tasks/{taskId}`             | Delete a task   |
 
 ---
 
-## Task Assignment
+## Create Task
 
-| Method | Endpoint                 |
-| ------ | ------------------------ |
-| PATCH  | `/tasks/{taskId}/assign` |
+| Method | Endpoint                          |
+| ------ | --------------------------------- |
+| POST   | `/api/projects/{projectId}/tasks` |
+
+#### Authorization & Validation Rules
+
+- Accessible to workspace `OWNER`, `ADMIN`, and `MEMBER`.
+- Caller must be an active member of the workspace owning the project (`403 Forbidden` if not).
+- Tasks cannot be created within an archived project (`400 Bad Request`).
+- Task `title` must be unique within the project (`409 Conflict`).
+- If `assigneeId` is provided, the designated user must be an active member of the workspace (`403 Forbidden` if not).
+- Initial task status is automatically set to `TODO`.
+- Returns `201 Created` with the task object.
+
+---
+
+## Update Task
+
+| Method | Endpoint              |
+| ------ | --------------------- |
+| PATCH  | `/api/tasks/{taskId}` |
+
+#### Authorization & Validation Rules
+
+- Accessible to workspace `OWNER`, `ADMIN`, and `MEMBER`.
+- Caller must be an active member of the workspace owning the task's project (`403 Forbidden` if not).
+- Tasks in archived projects cannot be updated (`400 Bad Request`).
+- If `title` is updated, it must remain unique within the project (`409 Conflict`).
+- General task update does not modify task status, priority, or assignee (handled by dedicated endpoints).
+- Returns `200 OK` with the updated task object.
+
+---
+
+## Task Assignment & Unassignment
+
+| Method | Endpoint                     |
+| ------ | ---------------------------- |
+| PATCH  | `/api/tasks/{taskId}/assign` |
 
 ### Description
 
-Assigns a task to a workspace member.
+Assigns a task to a workspace member or unassigns the current assignee.
+
+#### Authorization & Validation Rules
+
+- Accessible strictly to workspace `OWNER` and `ADMIN`. Workspace `MEMBER` users receive `403 Forbidden`.
+- Tasks within an archived project cannot be assigned or unassigned (`400 Bad Request`).
+- Providing `{ "assigneeId": "<userId>" }` assigns the task to the specified workspace member (the target user must be an active member of the workspace; otherwise returns `403 Forbidden`) and generates a task assignment notification.
+- Providing `{ "assigneeId": null }` unassigns the task (clearing the current assignee without generating a notification).
+- Returns `200 OK` with the updated task object.
 
 ---
 
 ## Task Status
 
-| Method | Endpoint                 |
-| ------ | ------------------------ |
-| PATCH  | `/tasks/{taskId}/status` |
+| Method | Endpoint                     |
+| ------ | ---------------------------- |
+| PATCH  | `/api/tasks/{taskId}/status` |
 
 ### Description
 
 Updates the task status.
 
+#### Authorization & Validation Rules
+
+- Accessible to workspace `OWNER`, `ADMIN`, and `MEMBER`.
+- Caller must be an active member of the workspace owning the task's project (`403 Forbidden` if not).
+- Tasks within an archived project cannot have their status changed (`400 Bad Request`).
+- Valid status values: `BACKLOG`, `TODO`, `IN_PROGRESS`, `REVIEW`, `DONE`.
+- Automatically sets `completedAt` to the current timestamp when transitioned to `DONE`, or resets `completedAt` to `null` when transitioned out of `DONE`.
+- Triggers a notification to the task's assignee if one is assigned.
+- Returns `200 OK` with the updated task object.
+
 ---
 
 ## Task Priority
 
-| Method | Endpoint                   |
-| ------ | -------------------------- |
-| PATCH  | `/tasks/{taskId}/priority` |
+| Method | Endpoint                       |
+| ------ | ------------------------------ |
+| PATCH  | `/api/tasks/{taskId}/priority` |
 
 ### Description
 
 Updates the task priority.
 
+#### Authorization & Validation Rules
+
+- Accessible to workspace `OWNER`, `ADMIN`, and `MEMBER`.
+- Caller must be an active member of the workspace owning the task's project (`403 Forbidden` if not).
+- Tasks within an archived project cannot have their priority changed (`400 Bad Request`).
+- Valid priority values: `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`.
+- Triggers a notification to the task's assignee if one is assigned.
+- Returns `200 OK` with the updated task object.
+
 ---
 
-# 16. Notification API
+## Delete Task
+
+| Method | Endpoint              |
+| ------ | --------------------- |
+| DELETE | `/api/tasks/{taskId}` |
+
+### Description
+
+Permanently deletes a task.
+
+### Authorization Rules
+
+- A task can be deleted by the user who created it (`createdById`).
+- Workspace `OWNER` and `ADMIN` users can delete any task within the workspace.
+- If a workspace member attempts to delete a task created by another user, the API returns `403 Forbidden`.
+- Returns `204 No Content` on successful deletion.
+
+---
+
+# 17. Notification API
 
 The Notification API provides access to in-application notifications.
 
@@ -789,10 +1018,22 @@ The Notification API provides access to in-application notifications.
 
 ## Endpoints
 
-| Method | Endpoint                               | Description                 |
-| ------ | -------------------------------------- | --------------------------- |
-| GET    | `/notifications`                       | Retrieve notifications      |
-| PATCH  | `/notifications/{notificationId}/read` | Mark a notification as read |
+| Method | Endpoint                                   | Description                 |
+| ------ | ------------------------------------------ | --------------------------- |
+| GET    | `/api/notifications`                       | Retrieve notifications      |
+| PATCH  | `/api/notifications/{notificationId}/read` | Mark a notification as read |
+
+---
+
+## Notification Access
+
+Users can retrieve only their own notifications.
+
+The authenticated user is determined from the access token.
+
+`GET /api/notifications` returns only notifications associated with the authenticated user.
+
+The API does not provide an endpoint for directly creating notifications. Notifications are generated internally as a result of business events handled by the application.
 
 ---
 
@@ -800,28 +1041,78 @@ The Notification API provides access to in-application notifications.
 
 The MVP supports only in-application notifications.
 
-Future versions may introduce:
+The following notification events are supported:
 
-- Email notifications
-- Push notifications
-- Real-time notifications
+- Workspace invitations.
+- Project creation.
+- Task assignment.
+- Task status changes.
+- Task priority changes.
 
-These notification channels are intentionally excluded from the MVP.
+Notification recipients depend on the event:
+
+- Workspace invitation notifications are sent to the invited user.
+- Project creation notifications are sent to all members of the workspace.
+- Task assignment notifications are sent only to the user assigned to the task.
+- Task status change notifications are sent only to the user assigned to the task.
+- Task priority change notifications are sent only to the user assigned to the task.
+- If a task has no assignee, no notification is created for task assignment, status change, or priority change events.
 
 ---
 
-# 17. Health API
+# 18. Dashboard API
 
-The Health API provides endpoints to verify the operational status of SprintHub services.
+The Dashboard API provides high-level consolidated project and task metrics for a specific workspace.
 
 ---
 
-## Health Endpoints
+## Get Workspace Dashboard
 
-| Method | Endpoint           | Purpose                    |
-| ------ | ------------------ | -------------------------- |
-| GET    | `/health`          | Overall application health |
-| GET    | `/health/database` | Database connectivity      |
+| Method | Endpoint                                  | Description                   |
+| ------ | ----------------------------------------- | ----------------------------- |
+| GET    | `/api/workspaces/{workspaceId}/dashboard` | Retrieve consolidated metrics |
+
+### Description
+
+Retrieves aggregate project and task counters for the specified workspace. This endpoint prevents the frontend from having to request raw collections of projects and tasks to compute metrics on the client side.
+
+### Authorization & Validation Rules
+
+- Accessible to workspace `OWNER`, `ADMIN`, and `MEMBER`.
+- Caller must be an active member of the specified workspace.
+- If the user is not a member of the workspace (or the workspace does not exist), the API returns `404 Not Found` to prevent workspace enumeration (anti-IDOR).
+
+### Response (`200 OK`)
+
+```json
+{
+  "activeProjects": 3,
+  "pendingTasks": 12,
+  "completedTasks": 25,
+  "overdueTasks": 2
+}
+```
+
+#### Field Specifications
+
+- `activeProjects`: Count of projects in the workspace where `status == "ACTIVE"` and `archived == false`.
+- `pendingTasks`: Count of tasks across the workspace projects whose status is `BACKLOG`, `TODO`, `IN_PROGRESS`, or `REVIEW`.
+- `completedTasks`: Count of tasks across the workspace projects whose status is `DONE`.
+- `overdueTasks`: Count of tasks across the workspace projects that are not completed (`status != "DONE"`) and whose `dueDate` is earlier than the current timestamp.
+
+---
+
+# 19. Health API
+
+The Health API provides an endpoint to verify the operational status of SprintHub services.
+
+---
+
+## Health Endpoint
+
+| Method | Endpoint      | Purpose                    |
+| ------ | ------------- | -------------------------- |
+| GET    | `/api/health` | Overall application health |
 
 ---
 
@@ -829,104 +1120,133 @@ The Health API provides endpoints to verify the operational status of SprintHub 
 
 ```json
 {
-  "status": "healthy",
-  "services": {
-    "application": "up",
-    "database": "up"
-  }
+  "success": true,
+  "message": "SprintHub API is running"
 }
 ```
+
+---
+
+# 20. Real-Time Events API
+
+SprintHub provides a Server-Sent Events (SSE) stream for live updates across clients.
+
+| Method | Endpoint      | Description                                |
+| ------ | ------------- | ------------------------------------------ |
+| GET    | `/api/events` | Establish persistent SSE streaming session |
+
+### Query Parameters
+
+- `token`: Bearer access token for session authorization (as EventSource does not support custom headers natively).
+
+### Broadcast Events
+
+- `WORKSPACE_MUTATED`: Fired upon workspace creation, update, deletion, or member role changes (`member_added`, `member_removed`, `ownership_transferred`).
+- `PROJECT_MUTATED`: Fired upon project creation, update, archiving, or deletion.
+- `TASK_MUTATED`: Fired upon task creation, update, assignment, or deletion.
+- `NOTIFICATION_CREATED`: Fired when a user receives an in-app alert.
 
 ---
 
 ## Future Health Checks
 
-As the platform evolves, additional health endpoints may be introduced for infrastructure components such as:
+As the platform evolves, additional health endpoints may be introduced for future infrastructure components such as:
 
-- Distributed caching
-- Background workers
-- Queue processing
+- Redis distributed caching.
+- Background workers.
+- Queue processing.
 
 These endpoints are intentionally excluded from the MVP.
 
 ---
 
-# 18. Pagination Standards
+# 20. Filtering Standards
 
-Collection endpoints support pagination to improve performance and reduce response size.
-
----
-
-## Query Parameters
-
-| Parameter | Description              | Default |
-| --------- | ------------------------ | ------- |
-| page      | Page number              | 1       |
-| pageSize  | Number of items per page | 20      |
+Filtering is supported for resources where filtering criteria are defined by the product requirements.
 
 ---
 
-## Example
+## Workspaces
 
-```text
-GET /tasks?page=2&pageSize=20
-```
+Workspaces do not support attribute-based filtering.
 
 ---
 
-## Pagination Response
+## Projects
 
-```json
-{
-  "pagination": {
-    "page": 2,
-    "pageSize": 20,
-    "totalItems": 120,
-    "totalPages": 6
-  }
-}
-```
+Projects support filtering by:
+
+- `status`
+- `archived`
 
 ---
 
-# 19. Filtering Standards
+## Tasks
 
-Collection endpoints may support filtering using query parameters.
+Tasks support filtering by:
+
+- `status`
+- `priority`
+- `assigneeId`
+- `dueDate`
 
 ---
 
 ## Example
 
 ```text
-GET /tasks?status=IN_PROGRESS&priority=HIGH
+GET /api/projects/{projectId}/tasks?status=IN_PROGRESS&priority=HIGH
 ```
 
 ---
 
-## Supported Filters
+# 21. Sorting Standards
 
-Typical filters include:
-
-- Status
-- Priority
-- Assignee
-- Workspace
-- Project
-
-Available filters depend on the resource being queried.
+Collection resources support sorting by the fields defined for each resource.
 
 ---
 
-# 20. Sorting Standards
+## Workspaces
 
-Collection endpoints may support server-side sorting.
+Workspaces support sorting by:
+
+- `name`
+- `createdAt`
+
+---
+
+## Projects
+
+Projects support sorting by:
+
+- `name`
+- `createdAt`
+
+---
+
+## Tasks
+
+Tasks support sorting by:
+
+- `createdAt`
+- `dueDate`
+- `priority`
+
+---
+
+## Sort Order
+
+Supported sort orders are:
+
+- `asc`
+- `desc`
 
 ---
 
 ## Example
 
 ```text
-GET /tasks?sortBy=createdAt&order=desc
+GET /api/workspaces?sortBy=name&sortOrder=asc
 ```
 
 ---
@@ -936,21 +1256,49 @@ GET /tasks?sortBy=createdAt&order=desc
 | Parameter | Description            |
 | --------- | ---------------------- |
 | sortBy    | Field used for sorting |
-| order     | asc or desc            |
+| sortOrder | asc or desc            |
 
 ---
 
-# 21. Search Standards
+# 22. Search Standards
 
-Resources may support text-based searching.
+Search is supported for collection resources using the primary searchable field defined for each resource.
+
+---
+
+## Workspaces
+
+Workspaces support search by:
+
+- `name`
+
+---
+
+## Projects
+
+Projects support search by:
+
+- `name`
+
+---
+
+## Tasks
+
+Tasks support search by:
+
+- `title`
+
+Task search is limited exclusively to the `title` field.
 
 ---
 
 ## Example
 
 ```text
-GET /projects?search=sprint
+GET /api/workspaces/{workspaceId}/projects?search=sprint
 ```
+
+Search matches only the project `name`.
 
 ---
 
@@ -960,11 +1308,12 @@ Search should:
 
 - Be case-insensitive.
 - Match partial text where appropriate.
-- Return paginated results.
+
+Search is restricted to the primary `name` field of workspaces and projects, and to the `title` field of tasks.
 
 ---
 
-# 22. Rate Limiting
+# 23. Rate Limiting
 
 Rate limiting protects the API from abuse and excessive traffic.
 
@@ -989,7 +1338,7 @@ HTTP 429 Too Many Requests
 
 ---
 
-# 23. API Security
+# 24. API Security
 
 SprintHub applies multiple security mechanisms across the API.
 
@@ -1024,18 +1373,18 @@ Sensitive information is never exposed through API responses.
 
 ---
 
-# 24. API Versioning Strategy
+# 25. API Versioning Strategy
 
 SprintHub follows a versioned API strategy to support future evolution without breaking existing clients.
 
 ---
 
-## Current Version
+## Current API Base Path
 
 The MVP exposes all endpoints under:
 
 ```text
-/api/v1
+/api
 ```
 
 ---
@@ -1055,7 +1404,7 @@ Non-breaking additions, such as optional fields or new endpoints, may be introdu
 
 ---
 
-# 25. OpenAPI & Swagger
+# 26. OpenAPI & Swagger
 
 SprintHub supports API documentation through the OpenAPI Specification.
 
@@ -1075,13 +1424,20 @@ The API documentation should:
 
 ## Documentation Standard
 
-The project follows the OpenAPI Specification and may expose interactive documentation through Swagger UI during development.
+SprintHub documents its REST API using:
 
-API documentation should remain synchronized with the implementation.
+- OpenAPI Specification
+- Swagger UI
+
+OpenAPI defines the API contract, including endpoints, request and response schemas, authentication requirements, and available parameters.
+
+Swagger UI provides interactive API documentation during development.
+
+The ADS serves as the authoritative design reference for the API, while the OpenAPI documentation must remain synchronized with the implementation.
 
 ---
 
-# 26. API Best Practices
+# 27. API Best Practices
 
 SprintHub follows industry-standard API design practices.
 
@@ -1112,27 +1468,56 @@ Errors should:
 
 ---
 
-# 27. Future API Evolution
+# 28. Future API Evolution
 
-The API has been designed to evolve without requiring major redesign.
+The API has been designed to evolve as new SprintHub capabilities are introduced.
 
-Potential future capabilities include:
+Potential future API capabilities include:
+
+## Collaboration
+
+- Comment endpoints.
+- File attachment endpoints.
+- Activity timeline endpoints.
+- Mention endpoints.
+- Team chat endpoints.
+
+## Productivity
+
+- Label endpoints.
+- Custom field endpoints.
+- Time tracking endpoints.
+- Sprint planning endpoints.
+- Kanban board improvement endpoints.
+
+## Notifications
 
 - Email notification endpoints.
 - Push notification endpoints.
-- Real-time communication endpoints.
-- File upload endpoints.
-- Comment endpoints.
-- Activity timeline endpoints.
-- Calendar integration endpoints.
+- Real-time notification endpoints.
 
-Future infrastructure improvements may also introduce endpoints related to background processing or additional platform capabilities.
+## Integrations
 
-These features are intentionally excluded from the MVP.
+- Google Calendar integration endpoints.
+- GitHub integration endpoints.
+- Slack integration endpoints.
+- Microsoft Teams integration endpoints.
+
+## Infrastructure
+
+Future infrastructure improvements may introduce API capabilities related to:
+
+- Redis distributed caching.
+- Background workers.
+- Queue processing.
+- WebSockets.
+- Horizontal scaling.
+
+These capabilities are intentionally excluded from the MVP and may be introduced in future versions.
 
 ---
 
-# 28. API Change Management
+# 29. API Change Management
 
 API changes should be introduced in a controlled and backward-compatible manner.
 
@@ -1159,7 +1544,7 @@ Deprecated endpoints should:
 
 ---
 
-# 29. Conclusion
+# 30. Conclusion
 
 The API Design Specification defines the communication contract for SprintHub.
 

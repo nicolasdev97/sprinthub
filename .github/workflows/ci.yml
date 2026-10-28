@@ -1,0 +1,150 @@
+name: SprintHub CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: true
+
+jobs:
+  lint-and-typecheck:
+    name: Lint, Format & Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22 LTS with npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies cleanly
+        run: npm ci
+
+      - name: Generate Prisma Client types
+        run: npm run db:generate
+
+      - name: Run ESLint across workspaces
+        run: npm run lint
+
+      - name: Verify code formatting with Prettier
+        run: npm run format:check
+
+      - name: Run strict TypeScript typecheck (API & Web)
+        run: npm run typecheck
+
+      - name: Validate OpenAPI 3.0.3 specification
+        run: npm run docs:validate
+
+  test-backend:
+    name: Backend Unit & Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sprinthub_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d sprinthub_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sprinthub_test
+      JWT_SECRET: test-jwt-secret-key-for-integration-tests-only
+      JWT_REFRESH_SECRET: test-jwt-refresh-secret-key-for-integration
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22 LTS with npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies cleanly
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run db:generate
+
+      - name: Apply Prisma migrations to test database
+        run: npm run db:migrate:deploy
+
+      - name: Run backend unit tests (Vitest)
+        run: npm run test:api
+
+      - name: Run backend integration tests (Vitest + Supertest)
+        run: npm run test:integration
+
+  test-frontend:
+    name: Frontend Unit & Component Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22 LTS with npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies cleanly
+        run: npm ci
+
+      - name: Run frontend unit & component tests (Jest)
+        run: npm run test:web -- --ci
+
+  build:
+    name: Production Build (API & Web)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs:
+      - lint-and-typecheck
+      - test-backend
+      - test-frontend
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sprinthub?schema=public
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22 LTS with npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies cleanly
+        run: npm ci --include=dev
+
+      - name: Build backend API (Prisma Generate + TypeScript)
+        run: npm run build:api
+
+      - name: Build frontend Web (Next.js Standalone)
+        run: npm run build:web

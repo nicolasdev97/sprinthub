@@ -8,10 +8,10 @@
 | ---------------- | ----------------------------------------- |
 | **Document**     | Software Requirements Specification (SRS) |
 | **Project**      | SprintHub                                 |
-| **Version**      | 1.0                                       |
+| **Version**      | 1.1                                       |
 | **Status**       | Approved                                  |
 | **Owner**        | Nicolás Palacio                           |
-| **Last Updated** | July 2026                                 |
+| **Last Updated** | September 2026                            |
 
 ---
 
@@ -76,7 +76,7 @@ Each workspace contains:
 - Dashboards
 - Notifications
 
-Every user belongs to one or more workspaces and interacts with projects according to their assigned role.
+Users may belong to one or more workspaces and interact with projects according to their assigned role.
 
 The application follows a modular architecture that separates business capabilities into well-defined domains, allowing the platform to evolve while maintaining a clear separation of responsibilities.
 
@@ -153,7 +153,7 @@ The following functional requirements define the core capabilities of the Sprint
 
 #### Description
 
-The system shall allow a guest user to create a new account using their name, email address, and password.
+The system shall allow a guest user to create a new account using their first name, last name, email address, and password.
 
 #### Preconditions
 
@@ -232,9 +232,10 @@ The system shall terminate the active user session.
 
 #### Acceptance Criteria
 
-- Refresh Token is invalidated.
-- Authentication cookies are removed.
-- User session is terminated successfully.
+- Refresh Token is invalidated by deleting its persisted record from the database.
+- Authentication cookies (`refreshToken`) are removed.
+- User session is terminated successfully with `204 No Content`.
+- **Multi-Tab Session Termination:** A broadcast signal is dispatched across all open browser tabs via `BroadcastChannel` (and `localStorage` fallback) to immediately clear authentication memory, wipe cached query data, and redirect to `/login`.
 
 ---
 
@@ -251,11 +252,17 @@ The system shall terminate the active user session.
 
 Authenticated users shall be able to create a workspace.
 
+Each workspace includes:
+
+- Name
+- Description
+
 #### Acceptance Criteria
 
 - Workspace name is required.
 - Creator automatically becomes the Workspace Owner.
 - Workspace is successfully persisted.
+- Supports optional initial team member invitations (email and role) configured directly within the creation modal.
 
 ---
 
@@ -268,7 +275,12 @@ Authenticated users shall be able to create a workspace.
 
 #### Description
 
-Workspace owners may update workspace information.
+Workspace owners may update workspace information, including:
+
+- Name
+- Description
+
+Workspace description is optional.
 
 ---
 
@@ -283,9 +295,32 @@ Workspace owners may update workspace information.
 
 Only workspace owners may permanently delete a workspace.
 
+#### Acceptance Criteria
+
+- Only users with the `OWNER` role can initiate workspace deletion.
+- Requires typing the exact workspace name in the confirmation dialog to activate deletion.
+- Deletion permanently removes the workspace and all associated projects, tasks, and member records.
+- Dispatches real-time and cross-tab synchronization events.
+- Redirects the user to `/workspaces` with a confirmation toast.
+
 ---
 
-### RF-007 – Invite Member
+### RF-007 – Invite and View Members
+
+| Property     | Value                  |
+| ------------ | ---------------------- |
+| **Priority** | High                   |
+| **Actor**    | Owner / Admin / Member |
+
+#### Description
+
+Workspace members shall be able to view the list of members belonging to their workspace.
+
+Workspace owners and administrators shall be able to add users to the workspace.
+
+---
+
+### RF-008 – Manage Roles and Remove Members
 
 | Property     | Value         |
 | ------------ | ------------- |
@@ -294,20 +329,9 @@ Only workspace owners may permanently delete a workspace.
 
 #### Description
 
-Workspace owners and administrators shall be able to invite users via email.
+##### Role Management
 
----
-
-### RF-008 – Manage Roles
-
-| Property     | Value |
-| ------------ | ----- |
-| **Priority** | High  |
-| **Actor**    | Owner |
-
-#### Description
-
-Workspace owners may change member roles.
+Only the Workspace Owner may change member roles.
 
 Supported roles include:
 
@@ -315,11 +339,48 @@ Supported roles include:
 - ADMIN
 - MEMBER
 
+The `OWNER` role cannot be assigned to another member via role modification, and the workspace owner's role cannot be updated.
+
+##### Member Removal
+
+Workspace Owners and Administrators may remove members from the workspace.
+
+Rules governing member removal:
+
+- The Workspace Owner cannot be removed from the workspace.
+- Administrators cannot remove other administrators; only the Owner can remove an Admin.
+- When a member is removed, their workspace membership record is deleted. Tasks previously assigned to that member remain and their `assigneeId` is set to `null`.
+
+---
+
+### RF-009 – Search and Sort Workspaces
+
+| Property     | Value  |
+| ------------ | ------ |
+| **Priority** | Medium |
+| **Actor**    | Member |
+
+#### Description
+
+Users shall be able to search and sort workspaces they have access to.
+
+Search shall match only the workspace `name`.
+
+Search shall perform a case-insensitive partial match (`contains`) against the workspace `name`.
+
+Workspace listing shall support:
+
+- Search by `name`.
+- Sorting by `name` or `createdAt`.
+- Sort order: `asc` or `desc`.
+
+Workspace filtering is not supported.
+
 ---
 
 ## Project Module
 
-### RF-009 – Create Project
+### RF-010 – Create Project
 
 | Property     | Value         |
 | ------------ | ------------- |
@@ -330,9 +391,16 @@ Supported roles include:
 
 Authorized users shall be able to create projects within a workspace.
 
+Each project includes:
+
+- Name
+- Description
+- Status
+- Archived status
+
 ---
 
-### RF-010 – Update Project
+### RF-011 – Update Project
 
 | Property     | Value         |
 | ------------ | ------------- |
@@ -341,11 +409,17 @@ Authorized users shall be able to create projects within a workspace.
 
 #### Description
 
-Authorized users may update project information.
+Authorized users may update project information, including:
+
+- Name
+- Description
+- Status
+
+Project description is optional.
 
 ---
 
-### RF-011 – Archive Project
+### RF-012 – Archive Project
 
 | Property     | Value         |
 | ------------ | ------------- |
@@ -358,7 +432,22 @@ Projects may be archived instead of being permanently deleted.
 
 ---
 
-### RF-012 – Delete Project
+### RF-013 – Unarchive Project
+
+| Property     | Value         |
+| ------------ | ------------- |
+| **Priority** | Medium        |
+| **Actor**    | Owner / Admin |
+
+#### Description
+
+Authorized users shall be able to unarchive a previously archived project.
+
+When a project is unarchived, its `archived` status shall be set to `false`.
+
+---
+
+### RF-014 – Delete Project
 
 | Property     | Value         |
 | ------------ | ------------- |
@@ -369,11 +458,50 @@ Projects may be archived instead of being permanently deleted.
 
 Authorized users may permanently delete projects.
 
+#### Acceptance Criteria
+
+- Only users with `OWNER` or `ADMIN` role can delete a project.
+- Requires typing the exact project name in the confirmation dialog to activate deletion.
+- Deleting a project permanently deletes all associated tasks.
+- Dispatches real-time and cross-tab synchronization events.
+- Redirects the user to `/workspaces/{workspaceId}/projects` with a confirmation toast.
+
+---
+
+### RF-015 – Search and Filter Projects
+
+| Property     | Value  |
+| ------------ | ------ |
+| **Priority** | Medium |
+| **Actor**    | Member |
+
+#### Description
+
+Users shall be able to search, filter, and sort projects within workspaces they have access to.
+
+Search shall match only the project `name`.
+
+Search shall perform a case-insensitive partial match (`contains`) against the project `name`.
+
+Project listing shall support:
+
+- Search by `name`.
+- Filter by `status`.
+- Filter by `archived` status.
+- Sorting by `name` or `createdAt`.
+- Sort order: `asc` or `desc`.
+
+Supported project statuses are:
+
+- PLANNING
+- ACTIVE
+- COMPLETED
+
 ---
 
 ## Task Module
 
-### RF-013 – Create Task
+### RF-016 – Create Task
 
 | Property     | Value  |
 | ------------ | ------ |
@@ -387,14 +515,18 @@ Users shall be able to create tasks.
 Each task includes:
 
 - Title
-- Description
+- Description (optional)
 - Status
 - Priority
 - Due Date
+- Creator (`createdById`)
+- Optional Assignee (`assigneeId`)
+
+The `assigneeId` field is optional and may reference a workspace member.
 
 ---
 
-### RF-014 – Update Task
+### RF-017 – Update Task
 
 | Property     | Value  |
 | ------------ | ------ |
@@ -403,11 +535,28 @@ Each task includes:
 
 #### Description
 
-Users may update task information.
+Users may update the following task information:
+
+- Title
+- Description
+- Due Date
 
 ---
 
-### RF-015 – Delete Task
+### RF-018 – Delete Task
+
+| Property     | Value                                 |
+| ------------ | ------------------------------------- |
+| **Priority** | High                                  |
+| **Actor**    | Owner / Admin / Task Creator (Member) |
+
+#### Description
+
+A task may be permanently deleted by the user who created it, or by any workspace Owner or Admin. Workspace members cannot delete tasks created by other users.
+
+---
+
+### RF-019 – Assign Task
 
 | Property     | Value         |
 | ------------ | ------------- |
@@ -416,24 +565,28 @@ Users may update task information.
 
 #### Description
 
-Authorized users may permanently delete tasks.
+Authorized users may assign a task to a workspace member through the dedicated task assignment operation (`PATCH /api/tasks/{taskId}/assign`) by providing a valid `assigneeId`.
+
+The `assigneeId` field is not part of the general task update operation.
 
 ---
 
-### RF-016 – Assign Task
+### RF-020 – Unassign Task
 
 | Property     | Value         |
 | ------------ | ------------- |
-| **Priority** | High          |
+| **Priority** | Medium        |
 | **Actor**    | Owner / Admin |
 
 #### Description
 
-Tasks may be assigned to workspace members.
+Authorized users shall be able to remove the user assigned to a task through the dedicated task assignment operation (`PATCH /api/tasks/{taskId}/assign`) by setting `assigneeId` to `null`.
+
+After unassignment, the task shall have no assigned user and no assignment notification is generated.
 
 ---
 
-### RF-017 – Update Task Status
+### RF-021 – Update Task Status
 
 | Property     | Value  |
 | ------------ | ------ |
@@ -444,17 +597,21 @@ Tasks may be assigned to workspace members.
 
 Users may update the task status.
 
+When a task changes to `DONE`, the system shall set `completedAt`.
+
+When a task changes from `DONE` to another status, the system shall reset `completedAt` to `null`.
+
 Supported statuses:
 
-- Backlog
-- To Do
-- In Progress
-- Review
-- Done
+- BACKLOG
+- TODO
+- IN_PROGRESS
+- REVIEW
+- DONE
 
 ---
 
-### RF-018 – Update Task Priority
+### RF-022 – Update Task Priority
 
 | Property     | Value  |
 | ------------ | ------ |
@@ -463,20 +620,65 @@ Supported statuses:
 
 #### Description
 
-Users may update the task priority.
+Users may update the task priority through the dedicated task priority operation.
+
+The `priority` field is not part of the general task update operation.
 
 Supported priorities:
 
-- Low
-- Medium
-- High
-- Critical
+- LOW
+- MEDIUM
+- HIGH
+- CRITICAL
+
+
+---
+
+### RF-023 – Search and Filter Tasks
+
+| Property     | Value  |
+| ------------ | ------ |
+| **Priority** | Medium |
+| **Actor**    | Member |
+
+#### Description
+
+Users shall be able to search, filter, and sort tasks within projects they have access to.
+
+Search shall match only the task `title`.
+
+Search shall perform a case-insensitive partial match (`contains`) against the task `title`.
+
+Task listing shall support:
+
+- Search by `title`.
+- Filter by `status`.
+- Filter by `priority`.
+- Filter by `assigneeId`.
+- Filter by `dueDate`.
+- Sorting by `createdAt`, `dueDate`, or `priority`.
+- Sort order: `asc` or `desc`.
+
+Supported task statuses are:
+
+- BACKLOG
+- TODO
+- IN_PROGRESS
+- REVIEW
+- DONE
+
+Supported task priorities are:
+
+- LOW
+- MEDIUM
+- HIGH
+- CRITICAL
 
 ---
 
 ## Dashboard Module
 
-### RF-019 – Dashboard Metrics
+### RF-024 – Dashboard Metrics
 
 | Property     | Value  |
 | ------------ | ------ |
@@ -485,19 +687,176 @@ Supported priorities:
 
 #### Description
 
-The dashboard shall display:
+The system shall provide two complementary metric layers:
 
-- Active Projects
-- Pending Tasks
-- Completed Tasks
-- Overdue Tasks
-- Productivity Summary
+1. **Personal Dashboard (/dashboard):** Cross-workspace hub displaying:
+   - **Assigned to You:** Count and list of active tasks assigned to the authenticated user across all workspaces.
+   - **Needs Attention:** Count of tasks requiring immediate attention (CRITICAL priority or overdue).
+   - **Due This Week:** Proactive count of tasks scheduled for completion within the next 7 days.
+   - **Active Projects:** Count of non-archived projects with ACTIVE status across workspaces.
+   - **Workload & Health:** Analytic widgets computing sprint task completion rate (%), overdue risk volume, and critical/high priority distribution.
+   - **Recent Projects:** Direct access cards with workspace badges and task board links.
+
+2. **Workspace Dashboard (/workspaces/{workspaceId}/projects):** Workspace-scoped metrics aggregating:
+   - Total Projects
+   - Active Projects
+   - Pending Tasks
+   - Completed Tasks
+   - Overdue Tasks
+   - Overall Workspace Task Completion Rate (%)
+
+---
+
+## Global Navigation Hubs Module
+
+### RF-026 – Global Projects Hub
+
+| Property     | Value  |
+| ------------ | ------ |
+| **Priority** | High   |
+| **Actor**    | Member |
+
+#### Description
+
+The system shall provide a centralized Projects Hub (/projects) aggregating all projects across the user\'s accessible workspaces, supporting:
+- Keyword search by project name.
+- Workspace filtering across active workspaces.
+- Lifecycle status filtering (PLANNING, ACTIVE, ON_HOLD, COMPLETED, CANCELLED).
+- Archive status toggle (Active Projects, Archived Projects, All).
+- Dynamic navigation to project task boards and project settings.
+
+---
+
+### RF-027 – Global Tasks Hub
+
+| Property     | Value  |
+| ------------ | ------ |
+| **Priority** | High   |
+| **Actor**    | Member |
+
+#### Description
+
+The system shall provide a cross-workspace Tasks Hub (/tasks) aggregating all tasks across the user\'s projects and workspaces, supporting:
+- Full-text search matching task titles and descriptions.
+- Cascading filters: Selecting a workspace filters the selectable projects dropdown to match that workspace.
+- User scope filter (Assigned to me, Created by me, Unassigned, or specific workspace members).
+- Multi-criteria status and priority filtering.
+- Paginated results table with deep-link task drawer opening.
+- Direct contextual back navigation preserving filter state.
+
+---
+
+### RF-028 – Command Palette & Keyboard Productivity
+
+| Property     | Value  |
+| ------------ | ------ |
+| **Priority** | Medium |
+| **Actor**    | Member |
+
+#### Description
+
+The system shall provide power-user keyboard navigation features:
+- **Command Palette (Ctrl+K):** Global quick-search dialog allowing instant fuzzy jumping between views (Dashboard, Workspaces, Projects Hub, Tasks Hub) and individual projects.
+- **Keyboard Shortcuts Dialog (?):** Modal catalog documenting available global keyboard shortcuts.
+- **Contextual Navigation Preservation:** URL parameters (?from=) ensuring that returning from boards or settings screens brings the user back to their originating hub.
+
+---
+
+---
+
+### RF-031 - Transfer Workspace Ownership
+
+| Property     | Value |
+| ------------ | ----- |
+| **Code**     | RF-031 |
+| **Name**     | Transfer Workspace Ownership |
+| **Priority** | High |
+| **Actor**    | Owner |
+
+#### Description
+
+The system shall allow the current Workspace Owner to transfer workspace ownership to any active member of the workspace.
+
+#### Acceptance Criteria
+
+- Only the active `OWNER` of the workspace can trigger ownership transfer.
+- The target user must already be an active member of the workspace.
+- Transferring ownership promotes the target member to `OWNER` and demotes the previous owner to `ADMIN`.
+- Real-time mutation event `WORKSPACE_MUTATED` (action: `ownership_transferred`) is broadcast to all clients.
+
+---
+
+## User Management Module
+
+### RF-032 - Manage User Profile
+
+| Property     | Value |
+| ------------ | ----- |
+| **Code**     | RF-032 |
+| **Name**     | Manage User Profile |
+| **Priority** | Medium |
+| **Actor**    | Member, Admin, Owner |
+
+#### Description
+
+The system shall allow authenticated users to view their account details and update their personal profile information.
+
+#### Acceptance Criteria
+
+- User can view their email, first name, last name, and account timestamps.
+- User can update their first name and last name via `PUT /api/users/me`.
+- Profile updates immediately synchronize across all open browser tabs via `crossTabSync`.
+
+---
+
+### RF-033 - Delete User Account
+
+| Property     | Value |
+| ------------ | ----- |
+| **Code**     | RF-033 |
+| **Name**     | Delete User Account |
+| **Priority** | High |
+| **Actor**    | Member, Admin, Owner |
+
+#### Description
+
+The system shall allow an authenticated user to permanently delete their account.
+
+#### Acceptance Criteria
+
+- Requires explicit confirmation input matching the user's exact full name (`confirmationName`).
+- If the user owns one or more workspaces, the deletion request is rejected with `400 Bad Request` requiring the user to transfer ownership or delete owned workspaces first.
+- Upon deletion, all user memberships, notifications, and refresh tokens are removed in cascade.
+- All active sessions are terminated across all open browser tabs with `AUTH_LOGOUT`.
+
+---
+
+## User Interface & Theme Module
+
+### RF-034 - Theme Customization (Dark / Light Mode)
+
+| Property     | Value |
+| ------------ | ----- |
+| **Code**     | RF-034 |
+| **Name**     | Theme Customization (Dark / Light Mode) |
+| **Priority** | Medium |
+| **Actor**    | Guest, Member, Admin, Owner |
+
+#### Description
+
+The system shall provide light and dark visual themes with user preference persistence.
+
+#### Acceptance Criteria
+
+- Users can switch between dark and light themes using the theme toggle.
+- Theme preference persists in browser storage and initializes seamlessly on app startup without layout shift.
+- System preference is respected by default when no explicit preference is set.
 
 ---
 
 ## Notification Module
 
-### RF-020 – Notifications
+### RF-025 – Notifications
 
 | Property     | Value  |
 | ------------ | ------ |
@@ -506,15 +865,48 @@ The dashboard shall display:
 
 #### Description
 
-The system shall generate in-application notifications when:
+The system shall generate in-application notifications for the following events:
 
-- A task is assigned.
-- A workspace invitation is sent.
-- A project status changes.
+- A user is added to a workspace.
+- A project is created within a workspace.
+- A task is assigned to a user.
+- A task status changes.
+- A task priority changes.
+
+#### Notification Recipients
+
+The notification recipient depends on the event:
+
+- **Member added to workspace:** The added user receives the notification.
+- **Project creation:** All members of the workspace receive the notification.
+- **Task assignment:** Only the user assigned to the task receives the notification.
+- **Task status changes:** Only the user assigned to the task receives the notification.
+- **Task priority changes:** Only the user assigned to the task receives the notification.
+
+If a task has no assignee, no notification shall be generated for task assignment, task status changes, or task priority changes.
+
+#### Notification State
+
+Each notification shall:
+
+- Belong to exactly one user.
+- Be created with `isRead` set to `false`.
+- Allow the recipient to mark the notification as read.
+
+#### Acceptance Criteria
+
+- A notification is created when a user is added to a workspace.
+- A notification is created for all workspace members when a project is created.
+- A notification is created for the assigned user when a task is assigned.
+- A notification is created for the assigned user when a task status changes.
+- A notification is created for the assigned user when a task priority changes.
+- No task notification is created when the task has no assignee.
+- Notifications are initially marked as unread.
+- Users can mark their own notifications as read.
 
 > **Note**
 >
-> Email notifications, push notifications, and real-time notifications are outside the scope of the MVP and are planned for future releases.
+> In-application real-time notifications and entity state updates via Server-Sent Events (SSE) and cross-tab synchronization are included in the MVP. External delivery channels (email notifications and mobile push notifications) are outside the scope of the MVP and are planned for future releases.
 
 ---
 
@@ -615,39 +1007,91 @@ A user email address must be unique.
 
 ---
 
-### BR-002 – Workspace Ownership
+### BR-002 – Unique Workspace Name
+
+Workspace names must be unique platform-wide. This rule is enforced both through application service validation and a unique database index (`Workspace.name @unique`).
+
+---
+
+### BR-003 – Unique Project Name
+
+Project names must be unique within their workspace. This rule is enforced both through application service validation and a composite unique database index (`Project(workspaceId, name)`).
+
+---
+
+### BR-004 – Unique Task Title
+
+Task titles must be unique within their project. This rule is enforced both through application service validation and a composite unique database index (`Task(projectId, title)`).
+
+---
+
+### BR-005 – Workspace Ownership
 
 Each workspace must have exactly **one Owner**.
 
+The workspace owner is explicitly assigned when the workspace is created.
+
+The `OWNER` role must remain consistent with the workspace ownership relationship.
+
 ---
 
-### BR-003 – Workspace Deletion
+### BR-006 – Workspace Deletion
 
 Only the Workspace Owner can permanently delete a workspace.
 
+Deleting a workspace also deletes all projects belonging to that workspace.
+
 ---
 
-### BR-004 – Workspace Access
+### BR-007 – Project Deletion
+
+Authorized users may permanently delete projects according to workspace permissions.
+
+Deleting a project also deletes all tasks belonging to that project.
+
+---
+
+### BR-008 – Workspace Access
 
 Only workspace members may access projects belonging to that workspace.
 
 ---
 
-### BR-005 – Archived Projects
+### BR-009 – Archived Projects
 
 Archived projects cannot receive new tasks.
 
+Archived projects may be unarchived by authorized users.
+
 ---
 
-### BR-006 – Task Ownership
+### BR-010 – Task Ownership
 
 Every task must belong to exactly one project.
 
 ---
 
+### BR-011 – Task Assignment
+
+A task may be assigned to a workspace member.
+
+A task may also remain unassigned.
+
+When an assigned user is removed from the system, the task remains and its assignment is cleared.
+
+---
+
+### BR-012 – Task Completion State
+
+When a task changes from `DONE` to another status, its `completedAt` value must be reset to `null`.
+
+The `completedAt` field shall only contain a completion timestamp when the task is in the `DONE` status.
+
+---
+
 # 7. Data Requirements
 
-SprintHub manages the following primary entities.
+SprintHub manages the following primary entities:
 
 - User
 - Workspace
@@ -656,6 +1100,100 @@ SprintHub manages the following primary entities.
 - Task
 - Notification
 - RefreshToken
+
+The data model includes the following relevant entity attributes and constraints:
+
+### User
+
+- `email` must be unique.
+- `createdAt` stores the account creation timestamp.
+- `updatedAt` stores the last account update timestamp.
+
+### Workspace
+
+- `name` is required and must be unique.
+- `description` is optional.
+- `createdAt` stores the workspace creation timestamp.
+- `updatedAt` stores the last workspace update timestamp.
+- Each workspace has exactly one owner.
+
+### WorkspaceMember
+
+- Each membership belongs to exactly one workspace and one user.
+- `role` defaults to `MEMBER` unless another role is explicitly assigned.
+- `joinedAt` stores the date and time when the user joined the workspace.
+- Each user may have only one membership record per workspace.
+- The combination of `workspaceId` and `userId` must be unique.
+
+### Project
+
+- `name` is required and must be unique within its workspace.
+- `description` is optional.
+- `status` represents the current project status.
+- `archived` defaults to `false`.
+- `createdAt` stores the project creation timestamp.
+- `updatedAt` stores the last project update timestamp.
+- Each project belongs to exactly one workspace.
+
+### Task
+
+- `projectId` identifies the project the task belongs to.
+- `createdById` identifies the user who created the task.
+- `assigneeId` is optional.
+- `title` is required and must be unique within its project.
+- `description` is optional.
+- `status` represents the current task status.
+- `priority` represents the task priority.
+- `dueDate` is optional.
+- `completedAt` is optional and stores the completion timestamp when the task is in the `DONE` status.
+- `createdAt` stores the task creation timestamp.
+- `updatedAt` stores the last task update timestamp.
+- Each task belongs to exactly one project.
+
+### Notification
+
+- Each notification belongs to exactly one user.
+- `isRead` defaults to `false`.
+- `createdAt` stores the notification creation timestamp.
+
+### RefreshToken
+
+- Each refresh token belongs to exactly one user.
+- `tokenHash` stores the hashed refresh token.
+- `expiresAt` stores the token expiration timestamp.
+- `createdAt` stores the token creation timestamp.
+
+---
+
+### Referential Integrity
+
+The system and database enforce the following deletion behavior:
+
+- Deleting a workspace deletes its workspace memberships and projects.
+- Deleting a project deletes its tasks.
+- Deleting a user account requires providing a `confirmationName` matching the user's full name (`firstName lastName`) and requires that the user does not own any workspaces.
+- Deleting a user deletes their workspace memberships, notifications, and refresh tokens.
+- Tasks created by the user are preserved; their `createdById` is set to `null` (`onDelete: SetNull`).
+- If a user assigned to a task is deleted, the task remains and its `assigneeId` is set to `null` (`onDelete: SetNull`).
+
+---
+
+### Database Indexes
+
+Indexes are used on frequently queried foreign key fields to improve query performance.
+
+The database includes indexes for:
+
+- `Workspace.ownerId`
+- `WorkspaceMember.userId`
+- `Project.workspaceId`
+- `Task.projectId`
+- `Notification.userId`
+- `RefreshToken.userId`
+
+The complete index definition is documented in the **Database Design Specification (DDS)**.
+
+---
 
 The complete database model, relationships, constraints, indexes, and entity definitions are documented in the **Database Design Specification (DDS)**.
 
@@ -827,11 +1365,20 @@ The following matrix provides high-level traceability between the product requir
 | PRD Requirement      | SRS Requirement |
 | -------------------- | --------------- |
 | Authentication       | RF-001 – RF-003 |
-| Workspace Management | RF-004 – RF-008 |
-| Project Management   | RF-009 – RF-012 |
-| Task Management      | RF-013 – RF-018 |
-| Dashboard            | RF-019          |
-| Notifications        | RF-020          |
+| Workspace Management | RF-004 – RF-009 |
+| Project Management   | RF-010 – RF-015 |
+| Task Management      | RF-016 – RF-023 |
+| Dashboard            | RF-024          |
+| Notifications        | RF-025          |
+| Global Projects Hub  | RF-026          |
+| Global Tasks Hub     | RF-027          |
+| Productivity Tools   | RF-028          |
+| Real-Time & Sync     | RF-029          |
+| Real-Time & Sync     | RF-030          |
+| Workspace Management | RF-031          |
+| User Management      | RF-032          |
+| User Management      | RF-033          |
+| UI & Appearance      | RF-034          |
 
 ---
 

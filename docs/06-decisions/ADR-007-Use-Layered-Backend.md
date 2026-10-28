@@ -9,11 +9,11 @@
 | **Document**        | ADR-007                            |
 | **Title**           | Use a Layered Backend Architecture |
 | **Project**         | SprintHub                          |
-| **Version**         | 1.0                                |
+| **Version**         | 1.1                                |
 | **Status**          | Approved                           |
 | **Owner**           | Nicolás Palacio                    |
 | **Decision Makers** | SprintHub Architecture Team        |
-| **Last Updated**    | July 2026                          |
+| **Last Updated**    | September 2026                     |
 
 ---
 
@@ -329,13 +329,18 @@ Business logic implemented in Services can be reused by multiple controllers wit
 
 # 7. Folder Organization
 
-Every backend module follows the same internal structure.
+Backend modules follow a consistent organization based on their responsibilities and requirements.
 
 ```text
 apps/
 
 └── api/
     └── src/
+        ├── @types/
+        │   └── express/
+        ├── config/
+        ├── database/
+        ├── middleware/
         ├── modules/
         │   └── tasks/
         │       ├── controller/
@@ -346,16 +351,13 @@ apps/
         │       ├── routes/
         │       ├── types/
         │       └── index.ts
-        ├── shared/
-        ├── config/
-        ├── database/
-        ├── middleware/
         ├── routes/
+        ├── shared/
         ├── app.ts
         └── server.ts
 ```
 
-This convention applies consistently across all business modules.
+This organization provides a consistent foundation across business modules while allowing their internal contents to evolve according to their specific requirements.
 
 ---
 
@@ -375,6 +377,8 @@ Service
 Repository
 ```
 
+A Service may interact with one or more repositories as part of application workflows.
+
 Forbidden:
 
 ```text
@@ -388,17 +392,12 @@ Repository
 Repository
       │
       ▼
-Controller
-```
-
-```text
-Repository
-      │
-      ▼
 Service
 ```
 
-Repositories should never invoke business logic or higher application layers.
+Repositories must remain focused on data access and must never invoke business logic or higher application layers.
+
+Cross-module interactions must follow the public service interfaces defined by the Modular Monolith Architecture.
 
 ---
 
@@ -462,7 +461,7 @@ Each backend module should follow these implementation conventions:
 - Controllers contain no business logic.
 - Services contain all business rules.
 - Repositories interact exclusively with Prisma Client.
-- Validation is implemented using Zod.
+- Validation uses Zod, with shared validation middleware located in `src/middleware` and module-specific schemas defined within each business module.
 - DTOs define API contracts.
 - Global middleware handles cross-cutting concerns.
 - Errors are managed through a centralized error handler.
