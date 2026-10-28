@@ -38,3 +38,4 @@ COPY --from=builder /app/apps/api/package.json ./package.json
 EXPOSE 3001
 
 CMD ["node", "dist/server.js"]
+
