@@ -51,7 +51,8 @@
     "docker:prod:up": "docker compose -f docker-compose.prod.yml up -d",
     "docker:prod:down": "docker compose -f docker-compose.prod.yml down",
     "docs:validate": "npm run docs:validate --workspace=api",
-    "docs:generate": "npm run docs:generate --workspace=api"
+    "docs:generate": "npm run docs:generate --workspace=api",
+    "verify:release": "npm run lint && npm run format:check && npm run typecheck && npm run docs:validate && npm run test:unit && npm run build"
   },
   "repository": {
     "type": "git",
