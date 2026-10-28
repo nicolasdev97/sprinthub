@@ -36,7 +36,7 @@ import {
 } from '@/components/ui';
 import { useTasks } from '@/features/tasks';
 import { normalizeApiError } from '@/shared/errors';
-import { cn } from '@/shared/utils';
+import { cn, deletedEntities } from '@/shared/utils';
 
 import { useArchiveProject } from '../hook';
 import { Project } from '../types';
@@ -63,7 +63,12 @@ export function ProjectCard({ project, canManage, workspaceName }: ProjectCardPr
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
-  const { data: tasks, isLoading: isTasksLoading } = useTasks(project.id);
+  const { data: tasks, isLoading: isTasksLoading } = useTasks(project.id, undefined, {
+    enabled:
+      Boolean(project.id) &&
+      !deletedEntities.isDeleted(project.id) &&
+      !deletedEntities.isDeleted(project.workspaceId),
+  });
   const archiveMutation = useArchiveProject(project.workspaceId);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -73,10 +78,8 @@ export function ProjectCard({ project, canManage, workspaceName }: ProjectCardPr
     ? `/workspaces/${project.workspaceId}/projects/${project.id}/tasks?from=projects`
     : `/workspaces/${project.workspaceId}/projects/${project.id}/tasks`;
 
-  const activeTasksCount =
-    tasks?.filter((task) => task.status !== 'DONE').length ?? 0;
-  const completedTasksCount =
-    tasks?.filter((task) => task.status === 'DONE').length ?? 0;
+  const activeTasksCount = tasks?.filter((task) => task.status !== 'DONE').length ?? 0;
+  const completedTasksCount = tasks?.filter((task) => task.status === 'DONE').length ?? 0;
   const totalTasksCount = activeTasksCount + completedTasksCount;
   const completionRate =
     totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
@@ -125,9 +128,7 @@ export function ProjectCard({ project, canManage, workspaceName }: ProjectCardPr
               <div
                 className={cn(
                   'flex size-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold uppercase',
-                  project.archived
-                    ? 'bg-muted text-muted-foreground'
-                    : 'bg-primary/10 text-primary'
+                  project.archived ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary'
                 )}
               >
                 {project.name.slice(0, 2)}
@@ -197,9 +198,7 @@ export function ProjectCard({ project, canManage, workspaceName }: ProjectCardPr
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuGroup>
-                  <DropdownMenuItem
-                    onClick={() => router.push(tasksHref)}
-                  >
+                  <DropdownMenuItem onClick={() => router.push(tasksHref)}>
                     <FolderKanban className="size-4 text-muted-foreground" />
                     <span>View Tasks</span>
                   </DropdownMenuItem>
@@ -300,10 +299,7 @@ export function ProjectCard({ project, canManage, workspaceName }: ProjectCardPr
         </CardContent>
 
         <CardFooter className="mt-auto flex items-center justify-between gap-2 border-t border-border/60 pt-4">
-          <Link
-            href={tasksHref}
-            className="flex-1"
-          >
+          <Link href={tasksHref} className="flex-1">
             <Button variant="default" size="sm" className="w-full">
               View Tasks
             </Button>
@@ -313,11 +309,7 @@ export function ProjectCard({ project, canManage, workspaceName }: ProjectCardPr
             <Link
               href={`/workspaces/${project.workspaceId}/projects/${project.id}/settings?from=${settingsFrom}`}
             >
-              <Button
-                variant="outline"
-                size="sm"
-                aria-label={`Settings for ${project.name}`}
-              >
+              <Button variant="outline" size="sm" aria-label={`Settings for ${project.name}`}>
                 <Settings className="size-3.5" />
                 <span>Settings</span>
               </Button>
@@ -337,4 +329,3 @@ export function ProjectCard({ project, canManage, workspaceName }: ProjectCardPr
     </>
   );
 }
-

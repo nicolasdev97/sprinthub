@@ -33,6 +33,7 @@ import {
 import { useAuth } from '@/features/auth';
 import { useWorkspace, useWorkspaceMembers } from '@/features/workspaces';
 import { normalizeApiError } from '@/shared/errors';
+import { deletedEntities } from '@/shared/utils';
 
 import { useArchiveProject, useProject } from '../hook';
 import { DeleteProjectDialog } from './DeleteProjectDialog';
@@ -100,10 +101,30 @@ export function ProjectSettingsView({ workspaceId, projectId }: ProjectSettingsV
 
   // Enforce access control: if user is a regular MEMBER, redirect back to tasks
   useEffect(() => {
-    if (!isLoading && project && members && !canManage) {
+    if (
+      !isLoading &&
+      project &&
+      workspace &&
+      members &&
+      currentMember?.role === 'MEMBER' &&
+      !canManage &&
+      !deletedEntities.isDeleted(workspaceId) &&
+      !deletedEntities.isDeleted(projectId)
+    ) {
       router.replace(projectTasksHref);
     }
-  }, [isLoading, project, members, canManage, router, projectTasksHref]);
+  }, [
+    isLoading,
+    project,
+    projectId,
+    workspace,
+    workspaceId,
+    members,
+    currentMember,
+    canManage,
+    router,
+    projectTasksHref,
+  ]);
 
   // 1. Loading State
   if (isLoading) {
@@ -127,7 +148,13 @@ export function ProjectSettingsView({ workspaceId, projectId }: ProjectSettingsV
   if (isError) {
     const apiError = normalizeApiError(error);
 
-    if (apiError.statusCode === 404 || apiError.message.toLowerCase().includes('not found')) {
+    if (
+      apiError.statusCode === 404 ||
+      apiError.statusCode === 403 ||
+      apiError.message.toLowerCase().includes('not found') ||
+      apiError.message.toLowerCase().includes('forbidden') ||
+      apiError.message.toLowerCase().includes('not a member')
+    ) {
       return (
         <div className="space-y-6">
           <div className="space-y-1">
@@ -205,7 +232,10 @@ export function ProjectSettingsView({ workspaceId, projectId }: ProjectSettingsV
     const isNotFound =
       !apiError ||
       apiError.statusCode === 404 ||
-      apiError.message.toLowerCase().includes('not found');
+      apiError.statusCode === 403 ||
+      apiError.message.toLowerCase().includes('not found') ||
+      apiError.message.toLowerCase().includes('forbidden') ||
+      apiError.message.toLowerCase().includes('not a member');
 
     if (isNotFound) {
       return (

@@ -1,28 +1,37 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { crossTabSync } from '@/shared/utils';
+import { crossTabSync, deletedEntities } from '@/shared/utils';
 
 import { projectService } from '../service';
 import {
   ArchiveProjectRequest,
   CreateProjectRequest,
+  Project,
   ProjectQueryParams,
   UpdateProjectRequest,
 } from '../types';
 
-export const useProjects = (workspaceId: string, params?: ProjectQueryParams) => {
+export const useProjects = (
+  workspaceId: string,
+  params?: ProjectQueryParams,
+  options?: { enabled?: boolean }
+) => {
+  const isEnabled = Boolean(workspaceId) && !deletedEntities.isDeleted(workspaceId);
   return useQuery({
     queryKey: ['projects', workspaceId, params],
     queryFn: () => projectService.getProjects(workspaceId, params),
-    enabled: Boolean(workspaceId),
+    enabled: options?.enabled !== undefined ? options.enabled && isEnabled : isEnabled,
+    retry: false,
   });
 };
 
-export const useProject = (projectId: string) => {
+export const useProject = (projectId: string, options?: { enabled?: boolean }) => {
+  const isEnabled = Boolean(projectId) && !deletedEntities.isDeleted(projectId);
   return useQuery({
     queryKey: ['projects', projectId],
     queryFn: () => projectService.getProject(projectId),
-    enabled: Boolean(projectId),
+    enabled: options?.enabled !== undefined ? options.enabled && isEnabled : isEnabled,
+    retry: false,
   });
 };
 
@@ -87,13 +96,41 @@ export const useDeleteProject = (workspaceId: string) => {
   return useMutation({
     mutationFn: (projectId: string) => projectService.deleteProject(projectId),
 
-    onSuccess: (_, projectId) => {
-      queryClient.invalidateQueries({
-        queryKey: ['projects', workspaceId],
+    onMutate: async (projectId: string) => {
+      // 1. Immediately register project as permanently deleted
+      deletedEntities.markDeleted(projectId);
+
+      // 2. Immediately silence and set null on any mounted queries observing this project or its tasks
+      queryClient.setQueryDefaults(['projects', projectId], { enabled: false, retry: false });
+      queryClient.setQueryDefaults(['tasks', projectId], { enabled: false, retry: false });
+      await queryClient.cancelQueries({ queryKey: ['projects', projectId] });
+      await queryClient.cancelQueries({ queryKey: ['tasks', projectId] });
+
+      queryClient.setQueryData(['projects', projectId], null);
+      queryClient.setQueryData(['tasks', projectId], []);
+
+      // 3. Optimistically remove project from list queries so <ProjectCard> unmounts right away
+      queryClient.setQueriesData<Project[]>({ queryKey: ['projects', workspaceId] }, (old) => {
+        if (!Array.isArray(old)) return old;
+        return old.filter((p) => p.id !== projectId);
       });
+      queryClient.setQueriesData<Project[]>({ queryKey: ['projects'] }, (old) => {
+        if (!Array.isArray(old)) return old;
+        return old.filter((p) => p.id !== projectId);
+      });
+    },
+
+    onSuccess: (_, projectId) => {
+      deletedEntities.markDeleted(projectId);
+
+      // Ensure queries for this deleted project remain silenced and set to null
+      queryClient.setQueryDefaults(['projects', projectId], { enabled: false, retry: false });
+      queryClient.setQueryDefaults(['tasks', projectId], { enabled: false, retry: false });
+      queryClient.setQueryData(['projects', projectId], null);
+      queryClient.setQueryData(['tasks', projectId], []);
 
       queryClient.invalidateQueries({
-        queryKey: ['projects', projectId],
+        queryKey: ['projects', workspaceId],
       });
 
       queryClient.invalidateQueries({
@@ -101,8 +138,10 @@ export const useDeleteProject = (workspaceId: string) => {
       });
 
       crossTabSync.postMessage({
-        type: 'QUERY_INVALIDATE',
-        queryKeys: [['projects'], ['tasks'], ['dashboard']],
+        type: 'ENTITY_DELETED',
+        entity: 'project',
+        id: projectId,
+        workspaceId,
       });
     },
   });
