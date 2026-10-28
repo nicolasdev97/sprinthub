@@ -40,7 +40,7 @@ import {
 import { useAuth } from '@/features/auth';
 import { projectService } from '@/features/projects';
 import { useWorkspaceContext } from '@/features/workspaces';
-import { cn } from '@/shared/utils';
+import { cn, deletedEntities } from '@/shared/utils';
 
 import { taskService } from '../service';
 import { Task, TaskPriority, TaskStatus } from '../types';
@@ -88,24 +88,19 @@ export function GlobalTasksView() {
   const ITEMS_PER_PAGE = 10;
 
   // Step 1: Query projects for all user workspaces in parallel
-  const workspaceProjectConfigs = useMemo(
-    () =>
-      workspaces.map((ws) => ({
-        queryKey: ['projects', ws.id],
-        queryFn: () => projectService.getProjects(ws.id),
-        enabled: Boolean(ws.id),
-      })),
-    [workspaces]
-  );
-
   const projectQueries = useQueries({
-    queries: workspaceProjectConfigs,
+    queries: workspaces.map((ws) => ({
+      queryKey: ['projects', ws.id],
+      queryFn: () => projectService.getProjects(ws.id),
+      enabled: Boolean(ws.id) && !deletedEntities.isDeleted(ws.id),
+      retry: false,
+    })),
   });
 
   const isProjectsLoading = projectQueries.some((q) => q.isLoading);
 
   const projectsDataFingerprint = projectQueries
-    .map((q) => `${q.dataUpdatedAt}-${q.status}`)
+    .map((q) => `${q.dataUpdatedAt}-${q.status}-${q.data?.length ?? 0}`)
     .join(':');
 
   // Combine all projects
@@ -122,23 +117,23 @@ export function GlobalTasksView() {
   }, [workspaces, projectsDataFingerprint]);
 
   // Step 2: Query tasks for all projects in parallel
-  const taskQueryConfigs = useMemo(
-    () =>
-      allProjects.map((project) => ({
-        queryKey: ['tasks', project.id],
-        queryFn: () => taskService.getTasks(project.id),
-        enabled: Boolean(project.id),
-      })),
-    [allProjects]
-  );
-
   const taskQueries = useQueries({
-    queries: taskQueryConfigs,
+    queries: allProjects.map((project) => ({
+      queryKey: ['tasks', project.id],
+      queryFn: () => taskService.getTasks(project.id),
+      enabled:
+        Boolean(project.id) &&
+        !deletedEntities.isDeleted(project.id) &&
+        !deletedEntities.isDeleted(project.workspaceId),
+      retry: false,
+    })),
   });
 
   const isTasksLoading = taskQueries.some((q) => q.isLoading);
 
-  const tasksDataFingerprint = taskQueries.map((q) => `${q.dataUpdatedAt}-${q.status}`).join(':');
+  const tasksDataFingerprint = taskQueries
+    .map((q) => `${q.dataUpdatedAt}-${q.status}-${q.data?.length ?? 0}`)
+    .join(':');
 
   // Combine all tasks with metadata
   const allTasks = useMemo<GlobalTaskWithMeta[]>(() => {
@@ -163,7 +158,10 @@ export function GlobalTasksView() {
 
   // Extract unique team members across tasks for assignee filter
   const allMembers = useMemo(() => {
-    const map = new Map<string, { id: string; firstName: string; lastName: string; email?: string }>();
+    const map = new Map<
+      string,
+      { id: string; firstName: string; lastName: string; email?: string }
+    >();
     allTasks.forEach((t) => {
       if (t.assignee) {
         map.set(t.assignee.id, {
@@ -311,7 +309,15 @@ export function GlobalTasksView() {
     }
 
     return result;
-  }, [allTasks, userScope, currentUserId, workspaceFilter, projectFilter, dueDateFilter, searchInput]);
+  }, [
+    allTasks,
+    userScope,
+    currentUserId,
+    workspaceFilter,
+    projectFilter,
+    dueDateFilter,
+    searchInput,
+  ]);
 
   const totalScopedTasks = scopedTasks.length;
   const inProgressCount = scopedTasks.filter((t) => t.status === 'IN_PROGRESS').length;
@@ -893,10 +899,7 @@ export function GlobalTasksView() {
                       variant={isCurrent ? 'default' : 'ghost'}
                       size="icon-xs"
                       onClick={() => setCurrentPage(page)}
-                      className={cn(
-                        'size-7 text-xs',
-                        isCurrent && 'pointer-events-none font-bold'
-                      )}
+                      className={cn('size-7 text-xs', isCurrent && 'pointer-events-none font-bold')}
                       aria-label={`Page ${page}`}
                       aria-current={isCurrent ? 'page' : undefined}
                     >

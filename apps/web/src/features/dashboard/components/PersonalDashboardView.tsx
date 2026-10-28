@@ -36,6 +36,7 @@ import {
   taskService,
 } from '@/features/tasks';
 import { useWorkspaceContext } from '@/features/workspaces';
+import { deletedEntities } from '@/shared/utils';
 
 interface DashboardTaskWithMeta extends Task {
   workspaceId: string;
@@ -58,7 +59,8 @@ export function PersonalDashboardView() {
     queries: workspaces.map((ws) => ({
       queryKey: ['projects', ws.id],
       queryFn: () => projectService.getProjects(ws.id),
-      enabled: Boolean(ws.id),
+      enabled: Boolean(ws.id) && !deletedEntities.isDeleted(ws.id),
+      retry: false,
     })),
   });
 
@@ -80,7 +82,11 @@ export function PersonalDashboardView() {
     queries: allProjects.map((project) => ({
       queryKey: ['tasks', project.id],
       queryFn: () => taskService.getTasks(project.id),
-      enabled: Boolean(project.id),
+      enabled:
+        Boolean(project.id) &&
+        !deletedEntities.isDeleted(project.id) &&
+        !deletedEntities.isDeleted(project.workspaceId),
+      retry: false,
     })),
   });
 
