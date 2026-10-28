@@ -1,21 +1,10 @@
-import { NextFunction, Request, Response } from "express";
-import { ZodSchema } from "zod";
+import { NextFunction, Request, Response } from 'express';
+import { ZodSchema } from 'zod';
 
-import { AppError } from "../../shared";
+import { validateRequest } from './validate-request';
 
 export function validateParams(schema: ZodSchema) {
-  return (request: Request, _response: Response, next: NextFunction): void => {
-    const result = schema.safeParse(request.params);
-
-    if (!result.success) {
-      const message = result.error.issues
-        .map((issue) => issue.message)
-        .join(", ");
-
-      throw new AppError(message, 400);
-    }
-
-    next();
+  return (req: Request, res: Response, next: NextFunction): void => {
+    validateRequest({ params: schema })(req, res, next);
   };
 }
-

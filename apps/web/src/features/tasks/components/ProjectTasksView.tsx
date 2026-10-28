@@ -38,16 +38,10 @@ import {
   TabsTrigger,
 } from '@/components/ui';
 import { useAuth } from '@/features/auth';
-import {
-  ProjectStatusBadge,
-  useProject,
-} from '@/features/projects';
-import {
-  useWorkspace,
-  useWorkspaceContext,
-  useWorkspaceMembers,
-} from '@/features/workspaces';
+import { ProjectStatusBadge, useProject } from '@/features/projects';
+import { useWorkspace, useWorkspaceContext, useWorkspaceMembers } from '@/features/workspaces';
 import { normalizeApiError } from '@/shared/errors';
+import { deletedEntities } from '@/shared/utils';
 
 import { useTasks } from '../hook';
 import { TaskPriority, TaskQueryParams, TaskStatus } from '../types';
@@ -67,11 +61,7 @@ interface ProjectTasksViewProps {
 type StatusFilterValue = 'ALL' | TaskStatus;
 type PriorityFilterValue = 'ALL' | TaskPriority;
 
-export function ProjectTasksView({
-  workspaceId,
-  projectId,
-  initialTaskId,
-}: ProjectTasksViewProps) {
+export function ProjectTasksView({ workspaceId, projectId, initialTaskId }: ProjectTasksViewProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -139,10 +129,15 @@ export function ProjectTasksView({
   const [sortOrder, setSortOrder] = useState<NonNullable<TaskQueryParams['sortOrder']>>('desc');
 
   useEffect(() => {
-    if (workspaceId && activeWorkspaceId !== workspaceId) {
+    if (
+      workspaceId &&
+      workspace &&
+      !deletedEntities.isDeleted(workspaceId) &&
+      activeWorkspaceId !== workspaceId
+    ) {
       setActiveWorkspaceId(workspaceId);
     }
-  }, [workspaceId, activeWorkspaceId, setActiveWorkspaceId]);
+  }, [workspaceId, workspace, activeWorkspaceId, setActiveWorkspaceId]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -195,8 +190,8 @@ export function ProjectTasksView({
   const currentMember = members.find((m) => m.userId === user?.id);
   const canManageProject = Boolean(
     currentMember?.role === 'OWNER' ||
-      currentMember?.role === 'ADMIN' ||
-      workspace?.ownerId === user?.id
+    currentMember?.role === 'ADMIN' ||
+    workspace?.ownerId === user?.id
   );
   const isProjectArchived = Boolean(project?.archived);
   const isCustomSort = sortBy !== 'createdAt' || sortOrder !== 'desc';
@@ -253,56 +248,24 @@ export function ProjectTasksView({
   }`;
 
   const totalTasksCount = tasks?.length ?? 0;
-  const completedTasksCount =
-    tasks?.filter((t) => t.status === 'DONE').length ?? 0;
-  const inProgressTasksCount =
-    tasks?.filter((t) => t.status === 'IN_PROGRESS').length ?? 0;
+  const completedTasksCount = tasks?.filter((t) => t.status === 'DONE').length ?? 0;
+  const inProgressTasksCount = tasks?.filter((t) => t.status === 'IN_PROGRESS').length ?? 0;
   const todoTasksCount =
-    tasks?.filter((t) => t.status === 'TODO' || t.status === 'BACKLOG').length ??
-    0;
+    tasks?.filter((t) => t.status === 'TODO' || t.status === 'BACKLOG').length ?? 0;
   const criticalTasksCount =
-    tasks?.filter((t) => t.priority === 'CRITICAL' && t.status !== 'DONE')
-      .length ?? 0;
+    tasks?.filter((t) => t.priority === 'CRITICAL' && t.status !== 'DONE').length ?? 0;
   const progressPercent =
-    totalTasksCount > 0
-      ? Math.round((completedTasksCount / totalTasksCount) * 100)
-      : 0;
-
-  if (isProjectError || (!isProjectLoading && !project)) {
-    const apiError = projectError ? normalizeApiError(projectError) : null;
-    const isNotFound =
-      !apiError ||
-      apiError.statusCode === 404 ||
-      apiError.message.toLowerCase().includes('not found');
-
-    if (isNotFound) {
-      return (
-        <div className="space-y-6">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Project Details</h1>
-            <p className="text-sm text-muted-foreground">
-              This project has been deleted or cannot be found.
-            </p>
-          </div>
-
-          <NotFoundState
-            title="Project not found or deleted"
-            description="This project may have been removed or you no longer have access to it."
-            actionText="Go to Workspace Projects"
-            actionIcon={<ArrowLeft className="mr-2 size-4" />}
-            actionHref={`/workspaces/${workspaceId}/projects`}
-          />
-        </div>
-      );
-    }
-  }
+    totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
 
   if (isWorkspaceError || (!isWorkspaceLoading && !workspace)) {
     const apiError = workspaceError ? normalizeApiError(workspaceError) : null;
     const isNotFound =
       !apiError ||
       apiError.statusCode === 404 ||
-      apiError.message.toLowerCase().includes('not found');
+      apiError.statusCode === 403 ||
+      apiError.message.toLowerCase().includes('not found') ||
+      apiError.message.toLowerCase().includes('forbidden') ||
+      apiError.message.toLowerCase().includes('not a member');
 
     if (isNotFound) {
       return (
@@ -320,6 +283,40 @@ export function ProjectTasksView({
             actionText="Go to Workspaces"
             actionIcon={<ArrowLeft className="mr-2 size-4" />}
             actionHref="/workspaces"
+          />
+        </div>
+      );
+    }
+  }
+
+  if (isProjectError || (!isProjectLoading && !project)) {
+    const apiError = projectError ? normalizeApiError(projectError) : null;
+    const isForbidden =
+      apiError?.statusCode === 403 ||
+      apiError?.message.toLowerCase().includes('forbidden') ||
+      apiError?.message.toLowerCase().includes('not a member');
+    const isNotFound =
+      !apiError ||
+      isForbidden ||
+      apiError.statusCode === 404 ||
+      apiError.message.toLowerCase().includes('not found');
+
+    if (isNotFound) {
+      return (
+        <div className="space-y-6">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Project Details</h1>
+            <p className="text-sm text-muted-foreground">
+              This project has been deleted or cannot be found.
+            </p>
+          </div>
+
+          <NotFoundState
+            title="Project not found or deleted"
+            description="This project may have been removed or you no longer have access to it."
+            actionText={isForbidden ? 'Go to Workspaces' : 'Go to Workspace Projects'}
+            actionIcon={<ArrowLeft className="mr-2 size-4" />}
+            actionHref={isForbidden ? '/workspaces' : `/workspaces/${workspaceId}/projects`}
           />
         </div>
       );
@@ -397,7 +394,8 @@ export function ProjectTasksView({
           <Archive className="size-4" />
           <AlertTitle>This project is archived</AlertTitle>
           <AlertDescription>
-            Tasks are in read-only mode. Unarchive the project in Project Settings to create or modify tasks.
+            Tasks are in read-only mode. Unarchive the project in Project Settings to create or
+            modify tasks.
           </AlertDescription>
         </Alert>
       )}
@@ -449,10 +447,7 @@ export function ProjectTasksView({
       )}
 
       {/* Dual View Tabs & Filter Bar */}
-      <Tabs
-        value={activeView}
-        onValueChange={(val) => setActiveView(val as 'board' | 'list')}
-      >
+      <Tabs value={activeView} onValueChange={(val) => setActiveView(val as 'board' | 'list')}>
         <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {/* Search Input with Debounce */}
@@ -546,7 +541,7 @@ export function ProjectTasksView({
               onValueChange={(val) => {
                 const [newSortBy, newSortOrder] = val.split('-') as [
                   NonNullable<TaskQueryParams['sortBy']>,
-                  NonNullable<TaskQueryParams['sortOrder']>
+                  NonNullable<TaskQueryParams['sortOrder']>,
                 ];
                 setSortBy(newSortBy);
                 setSortOrder(newSortOrder);
@@ -618,15 +613,19 @@ export function ProjectTasksView({
         )}
 
         {/* 2. Error State */}
-        {isError && !isTasksLoading && (
-          normalizeApiError(error).statusCode === 404 ||
-          normalizeApiError(error).message.toLowerCase().includes('not found') ? (
+        {isError &&
+          !isTasksLoading &&
+          (normalizeApiError(error).statusCode === 404 ||
+          normalizeApiError(error).statusCode === 403 ||
+          normalizeApiError(error).message.toLowerCase().includes('not found') ||
+          normalizeApiError(error).message.toLowerCase().includes('forbidden') ||
+          normalizeApiError(error).message.toLowerCase().includes('not a member') ? (
             <NotFoundState
               title="Project not found or deleted"
               description="This project may have been removed or you no longer have access to it."
-              actionText="Go to Workspace Projects"
+              actionText="Go to Workspaces"
               actionIcon={<ArrowLeft className="mr-2 size-4" />}
-              onAction={() => router.push(`/workspaces/${workspaceId}/projects`)}
+              onAction={() => router.push('/workspaces')}
             />
           ) : (
             <Alert variant="destructive">
@@ -646,8 +645,7 @@ export function ProjectTasksView({
                 </Button>
               </AlertDescription>
             </Alert>
-          )
-        )}
+          ))}
 
         {/* 3. Empty State */}
         {!isTasksLoading && !isError && (!tasks || tasks.length === 0) && (
@@ -677,7 +675,8 @@ export function ProjectTasksView({
                     No tasks in this project yet
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    Break down your project deliverables into actionable tasks and assign them to team members.
+                    Break down your project deliverables into actionable tasks and assign them to
+                    team members.
                   </p>
                 </div>
                 {!isProjectArchived && (
@@ -732,4 +731,3 @@ export function ProjectTasksView({
     </div>
   );
 }
-

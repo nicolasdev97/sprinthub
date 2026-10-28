@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
+import { clearClientSessionCookie } from '@/features/auth/utils/session-cookie';
 import { ApiErrorResponse, normalizeApiError } from '@/shared/errors';
 
 type AccessTokenListener = (token: string | null) => void;
@@ -22,12 +23,16 @@ let accessToken: string | null = null;
 const listeners = new Set<AccessTokenListener>();
 
 let isRefreshing = false;
+let isRedirectingToLogin = false;
 let failedRequestsQueue: QueuedRequest[] = [];
 
 export const getAccessToken = (): string | null => accessToken;
 
 export const setAccessToken = (token: string | null): void => {
   accessToken = token;
+  if (token) {
+    isRedirectingToLogin = false;
+  }
   listeners.forEach((listener) => listener(token));
 };
 
@@ -54,6 +59,25 @@ function processQueue(error: unknown, token: string | null = null): void {
 function shouldBypassRefresh(url?: string): boolean {
   if (!url) return false;
   return AUTH_BYPASS_PATHS.some((path) => url.includes(path));
+}
+
+function handleUnauthorizedSessionExpiry(): void {
+  clearClientSessionCookie();
+  setAccessToken(null);
+
+  if (typeof window === 'undefined' || isRedirectingToLogin) {
+    return;
+  }
+
+  const { pathname, search } = window.location;
+  const isPublicOrAuthRoute =
+    pathname === '/' || pathname.startsWith('/login') || pathname.startsWith('/register');
+
+  if (!isPublicOrAuthRoute) {
+    isRedirectingToLogin = true;
+    const redirectTarget = encodeURIComponent(`${pathname}${search}`);
+    window.location.replace(`/login?redirect=${redirectTarget}`);
+  }
 }
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL;
@@ -102,32 +126,38 @@ httpClient.interceptors.response.use(
     if (isRefreshing) {
       return new Promise<string>((resolve, reject) => {
         failedRequestsQueue.push({ resolve, reject });
-      })
-        .then((newToken) => {
+      }).then((newToken) => {
+        if (originalRequest.headers) {
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
-          return httpClient(originalRequest);
-        })
-        .catch((queueError) => Promise.reject(normalizeApiError(queueError)));
+        }
+        return httpClient(originalRequest);
+      });
     }
 
     originalRequest._retry = true;
     isRefreshing = true;
 
     try {
-      const response = await httpClient.post<{ accessToken: string }>('/auth/refresh');
-      const newAccessToken = response.data.accessToken;
+      const response = await axios.post<{ accessToken: string }>(
+        `${baseURL}/auth/refresh`,
+        {},
+        { withCredentials: true, timeout: REQUEST_TIMEOUT_MS }
+      );
 
-      setAccessToken(newAccessToken);
-      processQueue(null, newAccessToken);
+      const newToken = response.data.accessToken;
+      setAccessToken(newToken);
+      processQueue(null, newToken);
 
-      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      if (originalRequest.headers) {
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+      }
+
       return httpClient(originalRequest);
     } catch (refreshError) {
-      const normalizedRefreshError = normalizeApiError(refreshError);
-      setAccessToken(null);
-      processQueue(normalizedRefreshError, null);
-
-      return Promise.reject(normalizedRefreshError);
+      const normalized = normalizeApiError(refreshError);
+      handleUnauthorizedSessionExpiry();
+      processQueue(normalized, null);
+      return Promise.reject(normalized);
     } finally {
       isRefreshing = false;
     }

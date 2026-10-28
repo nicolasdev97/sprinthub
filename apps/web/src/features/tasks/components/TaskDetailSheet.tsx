@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   AlertCircle,
@@ -56,11 +57,7 @@ import { UpdateTaskFormValues, updateTaskSchema } from '../schema';
 import { Task, TaskPriority, TaskStatus } from '../types';
 import { AssigneeSearchSelect } from './AssigneeSearchSelect';
 import { DeleteTaskDialog } from './DeleteTaskDialog';
-import {
-  TaskDueDateBadge,
-  TaskPriorityBadge,
-  TaskStatusBadge,
-} from './TaskBadges';
+import { TaskDueDateBadge, TaskPriorityBadge, TaskStatusBadge } from './TaskBadges';
 
 interface TaskDetailSheetProps {
   projectId: string;
@@ -97,13 +94,12 @@ function TaskDetailForm({
   onClose,
 }: TaskDetailFormProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const [draftStatus, setDraftStatus] = useState<TaskStatus>(task.status);
   const [draftPriority, setDraftPriority] = useState<TaskPriority>(task.priority);
-  const [draftAssigneeId, setDraftAssigneeId] = useState<string | null>(
-    task.assigneeId ?? null
-  );
+  const [draftAssigneeId, setDraftAssigneeId] = useState<string | null>(task.assigneeId ?? null);
 
   const updateTaskMutation = useUpdateTask(projectId);
   const updateStatusMutation = useUpdateTaskStatus(projectId);
@@ -119,17 +115,36 @@ function TaskDetailForm({
     },
   });
 
+  // Sync form and local draft state when the task is updated in real time by another user
+  useEffect(() => {
+    setDraftStatus(task.status);
+    setDraftPriority(task.priority);
+    setDraftAssigneeId(task.assigneeId ?? null);
+    form.reset({
+      title: task.title,
+      description: task.description ?? '',
+      dueDate: toDateInputValue(task.dueDate),
+    });
+  }, [
+    task.updatedAt,
+    task.title,
+    task.description,
+    task.dueDate,
+    task.status,
+    task.priority,
+    task.assigneeId,
+    form,
+  ]);
+
   const watchedTitle = useWatch({ control: form.control, name: 'title' });
   const watchedDueDate = useWatch({ control: form.control, name: 'dueDate' });
 
   const isStatusChanged = draftStatus !== task.status;
   const isPriorityChanged = draftPriority !== task.priority;
-  const isAssigneeChanged =
-    (draftAssigneeId ?? null) !== (task.assigneeId ?? null);
+  const isAssigneeChanged = (draftAssigneeId ?? null) !== (task.assigneeId ?? null);
   const isFormDirty = form.formState.isDirty;
 
-  const hasAnyChanges =
-    isStatusChanged || isPriorityChanged || isAssigneeChanged || isFormDirty;
+  const hasAnyChanges = isStatusChanged || isPriorityChanged || isAssigneeChanged || isFormDirty;
 
   const isSavingDetails =
     updateTaskMutation.isPending ||
@@ -156,9 +171,7 @@ function TaskDetailForm({
             taskId: task.id,
             data: {
               title: values.title.trim(),
-              description: values.description?.trim()
-                ? values.description.trim()
-                : null,
+              description: values.description?.trim() ? values.description.trim() : null,
               dueDate: isoDueDate,
             },
           })
@@ -210,12 +223,19 @@ function TaskDetailForm({
     } catch (err) {
       const apiError = normalizeApiError(err);
 
+      if (apiError.statusCode === 404 || apiError.message.toLowerCase().includes('not found')) {
+        queryClient.setQueryDefaults(['tasks', task.id], { enabled: false });
+        queryClient.setQueryData(['tasks', task.id], null);
+        toast({
+          title: 'Task no longer exists',
+          description: 'This task was already deleted.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       if (apiError.errors) {
-        const validFields: Array<keyof UpdateTaskFormValues> = [
-          'title',
-          'description',
-          'dueDate',
-        ];
+        const validFields: Array<keyof UpdateTaskFormValues> = ['title', 'description', 'dueDate'];
         for (const field of validFields) {
           const messages = apiError.errors[field];
           if (messages && messages.length > 0) {
@@ -253,19 +273,14 @@ function TaskDetailForm({
           <Alert>
             <Archive className="size-4" />
             <AlertTitle>Project is archived</AlertTitle>
-            <AlertDescription>
-              Tasks in an archived project are read-only.
-            </AlertDescription>
+            <AlertDescription>Tasks in an archived project are read-only.</AlertDescription>
           </Alert>
         )}
 
         {/* Quick Metadata Controls (Status, Priority, Assignee) */}
         <div className="grid grid-cols-1 gap-4 rounded-xl border border-border bg-muted/20 p-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label
-              htmlFor="detail-task-status"
-              className="text-xs text-muted-foreground"
-            >
+            <Label htmlFor="detail-task-status" className="text-xs text-muted-foreground">
               Status
             </Label>
             <Select
@@ -283,10 +298,7 @@ function TaskDetailForm({
           </div>
 
           <div className="space-y-1.5">
-            <Label
-              htmlFor="detail-task-priority"
-              className="text-xs text-muted-foreground"
-            >
+            <Label htmlFor="detail-task-priority" className="text-xs text-muted-foreground">
               Priority
             </Label>
             <Select
@@ -304,26 +316,19 @@ function TaskDetailForm({
 
           <div className="space-y-1.5 sm:col-span-2">
             <div className="flex items-center justify-between">
-              <Label
-                htmlFor="detail-task-assignee"
-                className="text-xs text-muted-foreground"
-              >
+              <Label htmlFor="detail-task-assignee" className="text-xs text-muted-foreground">
                 <UserIcon className="size-3" />
                 <span>Assignee</span>
               </Label>
               {!canManageProject && (
-                <span className="text-[11px] text-muted-foreground">
-                  Assigned by Admin / Owner
-                </span>
+                <span className="text-[11px] text-muted-foreground">Assigned by Admin / Owner</span>
               )}
             </div>
             <AssigneeSearchSelect
               id="detail-task-assignee"
               value={draftAssigneeId ?? ''}
               members={members}
-              disabled={
-                isProjectArchived || !canManageProject || isSavingDetails
-              }
+              disabled={isProjectArchived || !canManageProject || isSavingDetails}
               onValueChange={(val) => setDraftAssigneeId(val ? val : null)}
             />
           </div>
@@ -336,15 +341,11 @@ function TaskDetailForm({
                 <TaskDueDateBadge
                   task={{
                     ...task,
-                    dueDate: new Date(
-                      `${watchedDueDate}T23:59:59.000Z`
-                    ).toISOString(),
+                    dueDate: new Date(`${watchedDueDate}T23:59:59.000Z`).toISOString(),
                   }}
                 />
               ) : (
-                <span className="text-xs text-muted-foreground">
-                  No due date
-                </span>
+                <span className="text-xs text-muted-foreground">No due date</span>
               )}
             </div>
             {task.completedAt && (
@@ -400,10 +401,7 @@ function TaskDetailForm({
                 <FormItem>
                   <FormLabel>Due Date</FormLabel>
                   <FormControl>
-                    <DateInput
-                      disabled={isProjectArchived || isSavingDetails}
-                      {...field}
-                    />
+                    <DateInput disabled={isProjectArchived || isSavingDetails} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -430,11 +428,7 @@ function TaskDetailForm({
             />
 
             <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
-              {canDelete ? (
-                <DeleteTaskDialog task={task} onDeleted={onClose} />
-              ) : (
-                <div />
-              )}
+              {canDelete ? <DeleteTaskDialog task={task} onDeleted={onClose} /> : <div />}
 
               <div className="flex items-center gap-2">
                 <Button
@@ -450,10 +444,7 @@ function TaskDetailForm({
                   type="submit"
                   size="sm"
                   disabled={
-                    isProjectArchived ||
-                    isSavingDetails ||
-                    !hasAnyChanges ||
-                    !watchedTitle?.trim()
+                    isProjectArchived || isSavingDetails || !hasAnyChanges || !watchedTitle?.trim()
                   }
                 >
                   {isSavingDetails ? (
@@ -487,27 +478,32 @@ export function TaskDetailSheet({
   isProjectArchived,
 }: TaskDetailSheetProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
 
-  const {
-    data: task,
-    isLoading,
-    isError,
-    error,
-  } = useTask(open && taskId ? taskId : '');
+  const { data: task, isLoading, isError, error } = useTask(open && taskId ? taskId : '');
+
+  const hadLoadedTaskRef = useRef<boolean>(false);
+  useEffect(() => {
+    if (task) {
+      hadLoadedTaskRef.current = true;
+    } else if (open && hadLoadedTaskRef.current && !isLoading && !task) {
+      toast({
+        title: 'Task deleted',
+        description: 'This task was deleted by another member of your team.',
+        variant: 'destructive',
+      });
+      hadLoadedTaskRef.current = false;
+      onOpenChange(false);
+    }
+  }, [task, open, isLoading, toast, onOpenChange]);
 
   const canDelete = Boolean(
-    task &&
-      !isProjectArchived &&
-      (canManageProject || (user?.id && task.createdById === user.id))
+    task && !isProjectArchived && (canManageProject || (user?.id && task.createdById === user.id))
   );
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="w-full overflow-y-auto p-0 sm:max-w-lg"
-        showCloseButton
-      >
+      <SheetContent side="right" className="w-full overflow-y-auto p-0 sm:max-w-lg" showCloseButton>
         {/* 1. Loading State */}
         {isLoading && (
           <>
@@ -534,24 +530,29 @@ export function TaskDetailSheet({
         )}
 
         {/* 2. Error State */}
-        {isError && !isLoading && (
+        {((isError && !isLoading) || (!isLoading && !task && open && Boolean(taskId))) && (
           <>
             <SheetHeader className="border-b border-border px-6 py-4">
               <SheetTitle className="text-left text-base">Task Details</SheetTitle>
               <SheetDescription className="text-left text-xs">
-                {normalizeApiError(error).statusCode === 404 ||
+                {!error ||
+                normalizeApiError(error).statusCode === 404 ||
                 normalizeApiError(error).message.toLowerCase().includes('not found')
                   ? 'This task has been deleted or cannot be found.'
                   : 'Unable to load task details.'}
               </SheetDescription>
             </SheetHeader>
             <div className="p-6">
-              {normalizeApiError(error).statusCode === 404 ||
-              normalizeApiError(error).message.toLowerCase().includes('not found') ? (
+              {!error ||
+              normalizeApiError(error).statusCode === 404 ||
+              normalizeApiError(error).statusCode === 403 ||
+              normalizeApiError(error).message.toLowerCase().includes('not found') ||
+              normalizeApiError(error).message.toLowerCase().includes('forbidden') ||
+              normalizeApiError(error).message.toLowerCase().includes('not a member') ? (
                 <NotFoundState
                   title="Task not found or deleted"
-                  description="This task may have been removed or no longer exists."
-                  actionText="Close"
+                  description="This task may have been removed or you no longer have access to it."
+                  actionText="Close Task"
                   actionIcon={<X className="mr-2 size-4" />}
                   actionVariant="default"
                   onAction={() => onOpenChange(false)}
@@ -563,11 +564,7 @@ export function TaskDetailSheet({
                   <AlertTitle>Unable to load task details</AlertTitle>
                   <AlertDescription className="mt-2 flex items-center justify-between gap-2">
                     <span>{normalizeApiError(error).message}</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onOpenChange(false)}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
                       <X className="size-3.5" />
                       <span>Close</span>
                     </Button>

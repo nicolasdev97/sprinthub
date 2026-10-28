@@ -57,7 +57,7 @@ export function TransferOwnershipDialog({
   const selectedMember = eligibleMembers.find((m) => m.userId === selectedMemberId);
   const selectedMemberName = selectedMember?.user
     ? `${selectedMember.user.firstName} ${selectedMember.user.lastName}`
-    : selectedMember?.user?.email ?? 'the selected member';
+    : (selectedMember?.user?.email ?? 'the selected member');
 
   const handleTransfer = async () => {
     if (!selectedMemberId) return;
@@ -91,7 +91,8 @@ export function TransferOwnershipDialog({
           <CardTitle>Transfer Workspace Ownership</CardTitle>
         </div>
         <CardDescription>
-          Transfer this workspace to another member. They will become the primary Owner, and your role will become Admin.
+          Transfer this workspace to another member. They will become the primary Owner, and your
+          role will become Admin.
         </CardDescription>
       </CardHeader>
 
@@ -106,7 +107,8 @@ export function TransferOwnershipDialog({
 
         {eligibleMembers.length === 0 ? (
           <p className="text-xs text-muted-foreground">
-            There are no other members in this workspace to transfer ownership to. Invite a team member first.
+            There are no other members in this workspace to transfer ownership to. Invite a team
+            member first.
           </p>
         ) : (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -149,14 +151,19 @@ export function TransferOwnershipDialog({
                     <span>Confirm Ownership Transfer</span>
                   </AlertDialogTitle>
                   <AlertDialogDescription className="space-y-2 pt-2 text-foreground">
-                    <p>
+                    <span className="block">
                       Are you sure you want to transfer ownership of{' '}
-                      <span className="font-semibold text-foreground">&quot;{workspace.name}&quot;</span> to{' '}
-                      <span className="font-semibold text-foreground">{selectedMemberName}</span>?
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      This action will grant {selectedMemberName} full ownership rights (including workspace deletion and billing). You will retain Admin access to manage projects and members.
-                    </p>
+                      <span className="font-semibold text-foreground">
+                        &quot;{workspace.name}&quot;
+                      </span>{' '}
+                      to <span className="font-semibold text-foreground">{selectedMemberName}</span>
+                      ?
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      This action will grant {selectedMemberName} full ownership rights (including
+                      workspace deletion and billing). You will retain Admin access to manage
+                      projects and members.
+                    </span>
                   </AlertDialogDescription>
                 </AlertDialogHeader>
 

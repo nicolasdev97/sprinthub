@@ -16,7 +16,7 @@ import {
 } from '@/components/ui';
 import { useAuth } from '@/features/auth';
 import { useProjects } from '@/features/projects';
-import { cn } from '@/shared/utils';
+import { cn, deletedEntities } from '@/shared/utils';
 
 import { useWorkspaceMembers } from '../hook';
 import { Workspace, WorkspaceRole } from '../types';
@@ -41,8 +41,13 @@ function getRoleBadgeVariant(role: WorkspaceRole): 'default' | 'secondary' | 'ou
 
 export function WorkspaceCard({ workspace, isActive, onSelect }: WorkspaceCardProps) {
   const { user } = useAuth();
-  const { data: members, isLoading: isMembersLoading } = useWorkspaceMembers(workspace.id);
-  const { data: projects, isLoading: isProjectsLoading } = useProjects(workspace.id);
+  const isWorkspaceValid = Boolean(workspace.id) && !deletedEntities.isDeleted(workspace.id);
+  const { data: members, isLoading: isMembersLoading } = useWorkspaceMembers(workspace.id, {
+    enabled: isWorkspaceValid,
+  });
+  const { data: projects, isLoading: isProjectsLoading } = useProjects(workspace.id, undefined, {
+    enabled: isWorkspaceValid,
+  });
 
   const projectsCount = projects?.filter((p) => !p.archived).length ?? 0;
 
@@ -118,9 +123,7 @@ export function WorkspaceCard({ workspace, isActive, onSelect }: WorkspaceCardPr
               {isProjectsLoading && !projects ? (
                 <Skeleton className="mt-0.5 h-4 w-8" />
               ) : (
-                <p className="font-semibold text-foreground">
-                  {projectsCount}
-                </p>
+                <p className="font-semibold text-foreground">{projectsCount}</p>
               )}
             </div>
           </div>
@@ -133,21 +136,13 @@ export function WorkspaceCard({ workspace, isActive, onSelect }: WorkspaceCardPr
           onClick={() => onSelect(workspace.id)}
           className="flex-1"
         >
-          <Button
-            variant={isActive ? 'default' : 'secondary'}
-            size="sm"
-            className="w-full"
-          >
+          <Button variant={isActive ? 'default' : 'secondary'} size="sm" className="w-full">
             {isActive ? 'View Projects' : 'Switch & View Projects'}
           </Button>
         </Link>
 
         <Link href={`/workspaces/${workspace.id}/settings?from=hub`}>
-          <Button
-            variant="outline"
-            size="sm"
-            aria-label={`Settings for ${workspace.name}`}
-          >
+          <Button variant="outline" size="sm" aria-label={`Settings for ${workspace.name}`}>
             <Settings className="size-3.5" />
             <span>Settings</span>
           </Button>
@@ -156,4 +151,3 @@ export function WorkspaceCard({ workspace, isActive, onSelect }: WorkspaceCardPr
     </Card>
   );
 }
-

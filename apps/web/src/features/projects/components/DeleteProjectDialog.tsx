@@ -28,10 +28,7 @@ import {
 import { normalizeApiError } from '@/shared/errors';
 
 import { useDeleteProject } from '../hook';
-import {
-  createDeleteProjectConfirmSchema,
-  DeleteProjectConfirmFormValues,
-} from '../schema';
+import { createDeleteProjectConfirmSchema, DeleteProjectConfirmFormValues } from '../schema';
 import { Project } from '../types';
 
 interface DeleteProjectDialogProps {
@@ -81,6 +78,13 @@ export function DeleteProjectDialog({
 
   const onSubmit = async () => {
     try {
+      const wasOnProjectPage = pathname.includes(`/projects/${project.id}`);
+      handleOpenChange(false);
+
+      if (wasOnProjectPage) {
+        router.replace(`/workspaces/${project.workspaceId}/projects`);
+      }
+
       await deleteProjectMutation.mutateAsync(project.id);
 
       toast({
@@ -88,11 +92,9 @@ export function DeleteProjectDialog({
         description: `"${project.name}" and all its tasks have been permanently removed.`,
         variant: 'success',
       });
-      handleOpenChange(false);
+
       if (onDeleted) {
         onDeleted();
-      } else if (pathname.includes(`/projects/${project.id}`)) {
-        router.push(`/workspaces/${project.workspaceId}/projects`);
       }
     } catch (error) {
       const apiError = normalizeApiError(error);
@@ -120,11 +122,22 @@ export function DeleteProjectDialog({
             <AlertDialogTitle>Delete Project Permanently</AlertDialogTitle>
           </div>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the{' '}
-            <span className="font-semibold text-foreground">{project.name}</span>{' '}
-            project and all tasks associated with it.
+            This action cannot be undone. All tasks, settings, and board data associated with this
+            project will be permanently removed.
           </AlertDialogDescription>
         </AlertDialogHeader>
+
+        {/* Emphasized Confirmation Box */}
+        <div className="rounded-lg border border-destructive/25 bg-destructive/10 p-3.5 space-y-2">
+          <p className="text-xs font-medium text-muted-foreground">
+            To prevent accidental deletion, please type the exact project name below:
+          </p>
+          <div className="rounded-md border border-border bg-background px-3 py-2 shadow-2xs">
+            <span className="font-mono text-sm font-bold text-foreground select-none break-all">
+              {project.name}
+            </span>
+          </div>
+        </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -133,20 +146,13 @@ export function DeleteProjectDialog({
               name="confirmationName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    Please type{' '}
-                    <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs font-semibold text-foreground">
-                      {project.name}
-                    </span>{' '}
-                    to confirm
-                  </FormLabel>
+                  <FormLabel className="text-sm font-medium">Confirm Project Name:</FormLabel>
                   <FormControl>
                     <Input
+                      {...field}
                       placeholder={project.name}
                       autoComplete="off"
                       disabled={isDeleting}
-                      autoFocus
-                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -156,19 +162,9 @@ export function DeleteProjectDialog({
 
             <AlertDialogFooter>
               <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-              <Button
-                type="submit"
-                variant="destructive"
-                disabled={!isConfirmed || isDeleting}
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" />
-                    <span>Deleting...</span>
-                  </>
-                ) : (
-                  <span>Delete Project</span>
-                )}
+              <Button type="submit" variant="destructive" disabled={!isConfirmed || isDeleting}>
+                {isDeleting && <Loader2 className="mr-2 size-4 animate-spin" />}
+                Delete Project
               </Button>
             </AlertDialogFooter>
           </form>
@@ -177,4 +173,3 @@ export function DeleteProjectDialog({
     </AlertDialog>
   );
 }
-

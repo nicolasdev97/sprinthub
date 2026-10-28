@@ -1,13 +1,15 @@
-import { Router } from "express";
+import { Router } from 'express';
 
 import {
   authenticate,
+  requireProjectAccess,
+  requireWorkspaceRole,
   validate,
   validateParams,
   validateQuery,
-} from "../../../middleware";
+} from '../../../middleware';
 
-import { ProjectController } from "../controller";
+import { ProjectController } from '../controller';
 import {
   createProjectSchema,
   updateProjectSchema,
@@ -15,13 +17,13 @@ import {
   projectFilterSchema,
   workspaceProjectParamsSchema,
   projectParamsSchema,
-} from "../schema";
-import { ProjectRepository } from "../repository";
-import { ProjectService } from "../service";
-import { WorkspaceRepository, WorkspaceService } from "../../workspaces";
-import { ProjectParams, WorkspaceProjectParams } from "../types";
+} from '../schema';
+import { ProjectRepository } from '../repository';
+import { ProjectService } from '../service';
+import { WorkspaceRepository, WorkspaceService } from '../../workspaces';
+import { ProjectParams, WorkspaceProjectParams } from '../types';
 
-import { NotificationRepository, NotificationService } from "../../notifications";
+import { NotificationRepository, NotificationService } from '../../notifications';
 
 export const projectRouter = Router();
 
@@ -31,63 +33,62 @@ const notificationRepository = new NotificationRepository();
 const notificationService = new NotificationService(notificationRepository);
 
 const workspaceRepository = new WorkspaceRepository();
-const workspaceService = new WorkspaceService(
-  workspaceRepository,
-  notificationService,
-);
+const workspaceService = new WorkspaceService(workspaceRepository, notificationService);
 
-const projectService = new ProjectService(
-  projectRepository,
-  workspaceService,
-  notificationService,
-);
+const projectService = new ProjectService(projectRepository, workspaceService, notificationService);
 
 const projectController = new ProjectController(projectService);
 
 projectRouter.post<WorkspaceProjectParams>(
-  "/workspaces/:workspaceId/projects",
+  '/workspaces/:workspaceId/projects',
   authenticate,
   validateParams(workspaceProjectParamsSchema),
+  requireWorkspaceRole('ADMIN'),
   validate(createProjectSchema),
-  projectController.createProject.bind(projectController),
+  projectController.createProject.bind(projectController)
 );
 
 projectRouter.get<WorkspaceProjectParams>(
-  "/workspaces/:workspaceId/projects",
+  '/workspaces/:workspaceId/projects',
   authenticate,
   validateParams(workspaceProjectParamsSchema),
+  requireWorkspaceRole('MEMBER'),
   validateQuery(projectFilterSchema),
-  projectController.getProjects.bind(projectController),
+  projectController.getProjects.bind(projectController)
 );
 
 projectRouter.get<ProjectParams>(
-  "/projects/:projectId",
+  '/projects/:projectId',
   authenticate,
   validateParams(projectParamsSchema),
-  projectController.getProjectById.bind(projectController),
+  requireProjectAccess('MEMBER'),
+  projectController.getProjectById.bind(projectController)
 );
 
 projectRouter.patch<ProjectParams>(
-  "/projects/:projectId",
+  '/projects/:projectId',
   authenticate,
   validateParams(projectParamsSchema),
+  requireProjectAccess('ADMIN'),
   validate(updateProjectSchema),
-  projectController.updateProject.bind(projectController),
+  projectController.updateProject.bind(projectController)
 );
 
 projectRouter.delete<ProjectParams>(
-  "/projects/:projectId",
+  '/projects/:projectId',
   authenticate,
   validateParams(projectParamsSchema),
-  projectController.deleteProject.bind(projectController),
+  requireProjectAccess('ADMIN'),
+  projectController.deleteProject.bind(projectController)
 );
 
 projectRouter.patch<ProjectParams>(
-  "/projects/:projectId/archive",
+  '/projects/:projectId/archive',
   authenticate,
   validateParams(projectParamsSchema),
+  requireProjectAccess('ADMIN'),
   validate(archiveProjectSchema),
-  projectController.archiveProject.bind(projectController),
+  projectController.archiveProject.bind(projectController)
 );
 
 export default projectRouter;

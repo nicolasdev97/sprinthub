@@ -43,6 +43,7 @@ import {
   WorkspaceStatusBadge,
 } from '@/features/workspaces';
 import { normalizeApiError } from '@/shared/errors';
+import { deletedEntities } from '@/shared/utils';
 
 import { useProjects } from '../hook';
 import { ProjectQueryParams, ProjectStatus } from '../types';
@@ -99,20 +100,21 @@ export function ProjectsListView({ workspaceId }: ProjectsListViewProps) {
   const [sortOrder, setSortOrder] = useState<NonNullable<ProjectQueryParams['sortOrder']>>('desc');
 
   useEffect(() => {
-    if (workspaceId && activeWorkspaceId !== workspaceId) {
+    if (
+      workspaceId &&
+      workspace &&
+      !deletedEntities.isDeleted(workspaceId) &&
+      activeWorkspaceId !== workspaceId
+    ) {
       setActiveWorkspaceId(workspaceId);
     }
-  }, [workspaceId, activeWorkspaceId, setActiveWorkspaceId]);
+  }, [workspaceId, workspace, activeWorkspaceId, setActiveWorkspaceId]);
 
-  const { data: wsMetrics, isLoading: isMetricsLoading } =
-    useWorkspaceDashboard(workspaceId);
-  const totalWorkspaceTasks =
-    (wsMetrics?.pendingTasks ?? 0) + (wsMetrics?.completedTasks ?? 0);
+  const { data: wsMetrics, isLoading: isMetricsLoading } = useWorkspaceDashboard(workspaceId);
+  const totalWorkspaceTasks = (wsMetrics?.pendingTasks ?? 0) + (wsMetrics?.completedTasks ?? 0);
   const wsCompletionRate =
     totalWorkspaceTasks > 0
-      ? Math.round(
-          ((wsMetrics?.completedTasks ?? 0) / totalWorkspaceTasks) * 100
-        )
+      ? Math.round(((wsMetrics?.completedTasks ?? 0) / totalWorkspaceTasks) * 100)
       : 0;
 
   const currentMember = members?.find((m) => m.userId === user?.id);
@@ -153,7 +155,7 @@ export function ProjectsListView({ workspaceId }: ProjectsListViewProps) {
   const handleSortChange = (val: string) => {
     const [field, order] = val.split('-') as [
       NonNullable<ProjectQueryParams['sortBy']>,
-      NonNullable<ProjectQueryParams['sortOrder']>
+      NonNullable<ProjectQueryParams['sortOrder']>,
     ];
     setSortBy(field);
     setSortOrder(order);
@@ -172,7 +174,10 @@ export function ProjectsListView({ workspaceId }: ProjectsListViewProps) {
     const isNotFound =
       !apiError ||
       apiError.statusCode === 404 ||
-      apiError.message.toLowerCase().includes('not found');
+      apiError.statusCode === 403 ||
+      apiError.message.toLowerCase().includes('not found') ||
+      apiError.message.toLowerCase().includes('forbidden') ||
+      apiError.message.toLowerCase().includes('not a member');
 
     if (isNotFound) {
       return (
@@ -216,7 +221,8 @@ export function ProjectsListView({ workspaceId }: ProjectsListViewProps) {
             {workspace && <WorkspaceStatusBadge isActive={activeWorkspaceId === workspace.id} />}
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Track project milestones, manage deliverables, and monitor task completion across your workspace.
+            Track project milestones, manage deliverables, and monitor task completion across your
+            workspace.
           </p>
         </div>
 
@@ -314,8 +320,7 @@ export function ProjectsListView({ workspaceId }: ProjectsListViewProps) {
               <span className="inline-flex items-center gap-1 rounded-md bg-muted/60 px-2 py-0.5 font-medium text-muted-foreground">
                 <Users className="size-3 text-purple-500" />
                 <span>
-                  {members?.length ?? 1}{' '}
-                  {(members?.length ?? 1) === 1 ? 'member' : 'members'}
+                  {members?.length ?? 1} {(members?.length ?? 1) === 1 ? 'member' : 'members'}
                 </span>
               </span>
             )}
@@ -439,9 +444,13 @@ export function ProjectsListView({ workspaceId }: ProjectsListViewProps) {
       )}
 
       {/* 2. Error State */}
-      {isError && !isLoading && (
-        normalizeApiError(error).statusCode === 404 ||
-        normalizeApiError(error).message.toLowerCase().includes('not found') ? (
+      {isError &&
+        !isLoading &&
+        (normalizeApiError(error).statusCode === 404 ||
+        normalizeApiError(error).statusCode === 403 ||
+        normalizeApiError(error).message.toLowerCase().includes('not found') ||
+        normalizeApiError(error).message.toLowerCase().includes('forbidden') ||
+        normalizeApiError(error).message.toLowerCase().includes('not a member') ? (
           <NotFoundState
             title="Workspace not found or deleted"
             description="This workspace may have been removed or you no longer have access to it."
@@ -467,8 +476,7 @@ export function ProjectsListView({ workspaceId }: ProjectsListViewProps) {
               </Button>
             </AlertDescription>
           </Alert>
-        )
-      )}
+        ))}
 
       {/* 3. Empty State */}
       {!isLoading && !isError && (!projects || projects.length === 0) && (
@@ -484,7 +492,8 @@ export function ProjectsListView({ workspaceId }: ProjectsListViewProps) {
                   No matching projects found
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  No projects match your current search or filter criteria. Try adjusting or resetting the filters.
+                  No projects match your current search or filter criteria. Try adjusting or
+                  resetting the filters.
                 </p>
               </div>
               <Button variant="outline" onClick={handleResetFilters}>
@@ -530,4 +539,3 @@ export function ProjectsListView({ workspaceId }: ProjectsListViewProps) {
     </div>
   );
 }
-

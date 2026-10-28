@@ -1,12 +1,13 @@
-import { Router } from "express";
+import { Router } from 'express';
 
 import {
   authenticate,
+  requireWorkspaceRole,
   validate,
   validateParams,
   validateQuery,
-} from "../../../middleware";
-import { WorkspaceController } from "../controller";
+} from '../../../middleware';
+import { WorkspaceController } from '../controller';
 import {
   createWorkspaceSchema,
   updateWorkspaceSchema,
@@ -16,11 +17,11 @@ import {
   workspaceParamsSchema,
   workspaceMemberParamsSchema,
   transferWorkspaceOwnershipSchema,
-} from "../schema";
-import { WorkspaceRepository } from "../repository";
-import { WorkspaceService } from "../service";
+} from '../schema';
+import { WorkspaceRepository } from '../repository';
+import { WorkspaceService } from '../service';
 
-import { NotificationRepository, NotificationService } from "../../notifications";
+import { NotificationRepository, NotificationService } from '../../notifications';
 
 export const workspaceRouter = Router();
 
@@ -29,85 +30,90 @@ const workspaceRepository = new WorkspaceRepository();
 const notificationRepository = new NotificationRepository();
 const notificationService = new NotificationService(notificationRepository);
 
-const workspaceService = new WorkspaceService(
-  workspaceRepository,
-  notificationService,
-);
+const workspaceService = new WorkspaceService(workspaceRepository, notificationService);
 
 const workspaceController = new WorkspaceController(workspaceService);
 
 workspaceRouter.post(
-  "/",
+  '/',
   authenticate,
   validate(createWorkspaceSchema),
-  workspaceController.createWorkspace.bind(workspaceController),
+  workspaceController.createWorkspace.bind(workspaceController)
 );
 
 workspaceRouter.get(
-  "/",
+  '/',
   authenticate,
   validateQuery(workspaceFilterSchema),
-  workspaceController.getWorkspaces.bind(workspaceController),
+  workspaceController.getWorkspaces.bind(workspaceController)
 );
 
 workspaceRouter.get(
-  "/:workspaceId",
+  '/:workspaceId',
   authenticate,
   validateParams(workspaceParamsSchema),
-  workspaceController.getWorkspaceById.bind(workspaceController),
+  requireWorkspaceRole('MEMBER'),
+  workspaceController.getWorkspaceById.bind(workspaceController)
 );
 
 workspaceRouter.patch(
-  "/:workspaceId",
+  '/:workspaceId',
   authenticate,
   validateParams(workspaceParamsSchema),
+  requireWorkspaceRole('OWNER'),
   validate(updateWorkspaceSchema),
-  workspaceController.updateWorkspace.bind(workspaceController),
+  workspaceController.updateWorkspace.bind(workspaceController)
 );
 
 workspaceRouter.delete(
-  "/:workspaceId",
+  '/:workspaceId',
   authenticate,
   validateParams(workspaceParamsSchema),
-  workspaceController.deleteWorkspace.bind(workspaceController),
+  requireWorkspaceRole('OWNER'),
+  workspaceController.deleteWorkspace.bind(workspaceController)
 );
 
 workspaceRouter.post(
-  "/:workspaceId/transfer-ownership",
+  '/:workspaceId/transfer-ownership',
   authenticate,
   validateParams(workspaceParamsSchema),
+  requireWorkspaceRole('OWNER'),
   validate(transferWorkspaceOwnershipSchema),
-  workspaceController.transferWorkspaceOwnership.bind(workspaceController),
+  workspaceController.transferWorkspaceOwnership.bind(workspaceController)
 );
 
 workspaceRouter.post(
-  "/:workspaceId/members",
+  '/:workspaceId/members',
   authenticate,
   validateParams(workspaceParamsSchema),
+  requireWorkspaceRole('ADMIN'),
   validate(addWorkspaceMemberSchema),
-  workspaceController.addWorkspaceMember.bind(workspaceController),
+  workspaceController.addWorkspaceMember.bind(workspaceController)
 );
 
 workspaceRouter.get(
-  "/:workspaceId/members",
+  '/:workspaceId/members',
   authenticate,
   validateParams(workspaceParamsSchema),
-  workspaceController.getWorkspaceMembers.bind(workspaceController),
+  requireWorkspaceRole('MEMBER'),
+  workspaceController.getWorkspaceMembers.bind(workspaceController)
 );
 
 workspaceRouter.patch(
-  "/:workspaceId/members/:memberId",
+  '/:workspaceId/members/:memberId',
   authenticate,
   validateParams(workspaceMemberParamsSchema),
+  requireWorkspaceRole('OWNER'),
   validate(updateWorkspaceMemberRoleSchema),
-  workspaceController.updateWorkspaceMemberRole.bind(workspaceController),
+  workspaceController.updateWorkspaceMemberRole.bind(workspaceController)
 );
 
 workspaceRouter.delete(
-  "/:workspaceId/members/:memberId",
+  '/:workspaceId/members/:memberId',
   authenticate,
   validateParams(workspaceMemberParamsSchema),
-  workspaceController.removeWorkspaceMember.bind(workspaceController),
+  requireWorkspaceRole('MEMBER'),
+  workspaceController.removeWorkspaceMember.bind(workspaceController)
 );
 
 export default workspaceRouter;

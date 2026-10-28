@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { Prisma } from "@prisma/client";
 
 import { AppError } from "./app-error";
+import { logger } from "../logger";
 
 export function errorHandler(
   error: Error,
@@ -9,8 +10,13 @@ export function errorHandler(
   response: Response,
   _next: NextFunction,
 ): Response {
-  if (error instanceof AppError) {
-    return response.status(error.statusCode).json({
+  if (
+    error instanceof AppError ||
+    (error as AppError).isOperational ||
+    error.name === "AppError"
+  ) {
+    const statusCode = (error as AppError).statusCode || 400;
+    return response.status(statusCode).json({
       success: false,
       message: error.message,
     });
@@ -38,6 +44,10 @@ export function errorHandler(
       message: "Invalid identifier format",
     });
   }
+
+  logger.error(
+    `Internal server error: ${error.message}${error.stack ? `\n${error.stack}` : ""}`,
+  );
 
   return response.status(500).json({
     success: false,

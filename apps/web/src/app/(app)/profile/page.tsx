@@ -42,9 +42,9 @@ import { AuthUser, useAuth } from '@/features/auth';
 import { projectService } from '@/features/projects';
 import { taskService } from '@/features/tasks';
 import { DeleteAccountDialog, useCurrentUser, useUpdateUser } from '@/features/users';
-import { useWorkspaceContext } from '@/features/workspaces';
+import { useWorkspaceContext, WorkspaceRole, workspaceService } from '@/features/workspaces';
 import { normalizeApiError } from '@/shared/errors';
-import { cn } from '@/shared/utils';
+import { cn, deletedEntities } from '@/shared/utils';
 
 interface PersonalDetailsFormProps {
   user: AuthUser;
@@ -59,10 +59,8 @@ function PersonalDetailsForm({ user }: PersonalDetailsFormProps) {
   const updateUserMutation = useUpdateUser();
   const isUpdating = updateUserMutation.isPending;
 
-  const hasChanges =
-    firstName.trim() !== user.firstName || lastName.trim() !== user.lastName;
-  const canSave =
-    hasChanges && firstName.trim() !== '' && lastName.trim() !== '';
+  const hasChanges = firstName.trim() !== user.firstName || lastName.trim() !== user.lastName;
+  const canSave = hasChanges && firstName.trim() !== '' && lastName.trim() !== '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,9 +97,7 @@ function PersonalDetailsForm({ user }: PersonalDetailsFormProps) {
           <UserIcon className="size-4 text-primary" />
           <span>Personal Details</span>
         </CardTitle>
-        <CardDescription>
-          Update your display name across all workspaces.
-        </CardDescription>
+        <CardDescription>Update your display name across all workspaces.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -151,12 +147,7 @@ function PersonalDetailsForm({ user }: PersonalDetailsFormProps) {
           </div>
 
           <div className="flex justify-end pt-2">
-            <Button
-              type="submit"
-              size="sm"
-              disabled={!canSave || isUpdating}
-              className="gap-1.5"
-            >
+            <Button type="submit" size="sm" disabled={!canSave || isUpdating} className="gap-1.5">
               {isUpdating ? (
                 <>
                   <Loader2 className="size-3.5 animate-spin" />
@@ -182,17 +173,27 @@ export default function ProfilePage() {
   const { user: authUser, logout } = useAuth();
   const { data: serverUser } = useCurrentUser();
   const user = serverUser || authUser;
-  const { workspaces, activeWorkspace, setActiveWorkspaceId } =
-    useWorkspaceContext();
+  const { workspaces, activeWorkspace, setActiveWorkspaceId } = useWorkspaceContext();
 
   const [copiedId, setCopiedId] = useState(false);
+
+  // 0. Query members for all workspaces in parallel to resolve accurate user roles (OWNER, ADMIN, MEMBER)
+  const memberQueries = useQueries({
+    queries: workspaces.map((ws) => ({
+      queryKey: ['workspaces', ws.id, 'members'],
+      queryFn: () => workspaceService.getMembers(ws.id),
+      enabled: Boolean(ws.id) && !deletedEntities.isDeleted(ws.id),
+      retry: false,
+    })),
+  });
 
   // 1. Query projects for all workspaces in parallel
   const projectQueries = useQueries({
     queries: workspaces.map((ws) => ({
       queryKey: ['projects', ws.id],
       queryFn: () => projectService.getProjects(ws.id),
-      enabled: Boolean(ws.id),
+      enabled: Boolean(ws.id) && !deletedEntities.isDeleted(ws.id),
+      retry: false,
     })),
   });
 
@@ -213,7 +214,11 @@ export default function ProfilePage() {
     queries: allProjects.map((project) => ({
       queryKey: ['tasks', project.id],
       queryFn: () => taskService.getTasks(project.id),
-      enabled: Boolean(project.id),
+      enabled:
+        Boolean(project.id) &&
+        !deletedEntities.isDeleted(project.id) &&
+        !deletedEntities.isDeleted(project.workspaceId),
+      retry: false,
     })),
   });
 
@@ -228,27 +233,30 @@ export default function ProfilePage() {
 
   const userId = user?.id;
   const myActiveTasksCount = userId
-    ? allTasks.filter((t) => t.assigneeId === userId && t.status !== 'DONE')
-        .length
+    ? allTasks.filter((t) => t.assigneeId === userId && t.status !== 'DONE').length
     : 0;
 
   const myCompletedTasksCount = userId
-    ? allTasks.filter((t) => t.assigneeId === userId && t.status === 'DONE')
-        .length
+    ? allTasks.filter((t) => t.assigneeId === userId && t.status === 'DONE').length
     : 0;
 
   const activeProjectsCount = allProjects.filter((p) => !p.archived).length;
   const isStatsLoading = isProjectsLoading || isTasksLoading;
 
-  const hasOwnedWorkspaces = workspaces.some((ws) => ws.ownerId === user?.id);
+  const hasOwnedWorkspaces = workspaces.some((ws, index) => {
+    const members = memberQueries[index]?.data;
+    const currentMember = members?.find((m) => m.userId === user?.id);
+    const role: WorkspaceRole =
+      currentMember?.role ?? (ws.ownerId === user?.id ? 'OWNER' : 'MEMBER');
+    return role === 'OWNER';
+  });
 
   if (!user) {
     return null;
   }
 
   const fullName = `${user.firstName} ${user.lastName}`.trim();
-  const initials =
-    `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
+  const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
   const memberSince = user.createdAt
     ? new Date(user.createdAt).toLocaleDateString('en-US', {
         month: 'long',
@@ -289,9 +297,7 @@ export default function ProfilePage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          My Profile
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">My Profile</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Manage your personal identity, workload overview, and account settings.
         </p>
@@ -310,9 +316,7 @@ export default function ProfilePage() {
               </Avatar>
               <div className="min-w-0 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <CardTitle className="truncate text-2xl font-bold">
-                    {fullName}
-                  </CardTitle>
+                  <CardTitle className="truncate text-2xl font-bold">{fullName}</CardTitle>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1.5">
@@ -350,9 +354,7 @@ export default function ProfilePage() {
                     {myActiveTasksCount}
                   </p>
                 )}
-                <span className="text-[11px] text-muted-foreground">
-                  In progress or pending
-                </span>
+                <span className="text-[11px] text-muted-foreground">In progress or pending</span>
               </div>
 
               {/* Completed Tasks */}
@@ -368,9 +370,7 @@ export default function ProfilePage() {
                     {myCompletedTasksCount}
                   </p>
                 )}
-                <span className="text-[11px] text-muted-foreground">
-                  Delivered across projects
-                </span>
+                <span className="text-[11px] text-muted-foreground">Delivered across projects</span>
               </div>
 
               {/* Active Projects */}
@@ -386,9 +386,7 @@ export default function ProfilePage() {
                     {activeProjectsCount}
                   </p>
                 )}
-                <span className="text-[11px] text-muted-foreground">
-                  In your workspaces
-                </span>
+                <span className="text-[11px] text-muted-foreground">In your workspaces</span>
               </div>
             </div>
           </CardContent>
@@ -401,9 +399,7 @@ export default function ProfilePage() {
               <Briefcase className="size-4 text-primary" />
               <span>Workspaces ({workspaces.length})</span>
             </CardTitle>
-            <CardDescription>
-              Environments you currently belong to
-            </CardDescription>
+            <CardDescription>Environments you currently belong to</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-1 flex-col justify-between space-y-4">
             {workspaces.length === 0 ? (
@@ -413,8 +409,13 @@ export default function ProfilePage() {
             ) : (
               <ScrollArea className="max-h-[145px] pr-1.5">
                 <div className="space-y-2">
-                  {workspaces.map((ws) => {
-                    const isOwner = ws.ownerId === user.id;
+                  {workspaces.map((ws, index) => {
+                    const members = memberQueries[index]?.data;
+                    const currentMember = members?.find((m) => m.userId === user.id);
+                    const userRole: WorkspaceRole =
+                      currentMember?.role ?? (ws.ownerId === user.id ? 'OWNER' : 'MEMBER');
+                    const isOwner = userRole === 'OWNER';
+                    const isAdmin = userRole === 'ADMIN';
                     const isWsActive = activeWorkspace?.id === ws.id;
 
                     return (
@@ -436,24 +437,28 @@ export default function ProfilePage() {
                         )}
                       >
                         <div className="min-w-0 flex-1 pr-2">
-                          <p className="truncate font-medium text-foreground">
-                            {ws.name}
-                          </p>
+                          <p className="truncate font-medium text-foreground">{ws.name}</p>
                           <p className="text-[10px] text-muted-foreground">
-                            {isOwner ? 'Workspace Creator' : 'Team Member'}
+                            {isOwner
+                              ? 'Workspace Creator'
+                              : isAdmin
+                                ? 'Workspace Admin'
+                                : 'Team Member'}
                           </p>
                         </div>
 
                         <div className="flex shrink-0 items-center gap-1.5">
                           <Badge
-                            variant={isOwner ? 'outline' : 'secondary'}
+                            variant={isOwner || isAdmin ? 'outline' : 'secondary'}
                             className={cn(
                               'text-[10px] font-semibold',
                               isOwner &&
-                                'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400',
+                              isAdmin &&
+                                'border-blue-500/40 bg-blue-500/10 text-blue-600 dark:text-blue-400'
                             )}
                           >
-                            {isOwner ? 'OWNER' : 'MEMBER'}
+                            {userRole}
                           </Badge>
                           {isWsActive && (
                             <Badge
@@ -487,10 +492,7 @@ export default function ProfilePage() {
       {/* Bottom Grid: Account Settings & Security */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Edit Personal Details Card */}
-        <PersonalDetailsForm
-          key={`${user.id}-${user.firstName}-${user.lastName}`}
-          user={user}
-        />
+        <PersonalDetailsForm key={`${user.id}-${user.firstName}-${user.lastName}`} user={user} />
 
         {/* Security & Credentials Card */}
         <Card>
@@ -499,9 +501,7 @@ export default function ProfilePage() {
               <ShieldCheck className="size-4 text-emerald-500" />
               <span>Security &amp; Account</span>
             </CardTitle>
-            <CardDescription>
-              Authentication status and technical identification.
-            </CardDescription>
+            <CardDescription>Authentication status and technical identification.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1 rounded-lg border border-border bg-muted/20 p-3">
@@ -591,16 +591,14 @@ export default function ProfilePage() {
               Once deleted, your profile and personal data will be permanently removed.
               {hasOwnedWorkspaces && (
                 <span className="block text-amber-500 pt-0.5 font-medium">
-                  You must transfer ownership or delete your workspaces before deleting your account.
+                  You must transfer ownership or delete your workspaces before deleting your
+                  account.
                 </span>
               )}
             </p>
           </div>
 
-          <DeleteAccountDialog
-            user={user}
-            hasOwnedWorkspaces={hasOwnedWorkspaces}
-          />
+          <DeleteAccountDialog user={user} hasOwnedWorkspaces={hasOwnedWorkspaces} />
         </CardContent>
       </Card>
     </div>

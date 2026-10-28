@@ -28,21 +28,29 @@ import {
 import { normalizeApiError } from '@/shared/errors';
 
 import { useDeleteWorkspace } from '../hook';
-import {
-  createDeleteWorkspaceConfirmSchema,
-  DeleteWorkspaceConfirmFormValues,
-} from '../schema';
+import { createDeleteWorkspaceConfirmSchema, DeleteWorkspaceConfirmFormValues } from '../schema';
 import { Workspace } from '../types';
 
 interface DeleteWorkspaceDialogProps {
   workspace: Workspace;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showTrigger?: boolean;
 }
 
-export function DeleteWorkspaceDialog({ workspace }: DeleteWorkspaceDialogProps) {
+export function DeleteWorkspaceDialog({
+  workspace,
+  open: controlledOpen,
+  onOpenChange: setControlledOpen,
+  showTrigger = true,
+}: DeleteWorkspaceDialogProps) {
   const router = useRouter();
   const { toast } = useToast();
   const deleteWorkspaceMutation = useDeleteWorkspace();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = setControlledOpen ?? setInternalOpen;
 
   const form = useForm<DeleteWorkspaceConfirmFormValues>({
     resolver: zodResolver(createDeleteWorkspaceConfirmSchema(workspace.name)),
@@ -67,6 +75,9 @@ export function DeleteWorkspaceDialog({ workspace }: DeleteWorkspaceDialogProps)
 
   const onSubmit = async () => {
     try {
+      handleOpenChange(false);
+      router.replace('/workspaces');
+
       await deleteWorkspaceMutation.mutateAsync(workspace.id);
 
       toast({
@@ -74,8 +85,6 @@ export function DeleteWorkspaceDialog({ workspace }: DeleteWorkspaceDialogProps)
         description: `"${workspace.name}" and all its associated projects were permanently removed.`,
         variant: 'success',
       });
-      handleOpenChange(false);
-      router.push('/workspaces');
     } catch (error) {
       const apiError = normalizeApiError(error);
       toast({
@@ -88,10 +97,12 @@ export function DeleteWorkspaceDialog({ workspace }: DeleteWorkspaceDialogProps)
 
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
-      <AlertDialogTrigger render={<Button variant="destructive" />}>
-        <Trash2 className="size-4" />
-        <span>Delete Workspace</span>
-      </AlertDialogTrigger>
+      {showTrigger && (
+        <AlertDialogTrigger render={<Button variant="destructive" />}>
+          <Trash2 className="size-4" />
+          <span>Delete Workspace</span>
+        </AlertDialogTrigger>
+      )}
 
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -101,10 +112,22 @@ export function DeleteWorkspaceDialog({ workspace }: DeleteWorkspaceDialogProps)
           </div>
           <AlertDialogDescription>
             This action cannot be undone. This will permanently delete the{' '}
-            <span className="font-semibold text-foreground">{workspace.name}</span>{' '}
-            workspace, all of its projects, tasks, and member associations.
+            <span className="font-semibold text-foreground">{workspace.name}</span> workspace, all
+            of its projects, tasks, and member associations.
           </AlertDialogDescription>
         </AlertDialogHeader>
+
+        {/* Emphasized Confirmation Box */}
+        <div className="rounded-lg border border-destructive/25 bg-destructive/10 p-3.5 space-y-2">
+          <p className="text-xs font-medium text-muted-foreground">
+            To prevent accidental deletion, please type the exact workspace name below:
+          </p>
+          <div className="rounded-md border border-border bg-background px-3 py-2 shadow-2xs">
+            <span className="font-mono text-sm font-bold text-foreground select-none break-all">
+              {workspace.name}
+            </span>
+          </div>
+        </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -113,19 +136,13 @@ export function DeleteWorkspaceDialog({ workspace }: DeleteWorkspaceDialogProps)
               name="confirmationName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    Please type{' '}
-                    <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs font-semibold text-foreground">
-                      {workspace.name}
-                    </span>{' '}
-                    to confirm
-                  </FormLabel>
+                  <FormLabel className="text-sm font-medium">Confirm Workspace Name:</FormLabel>
                   <FormControl>
                     <Input
+                      {...field}
                       placeholder={workspace.name}
                       autoComplete="off"
                       disabled={isDeleting}
-                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -135,19 +152,9 @@ export function DeleteWorkspaceDialog({ workspace }: DeleteWorkspaceDialogProps)
 
             <AlertDialogFooter>
               <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-              <Button
-                type="submit"
-                variant="destructive"
-                disabled={!isConfirmed || isDeleting}
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" />
-                    <span>Deleting...</span>
-                  </>
-                ) : (
-                  <span>Delete Workspace</span>
-                )}
+              <Button type="submit" variant="destructive" disabled={!isConfirmed || isDeleting}>
+                {isDeleting && <Loader2 className="mr-2 size-4 animate-spin" />}
+                Delete Workspace
               </Button>
             </AlertDialogFooter>
           </form>

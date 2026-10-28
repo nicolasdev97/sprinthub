@@ -740,6 +740,7 @@ The Workspace API manages collaborative workspaces and their members.
 | POST   | `/api/workspaces/{workspaceId}/members`            | Invite a member            |
 | PATCH  | `/api/workspaces/{workspaceId}/members/{memberId}` | Update member role         |
 | DELETE | `/api/workspaces/{workspaceId}/members/{memberId}` | Remove a member            |
+| POST   | `/api/workspaces/{workspaceId}/transfer-ownership` | Transfer ownership         |
 
 ---
 
@@ -785,6 +786,22 @@ The Workspace API manages collaborative workspaces and their members.
 - The workspace owner cannot be removed (`403 Forbidden`).
 - Administrators cannot remove other administrators (`403 Forbidden`); only the Owner can remove an Administrator.
 - Returns `204 No Content` on successful removal.
+
+---
+
+### Transfer Workspace Ownership
+
+| Method | Endpoint                                           |
+| ------ | -------------------------------------------------- |
+| POST   | `/api/workspaces/{workspaceId}/transfer-ownership` |
+
+#### Authorization & Rules
+
+- Accessible strictly to the workspace `OWNER` (`403 Forbidden` for other roles).
+- `newOwnerId` is required in the body and must belong to an active member of the workspace.
+- Ownership cannot be transferred to the current owner (`400 Bad Request`).
+- Upon transfer, the previous owner becomes an `ADMIN` and the recipient becomes the new `OWNER`.
+- Returns `200 OK` with the updated workspace entity.
 
 ---
 
@@ -1107,6 +1124,27 @@ The Health API provides an endpoint to verify the operational status of SprintHu
   "message": "SprintHub API is running"
 }
 ```
+
+---
+
+# 20. Real-Time Events API
+
+SprintHub provides a Server-Sent Events (SSE) stream for live updates across clients.
+
+| Method | Endpoint      | Description                                |
+| ------ | ------------- | ------------------------------------------ |
+| GET    | `/api/events` | Establish persistent SSE streaming session |
+
+### Query Parameters
+
+- `token`: Bearer access token for session authorization (as EventSource does not support custom headers natively).
+
+### Broadcast Events
+
+- `WORKSPACE_MUTATED`: Fired upon workspace creation, update, deletion, or member role changes (`member_added`, `member_removed`, `ownership_transferred`).
+- `PROJECT_MUTATED`: Fired upon project creation, update, archiving, or deletion.
+- `TASK_MUTATED`: Fired upon task creation, update, assignment, or deletion.
+- `NOTIFICATION_CREATED`: Fired when a user receives an in-app alert.
 
 ---
 

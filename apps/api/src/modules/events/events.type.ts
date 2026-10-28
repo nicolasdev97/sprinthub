@@ -22,7 +22,14 @@ export interface ProjectMutatedEvent {
 export interface WorkspaceMutatedEvent {
   type: "WORKSPACE_MUTATED";
   workspaceId: string;
-  action: "updated" | "deleted" | "member_added" | "member_removed" | "role_updated" | "ownership_transferred";
+  action:
+    | "updated"
+    | "deleted"
+    | "member_added"
+    | "member_removed"
+    | "role_updated"
+    | "ownership_transferred";
+  userId?: string;
 }
 
 export interface NotificationCreatedEvent {
@@ -36,4 +43,3 @@ export type SseEvent =
   | ProjectMutatedEvent
   | WorkspaceMutatedEvent
   | NotificationCreatedEvent;
-

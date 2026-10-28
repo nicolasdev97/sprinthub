@@ -38,6 +38,7 @@ import {
 import { useProjects } from '@/features/projects';
 import { useWorkspaceContext, useWorkspaceMembers, WorkspaceMember } from '@/features/workspaces';
 import { normalizeApiError } from '@/shared/errors';
+import { deletedEntities } from '@/shared/utils';
 
 import { taskService } from '../service';
 import { TaskStatus } from '../types';
@@ -116,7 +117,7 @@ export function CreateTaskDialog({
 
   const defaultWorkspaceId =
     propWorkspaceId || routeWorkspaceId || activeWorkspaceId || workspaces[0]?.id || '';
-  const defaultProjectId = isInsideProjectContext ? (propProjectId || routeProjectId || '') : '';
+  const defaultProjectId = isInsideProjectContext ? propProjectId || routeProjectId || '' : '';
 
   const form = useForm<UnifiedCreateTaskFormValues>({
     resolver: zodResolver(unifiedCreateTaskSchema),
@@ -141,17 +142,31 @@ export function CreateTaskDialog({
   const watchProjectId = useWatch({ control: form.control, name: 'projectId' });
   const watchTitle = useWatch({ control: form.control, name: 'title' });
 
-  // Load projects for currently selected workspace
-  const { data: rawProjects = [], isLoading: isProjectsLoading } = useProjects(selectedWorkspaceId);
-  const availableProjects = useMemo(
-    () => rawProjects.filter((p) => !p.archived),
-    [rawProjects]
+  const isWorkspaceValid = Boolean(
+    selectedWorkspaceId &&
+      workspaces.some((w) => w.id === selectedWorkspaceId) &&
+      !deletedEntities.isDeleted(selectedWorkspaceId)
   );
 
+  // Load projects for currently selected workspace
+  const { data: rawProjects = [], isLoading: isProjectsLoading } = useProjects(
+    selectedWorkspaceId,
+    undefined,
+    { enabled: isOpen && isWorkspaceValid }
+  );
+  const availableProjects = useMemo(() => rawProjects.filter((p) => !p.archived), [rawProjects]);
+
   // Load members for currently selected workspace
-  const { data: fetchedMembers = [], isLoading: isMembersLoading } = useWorkspaceMembers(selectedWorkspaceId);
+  const { data: fetchedMembers = [], isLoading: isMembersLoading } = useWorkspaceMembers(
+    selectedWorkspaceId,
+    { enabled: isOpen && isWorkspaceValid }
+  );
   const availableMembers = useMemo(() => {
-    if (propMembers && propMembers.length > 0 && selectedWorkspaceId === (propWorkspaceId || defaultWorkspaceId)) {
+    if (
+      propMembers &&
+      propMembers.length > 0 &&
+      selectedWorkspaceId === (propWorkspaceId || defaultWorkspaceId)
+    ) {
       return propMembers;
     }
     return fetchedMembers;
@@ -160,8 +175,9 @@ export function CreateTaskDialog({
   // When dialog opens, reset form values based on context
   useEffect(() => {
     if (isOpen) {
-      const activeWs = propWorkspaceId || routeWorkspaceId || activeWorkspaceId || workspaces[0]?.id || '';
-      const activePrj = isInsideProjectContext ? (propProjectId || routeProjectId || '') : '';
+      const activeWs =
+        propWorkspaceId || routeWorkspaceId || activeWorkspaceId || workspaces[0]?.id || '';
+      const activePrj = isInsideProjectContext ? propProjectId || routeProjectId || '' : '';
 
       form.reset({
         workspaceId: activeWs,
@@ -174,7 +190,18 @@ export function CreateTaskDialog({
         dueDate: '',
       });
     }
-  }, [isOpen, propWorkspaceId, propProjectId, routeWorkspaceId, routeProjectId, activeWorkspaceId, workspaces, defaultStatus, isInsideProjectContext, form]);
+  }, [
+    isOpen,
+    propWorkspaceId,
+    propProjectId,
+    routeWorkspaceId,
+    routeProjectId,
+    activeWorkspaceId,
+    workspaces,
+    defaultStatus,
+    isInsideProjectContext,
+    form,
+  ]);
 
   // Ensure project is synchronized if inside project context when projects load
   useEffect(() => {
@@ -356,7 +383,9 @@ export function CreateTaskDialog({
                     </FormLabel>
                     <FormControl>
                       <Select
-                        disabled={isSubmitting || isProjectsLoading || availableProjects.length === 0}
+                        disabled={
+                          isSubmitting || isProjectsLoading || availableProjects.length === 0
+                        }
                         value={field.value}
                         onValueChange={field.onChange}
                         aria-label="Select project"
@@ -497,10 +526,7 @@ export function CreateTaskDialog({
                   <FormItem>
                     <FormLabel>Due Date</FormLabel>
                     <FormControl>
-                      <DateInput
-                        disabled={isSubmitting}
-                        {...field}
-                      />
+                      <DateInput disabled={isSubmitting} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

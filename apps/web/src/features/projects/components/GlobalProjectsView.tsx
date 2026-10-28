@@ -33,6 +33,7 @@ import {
 import { useWorkspaceContext } from '@/features/workspaces';
 
 import { projectService } from '../service';
+import { deletedEntities } from '@/shared/utils';
 import { Project, ProjectStatus } from '../types';
 import { CreateProjectDialog } from './CreateProjectDialog';
 import { ProjectCard } from './ProjectCard';
@@ -65,24 +66,21 @@ export function GlobalProjectsView() {
   const [sortOrder, setSortOrder] = useState<SortOrderValue>('desc');
 
   // Query projects for all user workspaces in parallel
-  const workspaceProjectConfigs = useMemo(
-    () =>
-      workspaces.map((ws) => ({
-        queryKey: ['projects', ws.id],
-        queryFn: () => projectService.getProjects(ws.id),
-        enabled: Boolean(ws.id),
-      })),
-    [workspaces]
-  );
-
   const projectQueries = useQueries({
-    queries: workspaceProjectConfigs,
+    queries: workspaces.map((ws) => ({
+      queryKey: ['projects', ws.id],
+      queryFn: () => projectService.getProjects(ws.id),
+      enabled: Boolean(ws.id) && !deletedEntities.isDeleted(ws.id),
+      retry: false,
+    })),
   });
 
   const isProjectsLoading = projectQueries.some((q) => q.isLoading);
   const isAnyError = projectQueries.some((q) => q.isError);
 
-  const projectsDataFingerprint = projectQueries.map((q) => `${q.dataUpdatedAt}-${q.status}`).join(':');
+  const projectsDataFingerprint = projectQueries
+    .map((q) => `${q.dataUpdatedAt}-${q.status}-${q.data?.length ?? 0}`)
+    .join(':');
 
   // Combine projects across all workspaces
   const allProjects = useMemo<GlobalProjectWithMeta[]>(() => {

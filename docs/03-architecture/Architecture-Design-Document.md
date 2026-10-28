@@ -548,8 +548,8 @@ The frontend is organized around business domains rather than technical layers, 
 The frontend follows a Feature-Based Modular Architecture adhering strictly to ADR-006 and the Developer Guide naming conventions:
 
 - **Single-artifact layer folders (singular):** hook/, service/, schema/, context/
-- **Collection layer folders (plural):** components/, 	ypes/
-- **File naming standards:** <kebab-case>.<role>.ts (e.g., project.hook.ts, 	ask.service.ts, create-task.schema.ts, project.type.ts)
+- **Collection layer folders (plural):** components/, ypes/
+- **File naming standards:** <kebab-case>.<role>.ts (e.g., project.hook.ts, ask.service.ts, create-task.schema.ts, project.type.ts)
 - **React Components:** PascalCase.tsx
 
 Each feature encapsulates only the internal layers it requires on demand:
@@ -558,7 +558,7 @@ Each feature encapsulates only the internal layers it requires on demand:
 - hook/ (custom React hooks integrating TanStack Query)
 - service/ (API client abstraction)
 - schema/ (client-side Zod validation schemas)
-- 	ypes/ (TypeScript domain definitions and DTO mappings)
+- ypes/ (TypeScript domain definitions and DTO mappings)
 - components/ (view-level and modular presentational UI components)
 
 ---
@@ -584,20 +584,20 @@ apps/
 
 The application routes are organized under Next.js Route Groups:
 
-| Route Path | Route Type | Purpose |
-| :--- | :--- | :--- |
-| / | Static | Marketing landing page with dynamic session-aware CTA |
-| /(auth)/login | Dynamic | User authentication and session establishment |
-| /(auth)/register | Dynamic | New account registration |
-| /(app)/dashboard | Static | Centralized Personal Dashboard (cross-workspace metrics & tasks) |
-| /(app)/workspaces | Dynamic | Workspaces Hub (workspace management and cards) |
-| /(app)/workspaces/[workspaceId]/projects | Dynamic | Workspace Projects Overview and workspace metrics |
-| /(app)/workspaces/[workspaceId]/projects/[projectId]/tasks | Dynamic | Interactive Sprint Board (Kanban & Table Views, deep-link drawer) |
-| /(app)/workspaces/[workspaceId]/projects/[projectId]/settings | Dynamic | Project settings, lifecycle management, and danger zone |
-| /(app)/workspaces/[workspaceId]/settings | Dynamic | Workspace members, invitation management, and danger zone |
-| /(app)/projects | Static | Global Projects Hub (cross-workspace project search & filters) |
-| /(app)/tasks | Static | Global Tasks Hub (cross-workspace task search & cascading filters) |
-| /(app)/profile | Static | User profile management and active workspace memberships |
+| Route Path                                                    | Route Type | Purpose                                                            |
+| :------------------------------------------------------------ | :--------- | :----------------------------------------------------------------- |
+| /                                                             | Static     | Marketing landing page with dynamic session-aware CTA              |
+| /(auth)/login                                                 | Dynamic    | User authentication and session establishment                      |
+| /(auth)/register                                              | Dynamic    | New account registration                                           |
+| /(app)/dashboard                                              | Static     | Centralized Personal Dashboard (cross-workspace metrics & tasks)   |
+| /(app)/workspaces                                             | Dynamic    | Workspaces Hub (workspace management and cards)                    |
+| /(app)/workspaces/[workspaceId]/projects                      | Dynamic    | Workspace Projects Overview and workspace metrics                  |
+| /(app)/workspaces/[workspaceId]/projects/[projectId]/tasks    | Dynamic    | Interactive Sprint Board (Kanban & Table Views, deep-link drawer)  |
+| /(app)/workspaces/[workspaceId]/projects/[projectId]/settings | Dynamic    | Project settings, lifecycle management, and danger zone            |
+| /(app)/workspaces/[workspaceId]/settings                      | Dynamic    | Workspace members, invitation management, and danger zone          |
+| /(app)/projects                                               | Static     | Global Projects Hub (cross-workspace project search & filters)     |
+| /(app)/tasks                                                  | Static     | Global Tasks Hub (cross-workspace task search & cascading filters) |
+| /(app)/profile                                                | Static     | User profile management and active workspace memberships           |
 
 ---
 
@@ -616,6 +616,11 @@ SprintHub enforces predictable spatial hierarchy and zero dead-ends through URL-
 
 3. **Resilient Missing Resource Handling:**
    - When a requested resource (workspace, project, or task) is deleted or not found, views render a unified `<NotFoundState>` with contextual recovery navigation, preventing broken layouts or blank screens upon concurrent deletions.
+
+4. **Edge Route Protection & Real-Time Concurrency:**
+   - Next.js Edge Middleware (`middleware.ts`) guards private paths (`/dashboard`, `/workspaces`, `/projects`, `/tasks`, `/profile`) against unauthenticated access and open redirect exploits.
+   - Declarative `<Can>` component and `useHasPermission` hook synchronize role-based UI capabilities on the client.
+   - `RealtimeEventsProvider` connects to SSE and bridges cross-tab state via `BroadcastChannel` to keep task boards, member tables, and modals live.
 
 ---
 
@@ -951,15 +956,15 @@ Authorization rules are enforced within the Service Layer.
 
 ### Task Authorization Matrix
 
-| Operation | Allowed Roles / Actors | Authorization & IDOR Policy |
-| :--- | :--- | :--- |
-| **Create Task** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace; project cannot be archived |
-| **Read Tasks / Task Details** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace (prevents cross-tenant IDOR) |
-| **Update Task Details** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace; project cannot be archived |
-| **Delete Task** | Task Creator (`task.createdById === userId`) OR Workspace `OWNER` / `ADMIN` | Members cannot delete tasks created by other users (`403 Forbidden`) |
-| **Assign / Unassign Task** | Workspace `OWNER`, `ADMIN` strictly | Workspace members receive `403 Forbidden`; target assignee must be a workspace member |
-| **Update Task Status** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace; project cannot be archived |
-| **Update Task Priority** | `OWNER`, `ADMIN`, `MEMBER` | Must be an active member of the project's workspace; project cannot be archived |
+| Operation                     | Allowed Roles / Actors                                                      | Authorization & IDOR Policy                                                           |
+| :---------------------------- | :-------------------------------------------------------------------------- | :------------------------------------------------------------------------------------ |
+| **Create Task**               | `OWNER`, `ADMIN`, `MEMBER`                                                  | Must be an active member of the project's workspace; project cannot be archived       |
+| **Read Tasks / Task Details** | `OWNER`, `ADMIN`, `MEMBER`                                                  | Must be an active member of the project's workspace (prevents cross-tenant IDOR)      |
+| **Update Task Details**       | `OWNER`, `ADMIN`, `MEMBER`                                                  | Must be an active member of the project's workspace; project cannot be archived       |
+| **Delete Task**               | Task Creator (`task.createdById === userId`) OR Workspace `OWNER` / `ADMIN` | Members cannot delete tasks created by other users (`403 Forbidden`)                  |
+| **Assign / Unassign Task**    | Workspace `OWNER`, `ADMIN` strictly                                         | Workspace members receive `403 Forbidden`; target assignee must be a workspace member |
+| **Update Task Status**        | `OWNER`, `ADMIN`, `MEMBER`                                                  | Must be an active member of the project's workspace; project cannot be archived       |
+| **Update Task Priority**      | `OWNER`, `ADMIN`, `MEMBER`                                                  | Must be an active member of the project's workspace; project cannot be archived       |
 
 ---
 
@@ -973,15 +978,17 @@ Security is integrated across every architectural layer.
 
 SprintHub implements:
 
-- JWT Authentication
-- Refresh Token Authentication
-- Password Hashing
-- Role-Based Access Control (RBAC)
-- Input Validation
-- Secure HTTP Cookies
-- Helmet
-- CORS
-- Rate Limiting
+- JWT Authentication (in-memory access tokens)
+- Refresh Token Authentication (`HttpOnly`, `SameSite=Lax`, `Secure` cookies)
+- Next.js Edge Middleware route protection with Open Redirect defense
+- Client-side declarative RBAC guards (`<Can>`, `useHasPermission`)
+- Password Hashing (bcrypt)
+- Role-Based Access Control (RBAC) in API middleware
+- Input Validation (Zod)
+- Deep Input Sanitization & XSS cleansing
+- Helmet security headers
+- CORS origin whitelisting
+- Rate Limiting per IP
 
 ---
 
@@ -1134,16 +1141,19 @@ SprintHub implements a defense-in-depth 3-layer synchronization architecture ens
 ```
 
 ### Layer 1: Client Cross-Tab Broadcast Channel
+
 - **Mechanism:** Standard `BroadcastChannel('sprinthub_cross_tab_sync')` with `window.addEventListener('storage')` fallback for legacy or isolated contexts.
 - **Event Types:** `AUTH_LOGOUT`, `AUTH_LOGIN`, `AUTH_USER_UPDATED`, `QUERY_INVALIDATE`.
 - **Purpose:** Solves the stateless JWT vulnerability where logging out or updating user data in Tab A left stale credentials and states in Tab B. Additionally, mutation hooks across workspaces, projects, and tasks emit `QUERY_INVALIDATE` messages upon mutation success to immediately synchronize sibling browser tabs without waiting for window focus.
 
 ### Layer 2: Reactive Data Hygiene
+
 - **Window Focus Refetch:** Automatically revalidates active queries when the user returns to the tab.
 - **Controlled Stale Time:** Set to 5 seconds to eliminate unnecessary query churn while preventing stale screens.
 - **Background Notification Polling:** 15-second background interval that pauses when window is inactive.
 
 ### Layer 3: Server-Sent Events (SSE) Engine
+
 - **Endpoint:** `GET /api/events?token=<accessToken>` with `text/event-stream`, `no-cache`, and `X-Accel-Buffering: no`.
 - **Event Registry:** In-memory client connection pool managing active Response streams by `userId`.
 - **Heartbeat:** 25-second keepalive timer preventing proxy/NAT idle disconnects.
@@ -1519,13 +1529,13 @@ Future versions may integrate external monitoring platforms and alerting service
 
 The following architectural trade-offs were intentionally accepted.
 
-| Decision               | Benefit                                    | Trade-off                                                 |
-| ---------------------- | ------------------------------------------ | --------------------------------------------------------- |
-| Modular Monolith       | Simpler development and deployment         | Less isolation than microservices                         |
+| Decision               | Benefit                                                            | Trade-off                                                                                        |
+| ---------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| Modular Monolith       | Simpler development and deployment                                 | Less isolation than microservices                                                                |
 | REST API + SSE         | Broad compatibility, simplicity, and unidirectional push streaming | No bidirectional socket channel in MVP (unidirectional SSE used for mutations and notifications) |
-| PostgreSQL             | Strong consistency and relational modeling | Vertical scaling limits compared to distributed databases |
-| Feature-Based Frontend | High maintainability                       | Requires consistent architectural discipline              |
-| Layered Backend        | Clear separation of responsibilities       | Additional abstraction compared to simpler designs        |
+| PostgreSQL             | Strong consistency and relational modeling                         | Vertical scaling limits compared to distributed databases                                        |
+| Feature-Based Frontend | High maintainability                                               | Requires consistent architectural discipline                                                     |
+| Layered Backend        | Clear separation of responsibilities                               | Additional abstraction compared to simpler designs                                               |
 
 ---
 
