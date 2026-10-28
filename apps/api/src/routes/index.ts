@@ -9,11 +9,13 @@ import { userRouter } from "../modules/users";
 import { notificationRouter } from "../modules/notifications";
 import { dashboardRouter } from "../modules/dashboard";
 import { eventsRouter } from "../modules/events";
+import { docsRouter } from "../docs/swagger.config";
 
 const router = Router();
 
 const apiRouter = Router();
 
+apiRouter.use("/", docsRouter);
 apiRouter.get("/health", healthController);
 
 apiRouter.use("/auth", authRouter);
