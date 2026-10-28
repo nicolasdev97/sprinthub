@@ -12,7 +12,14 @@ export type CrossTabEvent =
   | { type: 'AUTH_LOGOUT' }
   | { type: 'AUTH_LOGIN'; user: AuthUser }
   | { type: 'AUTH_USER_UPDATED'; user: AuthUser }
-  | { type: 'QUERY_INVALIDATE'; queryKeys: string[][] };
+  | { type: 'QUERY_INVALIDATE'; queryKeys: string[][] }
+  | {
+      type: 'ENTITY_DELETED';
+      entity: 'workspace' | 'project' | 'task';
+      id: string;
+      workspaceId?: string;
+      projectId?: string;
+    };
 
 const CHANNEL_NAME = 'sprinthub:cross-tab';
 const STORAGE_FALLBACK_KEY = 'sprinthub:cross-tab-fallback';
@@ -77,7 +84,10 @@ class CrossTabSyncManager {
     if (typeof window !== 'undefined') {
       try {
         // Writing to localStorage triggers the 'storage' event in other tabs
-        window.localStorage.setItem(STORAGE_FALLBACK_KEY, JSON.stringify({ ...event, _t: Date.now() }));
+        window.localStorage.setItem(
+          STORAGE_FALLBACK_KEY,
+          JSON.stringify({ ...event, _t: Date.now() })
+        );
       } catch {
         // Ignore quota or restricted storage errors
       }
@@ -96,4 +106,3 @@ class CrossTabSyncManager {
 }
 
 export const crossTabSync = new CrossTabSyncManager();
-

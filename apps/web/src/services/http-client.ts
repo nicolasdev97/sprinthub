@@ -102,32 +102,38 @@ httpClient.interceptors.response.use(
     if (isRefreshing) {
       return new Promise<string>((resolve, reject) => {
         failedRequestsQueue.push({ resolve, reject });
-      })
-        .then((newToken) => {
+      }).then((newToken) => {
+        if (originalRequest.headers) {
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
-          return httpClient(originalRequest);
-        })
-        .catch((queueError) => Promise.reject(normalizeApiError(queueError)));
+        }
+        return httpClient(originalRequest);
+      });
     }
 
     originalRequest._retry = true;
     isRefreshing = true;
 
     try {
-      const response = await httpClient.post<{ accessToken: string }>('/auth/refresh');
-      const newAccessToken = response.data.accessToken;
+      const response = await axios.post<{ accessToken: string }>(
+        `${baseURL}/auth/refresh`,
+        {},
+        { withCredentials: true, timeout: REQUEST_TIMEOUT_MS }
+      );
 
-      setAccessToken(newAccessToken);
-      processQueue(null, newAccessToken);
+      const newToken = response.data.accessToken;
+      setAccessToken(newToken);
+      processQueue(null, newToken);
 
-      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      if (originalRequest.headers) {
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+      }
+
       return httpClient(originalRequest);
     } catch (refreshError) {
-      const normalizedRefreshError = normalizeApiError(refreshError);
+      const normalized = normalizeApiError(refreshError);
       setAccessToken(null);
-      processQueue(normalizedRefreshError, null);
-
-      return Promise.reject(normalizedRefreshError);
+      processQueue(normalized, null);
+      return Promise.reject(normalized);
     } finally {
       isRefreshing = false;
     }
