@@ -31,7 +31,8 @@
     "prisma:migrate": "npm run prisma:migrate --workspace=api",
     "prisma:migrate:deploy": "npm run prisma:migrate:deploy --workspace=api",
     "prisma:seed": "npm run prisma:seed --workspace=api",
-    "prisma:studio": "npm run prisma:studio --workspace=api"
+    "prisma:studio": "npm run prisma:studio --workspace=api",
+    "test:integration": "npm run test:integration --workspace=api"
   },
   "repository": {
     "type": "git",
