@@ -47,6 +47,9 @@
     "docker:down": "docker compose down",
     "docker:build": "docker compose up -d --build",
     "docker:db": "docker compose up -d postgres",
+    "docker:build:prod": "docker compose -f docker-compose.prod.yml build",
+    "docker:prod:up": "docker compose -f docker-compose.prod.yml up -d",
+    "docker:prod:down": "docker compose -f docker-compose.prod.yml down",
     "docs:validate": "npm run docs:validate --workspace=api",
     "docs:generate": "npm run docs:generate --workspace=api"
   },

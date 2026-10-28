@@ -1,0 +1,40 @@
+# Dependency caches and installations
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Git repository metadata
+.git
+.gitignore
+
+# Build outputs
+dist
+.next
+out
+build
+
+# Test artifacts and coverage
+coverage
+reports
+playwright-report
+test-results
+.nyc_output
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# IDE and OS files
+.vscode
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
