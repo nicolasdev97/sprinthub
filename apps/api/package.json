@@ -4,7 +4,7 @@
   "description": "SprintHub backend REST API built with Express, TypeScript, and Prisma.",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "tsx watch --env-file=.env src/server.ts",
     "build": "prisma generate && tsc",
     "start": "node dist/server.js",
     "lint": "eslint",
