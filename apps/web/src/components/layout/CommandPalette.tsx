@@ -24,7 +24,7 @@ import {
 import { projectService } from '@/features/projects';
 import { taskService } from '@/features/tasks';
 import { useWorkspaceContext } from '@/features/workspaces';
-import { cn } from '@/shared/utils';
+import { cn, deletedEntities } from '@/shared/utils';
 
 interface CommandPaletteProps {
   open: boolean;
@@ -41,11 +41,7 @@ interface PaletteItem {
   onSelect: () => void;
 }
 
-export function CommandPalette({
-  open,
-  onOpenChange,
-  onOpenCreateTask,
-}: CommandPaletteProps) {
+export function CommandPalette({ open, onOpenChange, onOpenCreateTask }: CommandPaletteProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -58,7 +54,8 @@ export function CommandPalette({
     queries: workspaces.map((ws) => ({
       queryKey: ['projects', ws.id],
       queryFn: () => projectService.getProjects(ws.id),
-      enabled: Boolean(ws.id) && open,
+      enabled: Boolean(ws.id) && open && !deletedEntities.isDeleted(ws.id),
+      retry: false,
     })),
   });
 
@@ -77,7 +74,12 @@ export function CommandPalette({
     queries: allProjects.map((p) => ({
       queryKey: ['tasks', p.id],
       queryFn: () => taskService.getTasks(p.id),
-      enabled: Boolean(p.id) && open,
+      enabled:
+        Boolean(p.id) &&
+        open &&
+        !deletedEntities.isDeleted(p.id) &&
+        !deletedEntities.isDeleted(p.workspaceId),
+      retry: false,
     })),
   });
 
@@ -154,7 +156,11 @@ export function CommandPalette({
     ];
 
     commands.forEach((cmd) => {
-      if (!term || cmd.title.toLowerCase().includes(term) || cmd.subtitle?.toLowerCase().includes(term)) {
+      if (
+        !term ||
+        cmd.title.toLowerCase().includes(term) ||
+        cmd.subtitle?.toLowerCase().includes(term)
+      ) {
         list.push(cmd);
       }
     });

@@ -5,10 +5,33 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useState 
 import { queryClient } from '@/lib';
 import { setAccessToken, subscribeAccessToken } from '@/services';
 import { userService } from '@/features/users';
-import { crossTabSync } from '@/shared/utils';
+import { crossTabSync, deletedEntities } from '@/shared/utils';
 
 import { authService } from '../service';
 import { AuthUser } from '../types';
+
+const SESSION_COOKIE_NAME = 'sprinthub_session';
+
+function hasClientSessionCookie(): boolean {
+  if (typeof document === 'undefined') {
+    return false;
+  }
+  return document.cookie
+    .split(';')
+    .some((item) => item.trim().startsWith(`${SESSION_COOKIE_NAME}=`));
+}
+
+function setClientSessionCookie(): void {
+  if (typeof document !== 'undefined') {
+    document.cookie = `${SESSION_COOKIE_NAME}=active; path=/; max-age=604800; SameSite=Lax`;
+  }
+}
+
+function clearClientSessionCookie(): void {
+  if (typeof document !== 'undefined') {
+    document.cookie = `${SESSION_COOKIE_NAME}=; path=/; max-age=0; SameSite=Lax`;
+  }
+}
 
 interface AuthContextValue {
   accessToken: string | null;
@@ -32,12 +55,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isInitializing, setIsInitializing] = useState<boolean>(true);
 
   const setAuth = useCallback((token: string, authUser: AuthUser) => {
+    deletedEntities.clear();
+    setClientSessionCookie();
     setAccessToken(token);
     setAccessTokenState(token);
     setUser(authUser);
   }, []);
 
   const clearAuth = useCallback(() => {
+    deletedEntities.clear();
+    clearClientSessionCookie();
     setAccessToken(null);
     setAccessTokenState(null);
     setUser(null);
@@ -77,10 +104,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       } else if (event.type === 'AUTH_USER_UPDATED') {
         setUser(event.user);
         queryClient.invalidateQueries({ queryKey: ['user'] });
-      } else if (event.type === 'QUERY_INVALIDATE') {
-        event.queryKeys.forEach((key) => {
-          queryClient.invalidateQueries({ queryKey: key });
-        });
       }
     });
   }, [clearAuth]);
@@ -89,6 +112,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     let isMounted = true;
 
     const initializeAuth = async () => {
+      // If no session indicator exists, skip refresh call to avoid unneeded 401 network error for guests
+      if (!hasClientSessionCookie()) {
+        if (isMounted) {
+          setIsInitializing(false);
+        }
+        return;
+      }
+
       try {
         const { accessToken } = await authService.refresh();
         setAccessToken(accessToken);
@@ -100,6 +131,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setUser(currentUser);
         }
       } catch {
+        clearClientSessionCookie();
         if (isMounted) {
           setAccessToken(null);
           setAccessTokenState(null);
@@ -145,7 +177,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   );
 };
 
-export function useAuth() {
+export const useAuth = (): AuthContextValue => {
   const context = useContext(AuthContext);
 
   if (!context) {
@@ -153,4 +185,4 @@ export function useAuth() {
   }
 
   return context;
-}
+};
