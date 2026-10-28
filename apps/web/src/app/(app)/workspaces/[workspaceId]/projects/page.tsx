@@ -1,6 +1,8 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 
 import { ProjectsListView } from '@/features/projects';
+import { AppContentSkeleton } from '@/components/layout';
 
 export const metadata: Metadata = {
   title: 'Projects | SprintHub',
@@ -16,6 +18,9 @@ export default async function WorkspaceProjectsPage({
 }: WorkspaceProjectsPageProps) {
   const { workspaceId } = await params;
 
-  return <ProjectsListView workspaceId={workspaceId} />;
+  return (
+    <Suspense fallback={<AppContentSkeleton />}>
+      <ProjectsListView workspaceId={workspaceId} />
+    </Suspense>
+  );
 }
-
