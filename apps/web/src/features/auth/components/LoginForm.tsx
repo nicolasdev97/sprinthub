@@ -30,12 +30,14 @@ import { normalizeApiError } from '@/shared/errors';
 
 import { useLogin } from '../hook';
 import { LoginFormValues, loginSchema } from '../schema';
+import { DEFAULT_AUTHENTICATED_REDIRECT, getSafeRedirectPath } from '../utils';
 
 interface LoginFormProps {
   registeredSuccess?: boolean;
+  redirectTo?: string;
 }
 
-export function LoginForm({ registeredSuccess = false }: LoginFormProps) {
+export function LoginForm({ registeredSuccess = false, redirectTo }: LoginFormProps) {
   const router = useRouter();
   const loginMutation = useLogin();
   const [showPassword, setShowPassword] = useState(false);
@@ -65,7 +67,8 @@ export function LoginForm({ registeredSuccess = false }: LoginFormProps) {
 
     try {
       await loginMutation.mutateAsync(values);
-      router.push('/dashboard');
+      const targetPath = getSafeRedirectPath(redirectTo, DEFAULT_AUTHENTICATED_REDIRECT);
+      router.push(targetPath);
     } catch (error) {
       const apiError = normalizeApiError(error);
 
@@ -171,11 +174,7 @@ export function LoginForm({ registeredSuccess = false }: LoginFormProps) {
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                       title={showPassword ? 'Hide password' : 'Show password'}
                     >
-                      {showPassword ? (
-                        <Eye className="size-4" />
-                      ) : (
-                        <EyeOff className="size-4" />
-                      )}
+                      {showPassword ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                     </button>
                   </div>
                   <FormMessage />
@@ -183,12 +182,7 @@ export function LoginForm({ registeredSuccess = false }: LoginFormProps) {
               )}
             />
 
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full"
-              disabled={isSubmitting}
-            >
+            <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
@@ -216,4 +210,3 @@ export function LoginForm({ registeredSuccess = false }: LoginFormProps) {
     </Card>
   );
 }
-

@@ -8,13 +8,13 @@ export const metadata: Metadata = {
 };
 
 interface LoginPageProps {
-  searchParams: Promise<{ registered?: string }>;
+  searchParams: Promise<{ registered?: string; redirect?: string }>;
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const resolvedSearchParams = await searchParams;
   const registeredSuccess = resolvedSearchParams.registered === 'true';
+  const redirectTo = resolvedSearchParams.redirect;
 
-  return <LoginForm registeredSuccess={registeredSuccess} />;
+  return <LoginForm registeredSuccess={registeredSuccess} redirectTo={redirectTo} />;
 }
-

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { Skeleton } from '@/components/ui';
-import { useAuth } from '@/features/auth';
+import { DEFAULT_AUTHENTICATED_REDIRECT, getSafeRedirectPath, useAuth } from '@/features/auth';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -18,7 +18,11 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
 
   useEffect(() => {
     if (!isInitializing && isAuthenticated) {
-      router.replace('/dashboard');
+      const searchParams =
+        typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const redirectParam = searchParams?.get('redirect');
+      const targetPath = getSafeRedirectPath(redirectParam, DEFAULT_AUTHENTICATED_REDIRECT);
+      router.replace(targetPath);
     }
   }, [isInitializing, isAuthenticated, router]);
 

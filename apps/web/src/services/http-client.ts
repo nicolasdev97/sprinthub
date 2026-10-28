@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
+import { clearClientSessionCookie } from '@/features/auth/utils/session-cookie';
 import { ApiErrorResponse, normalizeApiError } from '@/shared/errors';
 
 type AccessTokenListener = (token: string | null) => void;
@@ -22,12 +23,16 @@ let accessToken: string | null = null;
 const listeners = new Set<AccessTokenListener>();
 
 let isRefreshing = false;
+let isRedirectingToLogin = false;
 let failedRequestsQueue: QueuedRequest[] = [];
 
 export const getAccessToken = (): string | null => accessToken;
 
 export const setAccessToken = (token: string | null): void => {
   accessToken = token;
+  if (token) {
+    isRedirectingToLogin = false;
+  }
   listeners.forEach((listener) => listener(token));
 };
 
@@ -54,6 +59,25 @@ function processQueue(error: unknown, token: string | null = null): void {
 function shouldBypassRefresh(url?: string): boolean {
   if (!url) return false;
   return AUTH_BYPASS_PATHS.some((path) => url.includes(path));
+}
+
+function handleUnauthorizedSessionExpiry(): void {
+  clearClientSessionCookie();
+  setAccessToken(null);
+
+  if (typeof window === 'undefined' || isRedirectingToLogin) {
+    return;
+  }
+
+  const { pathname, search } = window.location;
+  const isPublicOrAuthRoute =
+    pathname === '/' || pathname.startsWith('/login') || pathname.startsWith('/register');
+
+  if (!isPublicOrAuthRoute) {
+    isRedirectingToLogin = true;
+    const redirectTarget = encodeURIComponent(`${pathname}${search}`);
+    window.location.replace(`/login?redirect=${redirectTarget}`);
+  }
 }
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL;
@@ -131,7 +155,7 @@ httpClient.interceptors.response.use(
       return httpClient(originalRequest);
     } catch (refreshError) {
       const normalized = normalizeApiError(refreshError);
-      setAccessToken(null);
+      handleUnauthorizedSessionExpiry();
       processQueue(normalized, null);
       return Promise.reject(normalized);
     } finally {

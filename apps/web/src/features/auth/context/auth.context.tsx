@@ -9,29 +9,7 @@ import { crossTabSync, deletedEntities } from '@/shared/utils';
 
 import { authService } from '../service';
 import { AuthUser } from '../types';
-
-const SESSION_COOKIE_NAME = 'sprinthub_session';
-
-function hasClientSessionCookie(): boolean {
-  if (typeof document === 'undefined') {
-    return false;
-  }
-  return document.cookie
-    .split(';')
-    .some((item) => item.trim().startsWith(`${SESSION_COOKIE_NAME}=`));
-}
-
-function setClientSessionCookie(): void {
-  if (typeof document !== 'undefined') {
-    document.cookie = `${SESSION_COOKIE_NAME}=active; path=/; max-age=604800; SameSite=Lax`;
-  }
-}
-
-function clearClientSessionCookie(): void {
-  if (typeof document !== 'undefined') {
-    document.cookie = `${SESSION_COOKIE_NAME}=; path=/; max-age=0; SameSite=Lax`;
-  }
-}
+import { clearClientSessionCookie, hasClientSessionCookie, setClientSessionCookie } from '../utils';
 
 interface AuthContextValue {
   accessToken: string | null;
