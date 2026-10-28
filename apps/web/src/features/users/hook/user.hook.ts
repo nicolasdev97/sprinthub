@@ -21,6 +21,15 @@ export const useUpdateUser = () => {
       queryClient.invalidateQueries({
         queryKey: ['user'],
       });
+      queryClient.invalidateQueries({
+        queryKey: ['workspaces'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['tasks'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard'],
+      });
       crossTabSync.postMessage({
         type: 'AUTH_USER_UPDATED',
         user: {
@@ -31,6 +40,10 @@ export const useUpdateUser = () => {
           createdAt: updatedUser.createdAt,
           updatedAt: updatedUser.updatedAt,
         },
+      });
+      crossTabSync.postMessage({
+        type: 'QUERY_INVALIDATE',
+        queryKeys: [['workspaces'], ['tasks'], ['dashboard']],
       });
     },
   });

@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   DEFAULT_AUTHENTICATED_REDIRECT,
   getSafeRedirectPath,
-  REFRESH_TOKEN_COOKIE_NAME,
   SESSION_COOKIE_NAME,
 } from '@/features/auth/utils/session-cookie';
 
@@ -22,9 +21,7 @@ function isGuestAuthRoute(pathname: string): boolean {
 
 function hasActiveSessionCookie(request: NextRequest): boolean {
   const sessionIndicator = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE_NAME)?.value;
-
-  return Boolean(sessionIndicator || refreshToken);
+  return sessionIndicator === 'active';
 }
 
 export function middleware(request: NextRequest): NextResponse {

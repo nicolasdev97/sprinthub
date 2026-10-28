@@ -61,7 +61,6 @@ taskRouter.post<
   authenticate,
   validateParams(projectTaskParamsSchema),
   requireProjectAccess('MEMBER'),
-  requireProjectAccess("MEMBER"),
   validate(createTaskSchema),
   taskController.createTask.bind(taskController)
 );
@@ -71,7 +70,6 @@ taskRouter.get<ProjectTaskParams>(
   authenticate,
   validateParams(projectTaskParamsSchema),
   requireProjectAccess('MEMBER'),
-  requireProjectAccess("MEMBER"),
   validateQuery(taskFilterSchema),
   taskController.getTasks.bind(taskController)
 );
@@ -80,7 +78,6 @@ taskRouter.get<TaskParams>(
   '/tasks/:taskId',
   authenticate,
   validateParams(taskParamsSchema),
-  requireTaskAccess("MEMBER"),
   requireTaskAccess('MEMBER'),
   taskController.getTaskById.bind(taskController)
 );
@@ -90,7 +87,6 @@ taskRouter.patch<TaskParams>(
   authenticate,
   validateParams(taskParamsSchema),
   requireTaskAccess('MEMBER'),
-  requireTaskAccess("MEMBER"),
   validate(updateTaskSchema),
   taskController.updateTask.bind(taskController)
 );
@@ -99,7 +95,6 @@ taskRouter.delete<TaskParams>(
   '/tasks/:taskId',
   authenticate,
   validateParams(taskParamsSchema),
-  requireTaskAccess("MEMBER"),
   requireTaskAccess('MEMBER'),
   taskController.deleteTask.bind(taskController)
 );
@@ -109,7 +104,6 @@ taskRouter.patch<TaskParams>(
   authenticate,
   validateParams(taskParamsSchema),
   requireTaskAccess('MEMBER'),
-  requireTaskAccess("MEMBER"),
   validate(assignTaskSchema),
   taskController.assignTask.bind(taskController)
 );
@@ -119,7 +113,6 @@ taskRouter.patch<TaskParams>(
   authenticate,
   validateParams(taskParamsSchema),
   requireTaskAccess('MEMBER'),
-  requireTaskAccess("MEMBER"),
   validate(updateTaskStatusSchema),
   taskController.updateTaskStatus.bind(taskController)
 );
@@ -129,10 +122,8 @@ taskRouter.patch<TaskParams>(
   authenticate,
   validateParams(taskParamsSchema),
   requireTaskAccess('MEMBER'),
-  requireTaskAccess("MEMBER"),
   validate(updateTaskPrioritySchema),
   taskController.updateTaskPriority.bind(taskController)
 );
 
 export default taskRouter;
-

@@ -52,7 +52,6 @@ workspaceRouter.get(
   '/:workspaceId',
   authenticate,
   validateParams(workspaceParamsSchema),
-  requireWorkspaceRole("MEMBER"),
   requireWorkspaceRole('MEMBER'),
   workspaceController.getWorkspaceById.bind(workspaceController)
 );
@@ -62,7 +61,6 @@ workspaceRouter.patch(
   authenticate,
   validateParams(workspaceParamsSchema),
   requireWorkspaceRole('OWNER'),
-  requireWorkspaceRole("OWNER"),
   validate(updateWorkspaceSchema),
   workspaceController.updateWorkspace.bind(workspaceController)
 );
@@ -71,7 +69,6 @@ workspaceRouter.delete(
   '/:workspaceId',
   authenticate,
   validateParams(workspaceParamsSchema),
-  requireWorkspaceRole("OWNER"),
   requireWorkspaceRole('OWNER'),
   workspaceController.deleteWorkspace.bind(workspaceController)
 );
@@ -81,7 +78,6 @@ workspaceRouter.post(
   authenticate,
   validateParams(workspaceParamsSchema),
   requireWorkspaceRole('OWNER'),
-  requireWorkspaceRole("OWNER"),
   validate(transferWorkspaceOwnershipSchema),
   workspaceController.transferWorkspaceOwnership.bind(workspaceController)
 );
@@ -91,7 +87,6 @@ workspaceRouter.post(
   authenticate,
   validateParams(workspaceParamsSchema),
   requireWorkspaceRole('ADMIN'),
-  requireWorkspaceRole("ADMIN"),
   validate(addWorkspaceMemberSchema),
   workspaceController.addWorkspaceMember.bind(workspaceController)
 );
@@ -100,7 +95,6 @@ workspaceRouter.get(
   '/:workspaceId/members',
   authenticate,
   validateParams(workspaceParamsSchema),
-  requireWorkspaceRole("MEMBER"),
   requireWorkspaceRole('MEMBER'),
   workspaceController.getWorkspaceMembers.bind(workspaceController)
 );
@@ -110,7 +104,6 @@ workspaceRouter.patch(
   authenticate,
   validateParams(workspaceMemberParamsSchema),
   requireWorkspaceRole('OWNER'),
-  requireWorkspaceRole("OWNER"),
   validate(updateWorkspaceMemberRoleSchema),
   workspaceController.updateWorkspaceMemberRole.bind(workspaceController)
 );
@@ -119,10 +112,8 @@ workspaceRouter.delete(
   '/:workspaceId/members/:memberId',
   authenticate,
   validateParams(workspaceMemberParamsSchema),
-  requireWorkspaceRole("MEMBER"),
   requireWorkspaceRole('MEMBER'),
   workspaceController.removeWorkspaceMember.bind(workspaceController)
 );
 
 export default workspaceRouter;
-

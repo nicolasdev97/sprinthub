@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { Project } from '@/features/projects/types';
+import { Task } from '@/features/tasks/types';
 import { crossTabSync, deletedEntities } from '@/shared/utils';
 
 import { workspaceService } from '../service';
@@ -63,13 +65,26 @@ export const useUpdateWorkspace = () => {
   return useMutation({
     mutationFn: ({ workspaceId, data }: { workspaceId: string; data: UpdateWorkspaceRequest }) =>
       workspaceService.updateWorkspace(workspaceId, data),
-    onSuccess: (_, variables) => {
+    onSuccess: (updatedWorkspace, variables) => {
+      if (updatedWorkspace && updatedWorkspace.id) {
+        queryClient.setQueryData(['workspaces', variables.workspaceId], updatedWorkspace);
+        queryClient.setQueriesData<Workspace[]>({ queryKey: ['workspaces'] }, (old) =>
+          Array.isArray(old)
+            ? old.map((w) => (w.id === updatedWorkspace.id ? { ...w, ...updatedWorkspace } : w))
+            : old
+        );
+      }
+
       queryClient.invalidateQueries({
         queryKey: ['workspaces'],
       });
 
       queryClient.invalidateQueries({
         queryKey: ['workspaces', variables.workspaceId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', variables.workspaceId],
       });
 
       crossTabSync.postMessage({
@@ -86,8 +101,42 @@ export const useDeleteWorkspace = () => {
   return useMutation({
     mutationFn: (workspaceId: string) => workspaceService.deleteWorkspace(workspaceId),
     onMutate: async (workspaceId: string) => {
-      // 1. Immediately register workspace as permanently deleted
+      // 1. Immediately register workspace (and its cached child projects & tasks) as permanently deleted
       deletedEntities.markDeleted(workspaceId);
+
+      const cachedProjectQueries = queryClient.getQueriesData<Project[]>({
+        queryKey: ['projects', workspaceId],
+      });
+      cachedProjectQueries.forEach(([, projectsList]) => {
+        if (Array.isArray(projectsList)) {
+          projectsList.forEach((p) => {
+            if (p?.id) {
+              deletedEntities.markDeleted(p.id, workspaceId);
+              queryClient.setQueryDefaults(['projects', p.id], { enabled: false, retry: false });
+              queryClient.setQueryDefaults(['tasks', p.id], { enabled: false, retry: false });
+              queryClient.setQueryData(['projects', p.id], null);
+
+              const cachedTaskQueries = queryClient.getQueriesData<Task[]>({
+                queryKey: ['tasks', p.id],
+              });
+              cachedTaskQueries.forEach(([, tasksList]) => {
+                if (Array.isArray(tasksList)) {
+                  tasksList.forEach((t) => {
+                    if (t?.id) {
+                      deletedEntities.markDeleted(t.id, p.id);
+                      queryClient.setQueryDefaults(['tasks', t.id], {
+                        enabled: false,
+                        retry: false,
+                      });
+                      queryClient.setQueryData(['tasks', t.id], null);
+                    }
+                  });
+                }
+              });
+            }
+          });
+        }
+      });
 
       // 2. Immediately silence and set null on queries for this workspace and child entities
       queryClient.setQueryDefaults(['workspaces', workspaceId], { enabled: false, retry: false });

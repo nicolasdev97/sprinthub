@@ -71,7 +71,11 @@ export const useUpdateTask = (projectId: string) => {
     mutationFn: ({ taskId, data }: { taskId: string; data: UpdateTaskRequest }) =>
       taskService.updateTask(taskId, data),
 
-    onSuccess: (_, variables) => {
+    onSuccess: (updatedTask, variables) => {
+      if (updatedTask && updatedTask.id) {
+        queryClient.setQueryData(['tasks', variables.taskId], updatedTask);
+      }
+
       queryClient.invalidateQueries({
         queryKey: ['tasks', projectId],
       });
@@ -99,7 +103,7 @@ export const useDeleteTask = (projectId: string) => {
     mutationFn: (taskId: string) => taskService.deleteTask(taskId),
 
     onMutate: async (taskId: string) => {
-      deletedEntities.markDeleted(taskId);
+      deletedEntities.markDeleted(taskId, projectId);
 
       queryClient.setQueryDefaults(['tasks', taskId], { enabled: false, retry: false });
       await queryClient.cancelQueries({ queryKey: ['tasks', taskId] });
@@ -115,7 +119,7 @@ export const useDeleteTask = (projectId: string) => {
     },
 
     onSuccess: (_, taskId) => {
-      deletedEntities.markDeleted(taskId);
+      deletedEntities.markDeleted(taskId, projectId);
 
       // Ensure deleted task is silenced and set to null so no refetch occurs
       queryClient.setQueryDefaults(['tasks', taskId], { enabled: false, retry: false });
@@ -146,13 +150,21 @@ export const useAssignTask = (projectId: string) => {
     mutationFn: ({ taskId, data }: { taskId: string; data: AssignTaskRequest }) =>
       taskService.assignTask(taskId, data),
 
-    onSuccess: (_, variables) => {
+    onSuccess: (updatedTask, variables) => {
+      if (updatedTask && updatedTask.id) {
+        queryClient.setQueryData(['tasks', variables.taskId], updatedTask);
+      }
+
       queryClient.invalidateQueries({
         queryKey: ['tasks', projectId],
       });
 
       queryClient.invalidateQueries({
         queryKey: ['tasks', variables.taskId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard'],
       });
 
       queryClient.invalidateQueries({
@@ -174,7 +186,11 @@ export const useUpdateTaskStatus = (projectId: string) => {
     mutationFn: ({ taskId, data }: { taskId: string; data: UpdateTaskStatusRequest }) =>
       taskService.updateTaskStatus(taskId, data),
 
-    onSuccess: (_, variables) => {
+    onSuccess: (updatedTask, variables) => {
+      if (updatedTask && updatedTask.id) {
+        queryClient.setQueryData(['tasks', variables.taskId], updatedTask);
+      }
+
       queryClient.invalidateQueries({
         queryKey: ['tasks', projectId],
       });
@@ -206,7 +222,11 @@ export const useUpdateTaskPriority = (projectId: string) => {
     mutationFn: ({ taskId, data }: { taskId: string; data: UpdateTaskPriorityRequest }) =>
       taskService.updateTaskPriority(taskId, data),
 
-    onSuccess: (_, variables) => {
+    onSuccess: (updatedTask, variables) => {
+      if (updatedTask && updatedTask.id) {
+        queryClient.setQueryData(['tasks', variables.taskId], updatedTask);
+      }
+
       queryClient.invalidateQueries({
         queryKey: ['tasks', projectId],
       });

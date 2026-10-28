@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { Task } from '@/features/tasks/types';
 import { crossTabSync, deletedEntities } from '@/shared/utils';
 
 import { projectService } from '../service';
@@ -69,7 +70,11 @@ export const useUpdateProject = (workspaceId: string) => {
     mutationFn: ({ projectId, data }: { projectId: string; data: UpdateProjectRequest }) =>
       projectService.updateProject(projectId, data),
 
-    onSuccess: (_, variables) => {
+    onSuccess: (updatedProject, variables) => {
+      if (updatedProject && updatedProject.id) {
+        queryClient.setQueryData(['projects', variables.projectId], updatedProject);
+      }
+
       queryClient.invalidateQueries({
         queryKey: ['projects', workspaceId],
       });
@@ -97,8 +102,23 @@ export const useDeleteProject = (workspaceId: string) => {
     mutationFn: (projectId: string) => projectService.deleteProject(projectId),
 
     onMutate: async (projectId: string) => {
-      // 1. Immediately register project as permanently deleted
-      deletedEntities.markDeleted(projectId);
+      // 1. Immediately register project (and its cached tasks) as permanently deleted
+      deletedEntities.markDeleted(projectId, workspaceId);
+
+      const cachedTaskQueries = queryClient.getQueriesData<Task[]>({
+        queryKey: ['tasks', projectId],
+      });
+      cachedTaskQueries.forEach(([, tasksList]) => {
+        if (Array.isArray(tasksList)) {
+          tasksList.forEach((t) => {
+            if (t?.id) {
+              deletedEntities.markDeleted(t.id, projectId);
+              queryClient.setQueryDefaults(['tasks', t.id], { enabled: false, retry: false });
+              queryClient.setQueryData(['tasks', t.id], null);
+            }
+          });
+        }
+      });
 
       // 2. Immediately silence and set null on any mounted queries observing this project or its tasks
       queryClient.setQueryDefaults(['projects', projectId], { enabled: false, retry: false });
@@ -107,7 +127,7 @@ export const useDeleteProject = (workspaceId: string) => {
       await queryClient.cancelQueries({ queryKey: ['tasks', projectId] });
 
       queryClient.setQueryData(['projects', projectId], null);
-      queryClient.setQueryData(['tasks', projectId], []);
+      queryClient.setQueriesData({ queryKey: ['tasks', projectId] }, []);
 
       // 3. Optimistically remove project from list queries so <ProjectCard> unmounts right away
       queryClient.setQueriesData<Project[]>({ queryKey: ['projects', workspaceId] }, (old) => {
@@ -121,13 +141,13 @@ export const useDeleteProject = (workspaceId: string) => {
     },
 
     onSuccess: (_, projectId) => {
-      deletedEntities.markDeleted(projectId);
+      deletedEntities.markDeleted(projectId, workspaceId);
 
       // Ensure queries for this deleted project remain silenced and set to null
       queryClient.setQueryDefaults(['projects', projectId], { enabled: false, retry: false });
       queryClient.setQueryDefaults(['tasks', projectId], { enabled: false, retry: false });
       queryClient.setQueryData(['projects', projectId], null);
-      queryClient.setQueryData(['tasks', projectId], []);
+      queryClient.setQueriesData({ queryKey: ['tasks', projectId] }, []);
 
       queryClient.invalidateQueries({
         queryKey: ['projects', workspaceId],
@@ -154,7 +174,11 @@ export const useArchiveProject = (workspaceId: string) => {
     mutationFn: ({ projectId, data }: { projectId: string; data: ArchiveProjectRequest }) =>
       projectService.archiveProject(projectId, data),
 
-    onSuccess: (_, variables) => {
+    onSuccess: (updatedProject, variables) => {
+      if (updatedProject && updatedProject.id) {
+        queryClient.setQueryData(['projects', variables.projectId], updatedProject);
+      }
+
       queryClient.invalidateQueries({
         queryKey: ['projects', workspaceId],
       });

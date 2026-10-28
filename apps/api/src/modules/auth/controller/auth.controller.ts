@@ -9,6 +9,24 @@ export const SESSION_COOKIE_NAME = 'sprinthub_session';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  private clearAuthCookies(res: Response) {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
+    });
+
+    res.clearCookie(SESSION_COOKIE_NAME, {
+      httpOnly: false,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
+    });
+  }
+
   async register(req: Request, res: Response) {
     const data = req.body as RegisterDto;
 
@@ -28,6 +46,7 @@ export class AuthController {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -36,6 +55,7 @@ export class AuthController {
       httpOnly: false,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -48,35 +68,31 @@ export class AuthController {
     const refreshToken = req.cookies?.refreshToken;
 
     if (!refreshToken) {
+      this.clearAuthCookies(res);
       throw new AppError('Refresh token is required', 401);
     }
 
-    const response = await this.authService.refreshAccessToken(refreshToken);
-
-    return res.status(200).json(response);
+    try {
+      const response = await this.authService.refreshAccessToken(refreshToken);
+      return res.status(200).json(response);
+    } catch (error) {
+      this.clearAuthCookies(res);
+      throw error;
+    }
   }
 
   async logout(req: Request, res: Response) {
     const refreshToken = req.cookies?.refreshToken;
 
-    if (!refreshToken) {
-      throw new AppError('Refresh token is required', 401);
+    if (refreshToken) {
+      try {
+        await this.authService.logout(refreshToken);
+      } catch {
+        // Ignore already-expired or already-revoked refresh tokens on logout
+      }
     }
 
-    await this.authService.logout(refreshToken);
-    const isProduction = process.env.NODE_ENV === 'production';
-
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-    });
-
-    res.clearCookie(SESSION_COOKIE_NAME, {
-      httpOnly: false,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-    });
+    this.clearAuthCookies(res);
 
     return res.status(204).send();
   }

@@ -44,7 +44,6 @@ projectRouter.post<WorkspaceProjectParams>(
   authenticate,
   validateParams(workspaceProjectParamsSchema),
   requireWorkspaceRole('ADMIN'),
-  requireWorkspaceRole("ADMIN"),
   validate(createProjectSchema),
   projectController.createProject.bind(projectController)
 );
@@ -54,7 +53,6 @@ projectRouter.get<WorkspaceProjectParams>(
   authenticate,
   validateParams(workspaceProjectParamsSchema),
   requireWorkspaceRole('MEMBER'),
-  requireWorkspaceRole("MEMBER"),
   validateQuery(projectFilterSchema),
   projectController.getProjects.bind(projectController)
 );
@@ -63,7 +61,6 @@ projectRouter.get<ProjectParams>(
   '/projects/:projectId',
   authenticate,
   validateParams(projectParamsSchema),
-  requireProjectAccess("MEMBER"),
   requireProjectAccess('MEMBER'),
   projectController.getProjectById.bind(projectController)
 );
@@ -73,7 +70,6 @@ projectRouter.patch<ProjectParams>(
   authenticate,
   validateParams(projectParamsSchema),
   requireProjectAccess('ADMIN'),
-  requireProjectAccess("ADMIN"),
   validate(updateProjectSchema),
   projectController.updateProject.bind(projectController)
 );
@@ -82,7 +78,6 @@ projectRouter.delete<ProjectParams>(
   '/projects/:projectId',
   authenticate,
   validateParams(projectParamsSchema),
-  requireProjectAccess("ADMIN"),
   requireProjectAccess('ADMIN'),
   projectController.deleteProject.bind(projectController)
 );
@@ -92,10 +87,8 @@ projectRouter.patch<ProjectParams>(
   authenticate,
   validateParams(projectParamsSchema),
   requireProjectAccess('ADMIN'),
-  requireProjectAccess("ADMIN"),
   validate(archiveProjectSchema),
   projectController.archiveProject.bind(projectController)
 );
 
 export default projectRouter;
-
