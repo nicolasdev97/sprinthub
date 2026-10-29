@@ -93,7 +93,7 @@ export function CreateTaskDialog({
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { workspaces, activeWorkspaceId } = useWorkspaceContext();
+  const { workspaces, activeWorkspaceId, isLoading: isWorkspacesLoading } = useWorkspaceContext();
 
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
@@ -352,7 +352,7 @@ export function CreateTaskDialog({
                     </FormLabel>
                     <FormControl>
                       <Select
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isWorkspacesLoading || workspaces.length === 0}
                         value={field.value}
                         onValueChange={(val) => {
                           field.onChange(val);
@@ -361,11 +361,20 @@ export function CreateTaskDialog({
                         }}
                         aria-label="Select workspace"
                       >
-                        {workspaces.map((ws) => (
-                          <SelectOption key={ws.id} value={ws.id}>
-                            {ws.name}
+                        {workspaces.length === 0 ? (
+                          <SelectOption value="">
+                            {isWorkspacesLoading ? 'Loading workspaces...' : 'No active workspaces'}
                           </SelectOption>
-                        ))}
+                        ) : (
+                          <>
+                            <SelectOption value="">Select a workspace...</SelectOption>
+                            {workspaces.map((ws) => (
+                              <SelectOption key={ws.id} value={ws.id}>
+                                {ws.name}
+                              </SelectOption>
+                            ))}
+                          </>
+                        )}
                       </Select>
                     </FormControl>
                     <FormMessage />
