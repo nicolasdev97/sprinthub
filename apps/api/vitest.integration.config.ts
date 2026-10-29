@@ -6,6 +6,7 @@ export default defineConfig({
     environment: 'node',
     env: {
       DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/sprinthub_test',
+      DIRECT_URL: 'postgresql://postgres:postgres@localhost:5432/sprinthub_test',
       JWT_SECRET: 'test-jwt-secret-key-for-integration-tests-only',
       JWT_REFRESH_SECRET: 'test-jwt-refresh-secret-key-for-integration',
       NODE_ENV: 'test',
