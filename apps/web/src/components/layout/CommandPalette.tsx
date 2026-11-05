@@ -431,10 +431,10 @@ export function CommandPaletteTrigger({ onClick }: { onClick: () => void }) {
       <button
         type="button"
         onClick={onClick}
-        className="xl:hidden flex size-8 items-center justify-center rounded-lg border border-border/70 bg-muted/40 hover:bg-muted/70 text-muted-foreground transition-colors cursor-pointer"
+        className="xl:hidden flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Open search"
       >
-        <Search className="size-3.5" />
+        <Search className="size-4" />
       </button>
     </>
   );
