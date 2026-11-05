@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, Loader2, Plus } from 'lucide-react';
+import { AlertCircle, Briefcase, FolderKanban, Loader2, Plus } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -35,10 +35,15 @@ import {
   Textarea,
   useToast,
 } from '@/components/ui';
-import { useProjects } from '@/features/projects';
-import { useWorkspaceContext, useWorkspaceMembers, WorkspaceMember } from '@/features/workspaces';
+import { CreateProjectDialog, useProjects } from '@/features/projects';
+import {
+  CreateWorkspaceDialog,
+  useWorkspaceContext,
+  useWorkspaceMembers,
+  WorkspaceMember,
+} from '@/features/workspaces';
 import { normalizeApiError } from '@/shared/errors';
-import { deletedEntities } from '@/shared/utils';
+import { cn, deletedEntities } from '@/shared/utils';
 
 import { taskService } from '../service';
 import { TaskStatus } from '../types';
@@ -101,6 +106,8 @@ export function CreateTaskDialog({
   const setIsOpen = isControlled ? setControlledOpen! : setUncontrolledOpen;
 
   const [serverError, setServerError] = useState<string | null>(null);
+  const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
+  const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
 
   // Extract route parameters if inside a workspace / project
   const segments = pathname.split('/').filter(Boolean);
@@ -171,6 +178,12 @@ export function CreateTaskDialog({
     }
     return fetchedMembers;
   }, [propMembers, selectedWorkspaceId, propWorkspaceId, defaultWorkspaceId, fetchedMembers]);
+
+  const hasNoWorkspaces = !isWorkspacesLoading && workspaces.length === 0;
+  const currentWorkspace = workspaces.find((w) => w.id === selectedWorkspaceId);
+  const hasNoProjects = Boolean(
+    !isProjectsLoading && selectedWorkspaceId && availableProjects.length === 0
+  );
 
   // When dialog opens, reset form values based on context
   useEffect(() => {
@@ -322,24 +335,137 @@ export function CreateTaskDialog({
         </DialogTrigger>
       )}
 
-      <DialogContent className="sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle>Create Task</DialogTitle>
-          <DialogDescription>
-            Add a new task to your project with priority, status, assignee, and target due date.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className={cn(hasNoWorkspaces ? 'sm:max-w-md' : 'sm:max-w-xl')}>
+        {hasNoWorkspaces ? (
+          <div className="flex flex-col items-center justify-center text-center p-2 py-4 space-y-4">
+            <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Briefcase className="size-6" />
+            </div>
+            <div className="space-y-1.5 max-w-sm">
+              <DialogTitle className="text-base font-semibold">Workspace Required</DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground">
+                To create and organize tasks, you first need a workspace. Create your first workspace to get started.
+              </DialogDescription>
+            </div>
+            <div className="flex items-center gap-2 pt-1">
+              <DialogClose render={<Button variant="outline" size="sm" />}>
+                Cancel
+              </DialogClose>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsCreateWorkspaceOpen(true);
+                }}
+                className="gap-1.5 text-xs"
+              >
+                <Plus className="size-3.5" />
+                <span>Create Workspace</span>
+              </Button>
+            </div>
+          </div>
+        ) : hasNoProjects ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>Create Task</DialogTitle>
+              <DialogDescription>
+                Add a new task to your project with priority, status, assignee, and target due date.
+              </DialogDescription>
+            </DialogHeader>
 
-        {serverError && (
-          <Alert variant="destructive">
-            <AlertCircle className="size-4" />
-            <AlertTitle>Unable to create task</AlertTitle>
-            <AlertDescription>{serverError}</AlertDescription>
-          </Alert>
-        )}
+            <Form {...form}>
+              <div className="space-y-4">
+                {/* Workspace Selector */}
+                <FormField
+                  control={form.control}
+                  name="workspaceId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Workspace <span className="text-destructive">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Select
+                          disabled={isSubmitting || isWorkspacesLoading || workspaces.length === 0}
+                          value={field.value}
+                          onValueChange={(val) => {
+                            field.onChange(val);
+                            form.setValue('projectId', '');
+                            form.setValue('assigneeId', '');
+                          }}
+                          aria-label="Select workspace"
+                        >
+                          <SelectOption value="">Select a workspace...</SelectOption>
+                          {workspaces.map((ws) => (
+                            <SelectOption key={ws.id} value={ws.id}>
+                              {ws.name}
+                            </SelectOption>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
+                {/* Empty Projects In-Context Guided Card */}
+                <div className="rounded-xl border border-dashed border-border bg-muted/30 p-5 text-center space-y-3">
+                  <div className="flex size-10 mx-auto items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <FolderKanban className="size-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold text-foreground">
+                      No projects in this workspace
+                    </p>
+                    <p className="text-[11px] text-muted-foreground max-w-sm mx-auto">
+                      Tasks must belong to a project. Create a project in{' '}
+                      <span className="font-semibold text-foreground">{currentWorkspace?.name || 'this workspace'}</span>{' '}
+                      to continue, or switch to another workspace above.
+                    </p>
+                  </div>
+                  <div className="pt-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => {
+                        setIsOpen(false);
+                        setIsCreateProjectOpen(true);
+                      }}
+                      className="gap-1.5 text-xs"
+                    >
+                      <Plus className="size-3.5" />
+                      <span>Create Project</span>
+                    </Button>
+                  </div>
+                </div>
+
+                <DialogFooter className="pt-2">
+                  <DialogClose render={<Button variant="outline" size="sm" />}>
+                    Cancel
+                  </DialogClose>
+                </DialogFooter>
+              </div>
+            </Form>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>Create Task</DialogTitle>
+              <DialogDescription>
+                Add a new task to your project with priority, status, assignee, and target due date.
+              </DialogDescription>
+            </DialogHeader>
+
+            {serverError && (
+              <Alert variant="destructive">
+                <AlertCircle className="size-4" />
+                <AlertTitle>Unable to create task</AlertTitle>
+                <AlertDescription>{serverError}</AlertDescription>
+              </Alert>
+            )}
+
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
             {/* Workspace & Project Selectors */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
@@ -568,7 +694,22 @@ export function CreateTaskDialog({
             </DialogFooter>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
-  );
+      </>
+    )}
+  </DialogContent>
+
+  {/* Seamless in-place switch to Workspace or Project Creation */}
+  <CreateWorkspaceDialog
+    open={isCreateWorkspaceOpen}
+    onOpenChange={setIsCreateWorkspaceOpen}
+    showTrigger={false}
+  />
+  <CreateProjectDialog
+    workspaceId={selectedWorkspaceId}
+    open={isCreateProjectOpen}
+    onOpenChange={setIsCreateProjectOpen}
+    showTrigger={false}
+  />
+</Dialog>
+);
 }
