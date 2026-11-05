@@ -117,9 +117,9 @@ export function AppNavbar() {
   }, [router, toggleTheme]);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-border bg-background/95 pr-4 pl-4 backdrop-blur-md md:pr-6 md:pl-6">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-border bg-background/95 px-3 sm:px-6 backdrop-blur-md max-w-full">
       {/* Left: Mobile Sidebar Drawer & Context-Aware Location Indicator */}
-      <div className="flex min-w-0 items-center gap-2 md:gap-3">
+      <div className="flex min-w-0 items-center gap-1.5 sm:gap-3">
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger
             render={
@@ -149,12 +149,12 @@ export function AppNavbar() {
       </div>
 
       {/* Center: Command Palette Search Trigger (Ctrl + K) */}
-      <div className="flex items-center justify-center px-1 sm:px-2">
+      <div className="flex shrink-0 items-center justify-center px-1 sm:px-2">
         <CommandPaletteTrigger onClick={() => setIsCommandPaletteOpen(true)} />
       </div>
 
       {/* Right Actions: Quick Create Task, Theme, Notifications, User Profile */}
-      <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+      <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         <GlobalCreateTaskDialog
           open={isCreateTaskOpen}
           onOpenChange={setIsCreateTaskOpen}

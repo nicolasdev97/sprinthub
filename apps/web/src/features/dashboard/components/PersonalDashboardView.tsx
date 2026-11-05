@@ -198,12 +198,12 @@ export function PersonalDashboardView() {
   const isLoadingOverall = isWorkspacesLoading || isProjectsLoading || isTasksLoading;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 min-w-0">
       {/* Personalized Header */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center min-w-0">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl break-words">
               {greeting}, {user?.firstName || 'there'}!
             </h1>
             <Sparkles className="size-5 text-amber-500 shrink-0" />
@@ -213,7 +213,7 @@ export function PersonalDashboardView() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Badge variant="outline" className="gap-1.5 px-3 py-1 text-xs text-muted-foreground">
             <Calendar className="size-3.5" />
             <span>{formattedToday}</span>
@@ -224,10 +224,10 @@ export function PersonalDashboardView() {
       {/* Top Actionable KPI Cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {/* Card 1: My Assigned Tasks */}
-        <Card className="p-4 shadow-2xs">
-          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <CheckCircle2 className="size-4 text-primary" />
-            <span>Assigned to You</span>
+        <Card className="p-3 sm:p-4 shadow-2xs min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium text-muted-foreground truncate">
+            <CheckCircle2 className="size-3.5 sm:size-4 text-primary shrink-0" />
+            <span className="truncate">Assigned to You</span>
           </div>
           <div className="mt-2 text-2xl font-bold text-foreground">
             {isLoadingOverall && allTasks.length === 0 ? (
@@ -236,7 +236,7 @@ export function PersonalDashboardView() {
               myAssignedTasks.length
             )}
           </div>
-          <p className="mt-1 text-[11px] text-muted-foreground">
+          <p className="mt-1 text-[11px] text-muted-foreground truncate">
             {myAssignedTasks.length === 1
               ? '1 pending task'
               : `${myAssignedTasks.length} pending tasks`}
@@ -244,10 +244,10 @@ export function PersonalDashboardView() {
         </Card>
 
         {/* Card 2: Needs Attention */}
-        <Card className="p-4 shadow-2xs">
-          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <Flame className="size-4 text-red-500" />
-            <span>Needs Attention</span>
+        <Card className="p-3 sm:p-4 shadow-2xs min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium text-muted-foreground truncate">
+            <Flame className="size-3.5 sm:size-4 text-red-500 shrink-0" />
+            <span className="truncate">Needs Attention</span>
           </div>
           <div className="mt-2 text-2xl font-bold text-foreground">
             {isLoadingOverall && allTasks.length === 0 ? (
@@ -256,17 +256,17 @@ export function PersonalDashboardView() {
               urgentTasksCount
             )}
           </div>
-          <p className="mt-1 text-[11px] text-muted-foreground">
+          <p className="mt-1 text-[11px] text-muted-foreground truncate">
             {overdueCount > 0 ? `${overdueCount} overdue · ` : ''}
             {criticalCount} critical
           </p>
         </Card>
 
         {/* Card 3: Due This Week */}
-        <Card className="p-4 shadow-2xs">
-          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <Clock className="size-4 text-amber-500" />
-            <span>Due This Week</span>
+        <Card className="p-3 sm:p-4 shadow-2xs min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium text-muted-foreground truncate">
+            <Clock className="size-3.5 sm:size-4 text-amber-500 shrink-0" />
+            <span className="truncate">Due This Week</span>
           </div>
           <div className="mt-2 text-2xl font-bold text-foreground">
             {isLoadingOverall && allTasks.length === 0 ? (
@@ -275,7 +275,7 @@ export function PersonalDashboardView() {
               dueThisWeekCount
             )}
           </div>
-          <p className="mt-1 text-[11px] text-muted-foreground">
+          <p className="mt-1 text-[11px] text-muted-foreground truncate">
             {dueTodayCount > 0
               ? `${dueTodayCount} due today`
               : dueThisWeekCount > 0
@@ -285,10 +285,10 @@ export function PersonalDashboardView() {
         </Card>
 
         {/* Card 4: Active Projects */}
-        <Card className="p-4 shadow-2xs">
-          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <FolderKanban className="size-4 text-sky-500" />
-            <span>Active Projects</span>
+        <Card className="p-3 sm:p-4 shadow-2xs min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium text-muted-foreground truncate">
+            <FolderKanban className="size-3.5 sm:size-4 text-sky-500 shrink-0" />
+            <span className="truncate">Active Projects</span>
           </div>
           <div className="mt-2 text-2xl font-bold text-foreground">
             {isLoadingOverall && allProjects.length === 0 ? (
@@ -297,7 +297,7 @@ export function PersonalDashboardView() {
               activeProjectsCount
             )}
           </div>
-          <p className="mt-1 text-[11px] text-muted-foreground">
+          <p className="mt-1 text-[11px] text-muted-foreground truncate">
             {planningProjectsCount > 0
               ? `${planningProjectsCount} in planning · ${workspaces.length} ${workspaces.length === 1 ? 'workspace' : 'workspaces'}`
               : `Across ${workspaces.length} ${workspaces.length === 1 ? 'workspace' : 'workspaces'}`}
