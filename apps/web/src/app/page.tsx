@@ -182,22 +182,22 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-primary/20">
       {/* Sticky Top Navigation */}
       <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-3 sm:px-6 lg:px-8">
           <Link
             href="/"
-            className="flex items-center gap-2.5 rounded-lg py-1 font-semibold tracking-tight outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex shrink-0 items-center gap-2 sm:gap-2.5 rounded-lg py-1 font-semibold tracking-tight outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Image
               src="/logo.png"
               alt="SprintHub Logo"
               width={36}
               height={36}
-              className="size-9 shrink-0 rounded-lg object-contain"
+              className="size-8 sm:size-9 shrink-0 rounded-lg object-contain"
               priority
             />
             <div className="flex flex-col leading-none">
-              <span className="text-base font-bold tracking-tight">SprintHub</span>
-              <span className="text-[11px] font-normal text-muted-foreground">Workspace OS</span>
+              <span className="text-sm sm:text-base font-bold tracking-tight">SprintHub</span>
+              <span className="hidden xs:inline sm:block text-[11px] font-normal text-muted-foreground">Workspace OS</span>
             </div>
           </Link>
 
@@ -213,7 +213,7 @@ export default function LandingPage() {
             </a>
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             {!isInitializing && isAuthenticated ? (
               <>
                 <ThemeToggle />
@@ -228,13 +228,19 @@ export default function LandingPage() {
                 <Button
                   variant="ghost"
                   size="sm"
+                  className="px-2 sm:px-3 text-xs sm:text-sm"
                   nativeButton={false}
                   render={<Link href="/login" />}
                 >
                   Sign in
                 </Button>
-                <Button size="sm" nativeButton={false} render={<Link href="/register" />}>
-                  <span>Get Started Free</span>
+                <Button
+                  size="sm"
+                  className="px-2.5 sm:px-3 text-xs sm:text-sm"
+                  nativeButton={false}
+                  render={<Link href="/register" />}
+                >
+                  <span>Get Started<span className="hidden xs:inline sm:inline"> Free</span></span>
                   <ArrowRight className="size-3.5" />
                 </Button>
               </>
