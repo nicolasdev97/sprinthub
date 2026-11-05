@@ -117,12 +117,6 @@ export function AppSidebar({ isCollapsed = false, onNavigate, className }: AppSi
 
       {/* Navigation Links */}
       <div className="flex-1 overflow-y-auto px-3 py-4">
-        {!isCollapsed && (
-          <p className="mb-2 px-2 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-            Navigation
-          </p>
-        )}
-
         <nav className="flex flex-col gap-1">
           {MAIN_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
