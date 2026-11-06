@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { JetBrains_Mono, Plus_Jakarta_Sans } from 'next/font/google';
 
 import './globals.css';
@@ -21,6 +21,13 @@ const jetBrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'SprintHub',
   description: 'SprintHub — Workspace & Project Management OS',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: 'cover',
 };
 
 const THEME_INIT_SCRIPT = `

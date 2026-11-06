@@ -6,6 +6,7 @@ import { AlertDialog as AlertDialogPrimitive } from '@base-ui/react/alert-dialog
 import { cn } from '@/shared/utils';
 
 import { buttonVariants } from './Button';
+import { useModalScrollLock } from './Dialog';
 
 function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
@@ -20,7 +21,7 @@ function AlertDialogOverlay({ className, ...props }: AlertDialogPrimitive.Backdr
     <AlertDialogPrimitive.Backdrop
       data-slot="alert-dialog-overlay"
       className={cn(
-        'fixed inset-0 z-50 bg-black/50 backdrop-blur-[1px] transition-opacity duration-150 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0',
+        'fixed inset-0 z-50 bg-black/50 backdrop-blur-[1px] transition-opacity duration-150 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 touch-none',
         className
       )}
       {...props}
@@ -29,13 +30,15 @@ function AlertDialogOverlay({ className, ...props }: AlertDialogPrimitive.Backdr
 }
 
 function AlertDialogContent({ className, ...props }: AlertDialogPrimitive.Popup.Props) {
+  useModalScrollLock();
+
   return (
     <AlertDialogPrimitive.Portal>
       <AlertDialogOverlay />
       <AlertDialogPrimitive.Popup
         data-slot="alert-dialog-content"
         className={cn(
-          'fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl border border-border bg-card p-6 text-card-foreground shadow-lg transition-[transform,scale,opacity] duration-150 outline-none sm:max-w-lg data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0',
+          'fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 max-h-[calc(100dvh-2.5rem)] overflow-y-auto overscroll-contain touch-pan-y gap-4 rounded-xl border border-border bg-card p-6 text-card-foreground shadow-lg transition-[transform,scale,opacity] duration-150 outline-none sm:max-w-lg data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0',
           className
         )}
         {...props}

@@ -5,6 +5,7 @@ import { Dialog as SheetPrimitive } from '@base-ui/react/dialog';
 import { XIcon } from 'lucide-react';
 
 import { cn } from '@/shared/utils';
+import { useModalScrollLock } from './Dialog';
 
 function Sheet({ ...props }: SheetPrimitive.Root.Props) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />;
@@ -23,7 +24,7 @@ function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
     <SheetPrimitive.Backdrop
       data-slot="sheet-overlay"
       className={cn(
-        'fixed inset-0 z-50 bg-black/50 backdrop-blur-[1px] transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0',
+        'fixed inset-0 z-50 bg-black/50 backdrop-blur-[1px] transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 touch-none',
         className
       )}
       {...props}
@@ -43,6 +44,8 @@ function SheetContent({
   showCloseButton = true,
   ...props
 }: SheetContentProps) {
+  useModalScrollLock();
+
   return (
     <SheetPrimitive.Portal>
       <SheetOverlay />
@@ -50,7 +53,7 @@ function SheetContent({
         data-slot="sheet-content"
         data-side={side}
         className={cn(
-          'fixed z-50 flex flex-col gap-4 bg-background shadow-lg transition-transform duration-200 ease-in-out outline-none',
+          'fixed z-50 flex flex-col gap-4 bg-background shadow-lg transition-transform duration-200 ease-in-out outline-none overscroll-contain touch-pan-y',
           side === 'left' &&
             'inset-y-0 left-0 h-full w-72 border-r border-border data-[ending-style]:-translate-x-full data-[starting-style]:-translate-x-full',
           side === 'right' &&
