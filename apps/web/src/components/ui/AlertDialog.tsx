@@ -30,6 +30,8 @@ function AlertDialogOverlay({ className, ...props }: AlertDialogPrimitive.Backdr
 }
 
 function AlertDialogContent({ className, ...props }: AlertDialogPrimitive.Popup.Props) {
+  useModalScrollLock();
+
   return (
     <AlertDialogPrimitive.Portal>
       <ModalScrollLock />
