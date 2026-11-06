@@ -66,6 +66,8 @@ function DialogContent({
   showCloseButton = true,
   ...props
 }: DialogContentProps) {
+  useModalScrollLock();
+
   return (
     <DialogPrimitive.Portal>
       <ModalScrollLock />
