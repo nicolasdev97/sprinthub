@@ -381,7 +381,7 @@ export function CommandPalette({ open, onOpenChange, onOpenCreateTask }: Command
         </div>
 
         {/* Footer shortcuts hint */}
-        <div className="flex items-center justify-between border-t border-border/70 bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground">
+        <div className="hidden sm:flex items-center justify-between border-t border-border/70 bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground">
           <div className="flex items-center gap-2">
             <span>
               <kbd className="rounded border border-border bg-background px-1 py-0.5 font-mono text-[10px]">
@@ -431,10 +431,10 @@ export function CommandPaletteTrigger({ onClick }: { onClick: () => void }) {
       <button
         type="button"
         onClick={onClick}
-        className="xl:hidden flex size-8 items-center justify-center rounded-lg border border-border/70 bg-muted/40 hover:bg-muted/70 text-muted-foreground transition-colors cursor-pointer"
+        className="xl:hidden flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Open search"
       >
-        <Search className="size-3.5" />
+        <Search className="size-4" />
       </button>
     </>
   );

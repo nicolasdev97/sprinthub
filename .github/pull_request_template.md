@@ -1,56 +1,56 @@
-## 📌 Descripción del Cambio
+## 📌 Description
 
-<!-- Proporciona un resumen claro y conciso de los cambios introducidos en este PR. -->
+<!-- Provide a clear and concise summary of the changes introduced in this PR. -->
 
-## 🔗 Issues Relacionados
+## 🔗 Related Issues
 
-<!-- Vincula el issue correspondiente (ej. Closes #123, Fixes #456, Ref #789) -->
+<!-- Link the corresponding issue (e.g. Closes #123, Fixes #456, Ref #789) -->
 
 - Closes #
 
-## 🏷️ Tipo de Cambio
+## 🏷️ Type of Change
 
-- [ ] `feat`: Nueva funcionalidad
-- [ ] `fix`: Corrección de bug
-- [ ] `refactor`: Refactorización de código sin cambios funcionales
-- [ ] `test`: Adición o actualización de pruebas
-- [ ] `docs`: Modificación o adición de documentación
-- [ ] `ci`: Cambios en pipelines de GitHub Actions o workflows
-- [ ] `build` / `chore`: Tareas de dependencias, scripts npm o Docker
-- [ ] `perf`: Mejora de rendimiento
+- [ ] `feat`: New feature
+- [ ] `fix`: Bug fix
+- [ ] `refactor`: Code refactoring without functional changes
+- [ ] `test`: Test addition or update
+- [ ] `docs`: Documentation addition or modification
+- [ ] `ci`: CI/CD pipeline or workflow changes
+- [ ] `build` / `chore`: Dependency, npm scripts, or Docker tasks
+- [ ] `perf`: Performance improvement
 
-## 📦 Workspaces Afectados
+## 📦 Affected Workspaces
 
 - [ ] `apps/api` (Backend Express 5 + Prisma)
 - [ ] `apps/web` (Frontend Next.js 16 + React 19)
-- [ ] `root` / Infraestructura (CI/CD, Docker Compose, scripts)
-- [ ] `docs` (Arquitectura, especificaciones, guías)
+- [ ] `root` / Infrastructure (CI/CD, Docker Compose, scripts)
+- [ ] `docs` (Architecture, specifications, guides)
 
 ---
 
-## ✅ Checklist del Autor
+## ✅ Author Checklist
 
-Por favor, asegúrate de cumplir con los siguientes puntos antes de solicitar revisión:
+Please ensure all of the following requirements are met before requesting a review:
 
-- [ ] **Linting**: `npm run lint` pasa sin advertencias ni errores en ambos workspaces.
-- [ ] **Formato**: `npm run format:check` verifica el estilo estricto de Prettier.
-- [ ] **Typecheck**: `npm run typecheck` (`tsc --noEmit`) pasa con 0 errores de tipado.
-- [ ] **Tests Unitarios**: `npm run test:unit` pasa con 100% de éxito en backend y frontend.
-- [ ] **Documentación OpenAPI**: Se ejecutó `npm run docs:validate` si se agregaron o cambiaron endpoints en `apps/api`.
-- [ ] **Variables de Entorno**: Se documentaron nuevas variables en los archivos `.env.example` correspondientes.
-- [ ] **Seguridad**: No se commitearon credenciales, secretos, API keys ni archivos sensibles (`.env`).
-- [ ] **Build**: `npm run build` compila con éxito para producción sin fallos.
+- [ ] **Linting**: `npm run lint` passes without warnings or errors across all workspaces.
+- [ ] **Formatting**: `npm run format:check` verifies Prettier code style.
+- [ ] **Typecheck**: `npm run typecheck` (`tsc --noEmit`) passes with 0 typing errors.
+- [ ] **Unit Tests**: `npm run test:unit` passes 100% across backend and frontend.
+- [ ] **OpenAPI Documentation**: `npm run docs:validate` was run if endpoints were added or modified in `apps/api`.
+- [ ] **Environment Variables**: New variables are documented in the respective `.env.example` files.
+- [ ] **Security**: No credentials, secrets, API keys, or sensitive files (`.env`) are committed.
+- [ ] **Build**: `npm run build` compiles successfully for production with 0 errors.
 
 ---
 
-## 🧪 Instrucciones de Prueba Local
+## 🧪 Local Testing Instructions
 
-<!-- Describe los pasos detallados para que el revisor pueda probar y verificar estos cambios localmente. -->
+<!-- Detailed steps for the reviewer to test and verify these changes locally. -->
 
 1.
 2.
 3.
 
-## 📸 Evidencias / Capturas (si aplica)
+## 📸 Evidence / Screenshots (if applicable)
 
-<!-- Adjunta capturas de pantalla, salidas de terminal relevantes o payloads de respuesta de la API. -->
+<!-- Attach relevant screenshots, terminal outputs, or API response payloads. -->

@@ -41,7 +41,7 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
+    <div className="flex h-dvh min-h-dvh w-full max-w-full overflow-hidden bg-background text-foreground">
       {/* Desktop Collapsible Sidebar + Border-Centered Toggle Button */}
       <div className="relative z-40 hidden md:flex md:shrink-0">
         <AppSidebar isCollapsed={isSidebarCollapsed} />
@@ -66,11 +66,11 @@ export function AppShell({ children }: AppShellProps) {
       </div>
 
       {/* Main Viewport Column */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden max-w-full">
         <AppNavbar />
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <div className="mx-auto w-full max-w-7xl">{children}</div>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] sm:pb-8">
+          <div className="mx-auto w-full max-w-7xl min-w-0">{children}</div>
         </main>
       </div>
     </div>

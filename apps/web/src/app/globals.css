@@ -121,10 +121,25 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground font-sans;
-  }
   html {
     @apply font-sans scroll-smooth;
+    max-width: 100vw;
+    overflow-x: hidden;
   }
+  body {
+    @apply bg-background text-foreground font-sans;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+}
+
+/* Modal Open Background Scroll Lock (Prevents iOS Safari & Android body/main scroll chaining) */
+html.modal-open,
+body.modal-open {
+  overflow: hidden !important;
+  touch-action: none;
+}
+
+html.modal-open main {
+  overflow: hidden !important;
 }
