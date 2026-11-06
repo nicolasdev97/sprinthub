@@ -6,7 +6,7 @@ import { AlertDialog as AlertDialogPrimitive } from '@base-ui/react/alert-dialog
 import { cn } from '@/shared/utils';
 
 import { buttonVariants } from './Button';
-import { useModalScrollLock } from './Dialog';
+import { ModalScrollLock } from './Dialog';
 
 function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
@@ -30,10 +30,9 @@ function AlertDialogOverlay({ className, ...props }: AlertDialogPrimitive.Backdr
 }
 
 function AlertDialogContent({ className, ...props }: AlertDialogPrimitive.Popup.Props) {
-  useModalScrollLock();
-
   return (
     <AlertDialogPrimitive.Portal>
+      <ModalScrollLock />
       <AlertDialogOverlay />
       <AlertDialogPrimitive.Popup
         data-slot="alert-dialog-content"
