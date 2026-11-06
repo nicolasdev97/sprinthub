@@ -16,7 +16,20 @@ export function useModalScrollLock() {
       document.body.classList.add('modal-open');
     }
 
+    const handleTouchMove = (e: TouchEvent) => {
+      const target = e.target as HTMLElement | null;
+      const scrollableModal = target?.closest(
+        '[data-slot="dialog-content"], [data-slot="alert-dialog-content"], [data-slot="sheet-content"]'
+      );
+      if (!scrollableModal && e.cancelable) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+
     return () => {
+      document.removeEventListener('touchmove', handleTouchMove);
       activeDialogCount = Math.max(0, activeDialogCount - 1);
       if (activeDialogCount === 0) {
         document.documentElement.classList.remove('modal-open');

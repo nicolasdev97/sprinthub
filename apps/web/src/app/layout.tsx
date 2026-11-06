@@ -7,14 +7,12 @@ import { Providers } from '@/providers';
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: '--font-jakarta-sans',
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
   display: 'swap',
 });
 
 const jetBrainsMono = JetBrains_Mono({
   variable: '--font-jetbrains-mono',
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
   display: 'swap',
 });
 

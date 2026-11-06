@@ -137,9 +137,11 @@
 html.modal-open,
 body.modal-open {
   overflow: hidden !important;
-  touch-action: none;
+  touch-action: none !important;
 }
 
 html.modal-open main {
   overflow: hidden !important;
+  touch-action: none !important;
+  pointer-events: none !important;
 }
