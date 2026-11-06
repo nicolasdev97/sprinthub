@@ -69,7 +69,7 @@ export function AppShell({ children }: AppShellProps) {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden max-w-full">
         <AppNavbar />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] sm:pb-8">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden touch-pan-y overscroll-y-auto p-4 md:p-6 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] sm:pb-8">
           <div className="mx-auto w-full max-w-7xl min-w-0">{children}</div>
         </main>
       </div>
