@@ -44,8 +44,6 @@ function SheetContent({
   showCloseButton = true,
   ...props
 }: SheetContentProps) {
-  useModalScrollLock();
-
   return (
     <SheetPrimitive.Portal>
       <ModalScrollLock />
