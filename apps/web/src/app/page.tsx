@@ -197,7 +197,9 @@ export default function LandingPage() {
             />
             <div className="flex flex-col leading-none">
               <span className="text-sm sm:text-base font-bold tracking-tight">SprintHub</span>
-              <span className="hidden xs:inline sm:block text-[11px] font-normal text-muted-foreground">Workspace OS</span>
+              <span className="hidden xs:inline sm:block text-[11px] font-normal text-muted-foreground">
+                Workspace OS
+              </span>
             </div>
           </Link>
 
@@ -240,7 +242,9 @@ export default function LandingPage() {
                   nativeButton={false}
                   render={<Link href="/register" />}
                 >
-                  <span>Get Started<span className="hidden xs:inline sm:inline"> Free</span></span>
+                  <span>
+                    Get Started<span className="hidden xs:inline sm:inline"> Free</span>
+                  </span>
                   <ArrowRight className="size-3.5" />
                 </Button>
               </>

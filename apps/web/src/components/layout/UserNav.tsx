@@ -70,7 +70,10 @@ export function UserNav({ onOpenShortcuts }: UserNavProps) {
             <UserIcon className="size-4 text-muted-foreground" />
             <span>Profile</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onOpenShortcuts?.()} className="hidden sm:flex cursor-pointer">
+          <DropdownMenuItem
+            onClick={() => onOpenShortcuts?.()}
+            className="hidden sm:flex cursor-pointer"
+          >
             <Keyboard className="size-4 text-muted-foreground" />
             <span>Keyboard Shortcuts</span>
           </DropdownMenuItem>
