@@ -91,7 +91,7 @@ function PersonalDetailsForm({ user }: PersonalDetailsFormProps) {
   };
 
   return (
-    <Card className="lg:col-span-2">
+    <Card className="w-full min-w-0 max-w-full lg:col-span-2">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <UserIcon className="size-4 text-primary" />
@@ -101,7 +101,7 @@ function PersonalDetailsForm({ user }: PersonalDetailsFormProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 min-w-0">
             <div className="space-y-1.5">
               <Label htmlFor="firstName" className="text-xs font-medium">
                 First Name
@@ -294,7 +294,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 max-w-full space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">My Profile</h1>
@@ -304,9 +304,9 @@ export default function ProfilePage() {
       </div>
 
       {/* Top Grid: Identity & Stats on Left, Workspaces on Right */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 min-w-0 max-w-full">
         {/* Identity & Workload Summary Card */}
-        <Card className="flex flex-col justify-between lg:col-span-2">
+        <Card className="flex flex-col justify-between w-full min-w-0 max-w-full lg:col-span-2">
           <div>
             <CardHeader className="flex flex-row items-center gap-4 pb-6">
               <Avatar className="size-16 border border-border shadow-2xs">
@@ -393,7 +393,7 @@ export default function ProfilePage() {
         </Card>
 
         {/* Workspaces Summary Card with Roles */}
-        <Card className="flex flex-col">
+        <Card className="flex flex-col w-full min-w-0 max-w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Briefcase className="size-4 text-primary" />
@@ -490,12 +490,12 @@ export default function ProfilePage() {
       </div>
 
       {/* Bottom Grid: Account Settings & Security */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 min-w-0 max-w-full">
         {/* Edit Personal Details Card */}
         <PersonalDetailsForm key={`${user.id}-${user.firstName}-${user.lastName}`} user={user} />
 
         {/* Security & Credentials Card */}
-        <Card>
+        <Card className="w-full min-w-0 max-w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <ShieldCheck className="size-4 text-emerald-500" />
@@ -518,8 +518,8 @@ export default function ProfilePage() {
               <span className="text-xs font-medium text-muted-foreground">
                 Account ID (for support)
               </span>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 truncate rounded border border-border bg-muted/40 px-2 py-1 font-mono text-[11px] text-foreground">
+              <div className="flex items-center gap-2 min-w-0">
+                <code className="flex-1 min-w-0 truncate rounded border border-border bg-muted/40 px-2 py-1 font-mono text-[11px] text-foreground">
                   {user.id}
                 </code>
                 <Button
@@ -563,7 +563,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Section: Danger Zone */}
-      <Card className="border-destructive/40">
+      <Card className="w-full min-w-0 max-w-full border-destructive/40">
         <CardHeader>
           <div className="flex items-center justify-between gap-2">
             <div className="space-y-1">

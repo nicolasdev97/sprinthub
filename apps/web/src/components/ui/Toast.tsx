@@ -60,7 +60,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
       <div
         aria-live="polite"
         aria-label="Notifications"
-        className="pointer-events-none fixed right-4 bottom-4 z-50 flex w-full max-w-sm flex-col gap-2"
+        className="pointer-events-none fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:inset-x-auto sm:right-4 sm:bottom-4 z-50 flex w-auto sm:w-full sm:max-w-sm flex-col gap-2 items-center sm:items-end"
       >
         {toasts.map((item) => {
           const isSuccess = item.variant === 'success';
@@ -71,7 +71,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
               key={item.id}
               role="status"
               className={cn(
-                'pointer-events-auto flex items-start gap-3 rounded-xl border p-4 shadow-lg transition-all',
+                'pointer-events-auto flex w-full items-start gap-3 rounded-xl border p-4 shadow-lg transition-all',
                 isSuccess && 'border-emerald-500/40 bg-card text-card-foreground',
                 isDestructive && 'border-destructive/50 bg-card text-card-foreground',
                 !isSuccess && !isDestructive && 'border-border bg-card text-card-foreground'
