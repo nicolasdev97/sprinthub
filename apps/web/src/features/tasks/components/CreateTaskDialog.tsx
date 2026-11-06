@@ -335,11 +335,103 @@ export function CreateTaskDialog({
         </DialogTrigger>
       )}
 
-      <DialogContent className={cn(hasNoWorkspaces ? 'sm:max-w-md' : 'sm:max-w-xl')}>
-        {hasNoWorkspaces ? (
-          <div className="flex flex-col items-center justify-center text-center p-2 py-4 space-y-4">
-            <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Briefcase className="size-6" />
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Create Task</DialogTitle>
+          <DialogDescription>
+            Add a new task to your project with priority, status, assignee, and target due date.
+          </DialogDescription>
+        </DialogHeader>
+
+        {serverError && (
+          <Alert variant="destructive">
+            <AlertCircle className="size-4" />
+            <AlertTitle>Unable to create task</AlertTitle>
+            <AlertDescription>{serverError}</AlertDescription>
+          </Alert>
+        )}
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
+            {/* Workspace & Project Selectors */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="workspaceId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Workspace <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Select
+                        disabled={isSubmitting || isWorkspacesLoading || workspaces.length === 0}
+                        value={field.value}
+                        onValueChange={(val) => {
+                          field.onChange(val);
+                          form.setValue('projectId', '');
+                          form.setValue('assigneeId', '');
+                        }}
+                        aria-label="Select workspace"
+                      >
+                        {workspaces.length === 0 ? (
+                          <SelectOption value="">
+                            {isWorkspacesLoading ? 'Loading workspaces...' : 'No active workspaces'}
+                          </SelectOption>
+                        ) : (
+                          <>
+                            <SelectOption value="">Select a workspace...</SelectOption>
+                            {workspaces.map((ws) => (
+                              <SelectOption key={ws.id} value={ws.id}>
+                                {ws.name}
+                              </SelectOption>
+                            ))}
+                          </>
+                        )}
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="projectId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Project <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Select
+                        disabled={
+                          isSubmitting || isProjectsLoading || availableProjects.length === 0
+                        }
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        aria-label="Select project"
+                      >
+                        {availableProjects.length === 0 ? (
+                          <SelectOption value="">
+                            {isProjectsLoading ? 'Loading projects...' : 'No active projects'}
+                          </SelectOption>
+                        ) : (
+                          <>
+                            <SelectOption value="">Select a project...</SelectOption>
+                            {availableProjects.map((p) => (
+                              <SelectOption key={p.id} value={p.id}>
+                                {p.name}
+                              </SelectOption>
+                            ))}
+                          </>
+                        )}
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
             <div className="space-y-1.5 max-w-sm">
               <DialogTitle className="text-base font-semibold">Workspace Required</DialogTitle>
