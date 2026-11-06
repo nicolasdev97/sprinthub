@@ -5,7 +5,7 @@ import { Dialog as SheetPrimitive } from '@base-ui/react/dialog';
 import { XIcon } from 'lucide-react';
 
 import { cn } from '@/shared/utils';
-import { useModalScrollLock } from './Dialog';
+import { ModalScrollLock } from './Dialog';
 
 function Sheet({ ...props }: SheetPrimitive.Root.Props) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />;
@@ -44,10 +44,9 @@ function SheetContent({
   showCloseButton = true,
   ...props
 }: SheetContentProps) {
-  useModalScrollLock();
-
   return (
     <SheetPrimitive.Portal>
+      <ModalScrollLock />
       <SheetOverlay />
       <SheetPrimitive.Popup
         data-slot="sheet-content"

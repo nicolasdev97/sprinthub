@@ -26,6 +26,11 @@ export function useModalScrollLock() {
   }, []);
 }
 
+export function ModalScrollLock() {
+  useModalScrollLock();
+  return null;
+}
+
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
@@ -61,10 +66,9 @@ function DialogContent({
   showCloseButton = true,
   ...props
 }: DialogContentProps) {
-  useModalScrollLock();
-
   return (
     <DialogPrimitive.Portal>
+      <ModalScrollLock />
       <DialogOverlay />
       <DialogPrimitive.Popup
         data-slot="dialog-content"
