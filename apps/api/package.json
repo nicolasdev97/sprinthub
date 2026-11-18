@@ -1,6 +1,6 @@
 {
   "name": "api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "SprintHub backend REST API built with Express, TypeScript, and Prisma.",
   "private": true,
   "scripts": {

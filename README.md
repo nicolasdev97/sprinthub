@@ -18,17 +18,64 @@
   <img src="https://img.shields.io/badge/PostgreSQL-17-4169E1?style=flat&logo=postgresql&logoColor=white" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/Prisma-6.x-2D3748?style=flat&logo=prisma&logoColor=white" alt="Prisma ORM" />
   <img src="https://img.shields.io/badge/OpenAPI-3.0%20%2F%20Swagger-85EA2D?style=flat&logo=swagger&logoColor=black" alt="OpenAPI 3.0" />
-  <img src="https://img.shields.io/badge/Tests-115%20Passing-brightgreen?style=flat&logo=vitest&logoColor=white" alt="115 Tests Passing" />
+  <img src="https://img.shields.io/badge/Tests-119%20Passing-brightgreen?style=flat&logo=vitest&logoColor=white" alt="119 Tests Passing" />
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/Release-v1.0.1-blue?style=flat&logo=github" alt="Release v1.0.1" /></a>
   <img src="https://img.shields.io/badge/License-MIT-blue?style=flat" alt="MIT License" />
 </p>
+
+<p align="center">
+  <a href="https://sprinthub-omega.vercel.app" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/🚀_Live_Demo-sprinthub--omega.vercel.app-0070F3?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
+  </a>
+</p>
+
+> [!TIP]
+> ### 🌐 Live Production Demo & Instant Access
+> **Deployed Application:** [https://sprinthub-omega.vercel.app](https://sprinthub-omega.vercel.app)  
+> Preloaded with sample workspaces, projects, task boards, and member roles for instant evaluation without local setup:
+> 
+> | Evaluator Role | Test Email | Password | Pre-seeded Environment |
+> | :--- | :--- | :--- | :--- |
+> | **Workspace Owner (Admin)** | `admin@sprinthub.dev` | `Password123!` | SprintHub Engineering (Full admin & role management) |
+> | **Workspace Member (Dev)** | `dev@sprinthub.dev` | `Password123!` | SprintHub Engineering (Task execution & progression) |
+
+### 📐 System Architecture Overview
+
+```mermaid
+flowchart LR
+    subgraph Client["Frontend · Next.js 15 (React 19)"]
+        UI["Interactive Kanban & Views"]
+        AuthGuard["RBAC Guards & Session"]
+        SSEListener["SSE Real-time Listener"]
+    end
+
+    subgraph API["Backend API · Express 5 & TypeScript"]
+        Security["Defensive Middleware<br/>(Helmet · CORS · RateLimit)"]
+        RBAC["Contextual RBAC Middleware"]
+        Modules["Domain Modules<br/>(Auth · Workspaces · Tasks)"]
+        SSE["SSE Event Broadcaster"]
+    end
+
+    subgraph Data["Persistence Layer"]
+        Prisma["Prisma ORM 6"]
+        PostgreSQL[("PostgreSQL 17 Database")]
+    end
+
+    UI --> Security
+    Security --> RBAC --> Modules --> Prisma --> PostgreSQL
+    Modules -.->|Real-time Events| SSE -.-> SSEListener
+```
 
 ---
 
 ## Table of Contents
 
+- [Live Demo & Instant Access](#-live-production-demo--instant-access)
+- [System Architecture Overview](#-system-architecture-overview)
 - [Overview](#overview)
 - [Key Features](#key-features)
 - [Monorepo Architecture](#monorepo-architecture)
+- [Architecture & Technical Documentation](#architecture--technical-documentation)
 - [Tech Stack](#tech-stack)
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
@@ -40,7 +87,7 @@
 - [Environment Variables](#environment-variables)
 - [Scripts & Command Matrix](#scripts--command-matrix)
 - [Security & Hardening](#security--hardening)
-- [Technical Documentation](#technical-documentation)
+- [Git Workflow & Branch Preservation](#git-workflow--branch-preservation)
 - [License](#license)
 
 ---
@@ -115,6 +162,44 @@ sprinthub/
 ├── docker-compose.yml           # Multi-container orchestration (PostgreSQL 17, API, Web)
 └── package.json                 # Monorepo root configuration and unified lifecycle scripts
 ```
+
+---
+
+## Architecture & Technical Documentation
+
+SprintHub is engineered with rigorous software engineering and architecture standards. All system specifications, database designs, API contracts, governance rules, and Architecture Decision Records (ADRs) are directly accessible:
+
+### 📚 Core Specifications (SAD, PRD, SRS, DDS)
+
+| Specification | Document | Description |
+| :--- | :--- | :--- |
+| **Blueprint** | [`SprintHub-Blueprint.md`](docs/00-project/SprintHub-Blueprint.md) | High-level system vision, architectural foundation, and bounded contexts |
+| **PRD** | [`Product-Requirements-Document.md`](docs/01-product/Product-Requirements-Document.md) | Product scope, user personas, epics, functional requirements, and acceptance criteria |
+| **SRS** | [`Software-Requirements-Specification.md`](docs/02-requirements/Software-Requirements-Specification.md) | IEEE 830-aligned system requirements, external interfaces, and non-functional constraints |
+| **SAD** | [`Architecture-Design-Document.md`](docs/03-architecture/Architecture-Design-Document.md) | 4+1 Architectural View model, Modular Monolith topology, component interaction, and security |
+| **DDS** | [`Database-Design-Specification.md`](docs/04-database/Database-Design-Specification.md) | Relational database schema, ER diagrams, PostgreSQL indexing strategy, and data integrity |
+| **API Spec** | [`API-Design-Specification.md`](docs/05-api/API-Design-Specification.md) | REST contract standards, HTTP status codes, error payloads, and OpenAPI schemas |
+| **Developer Guide** | [`Developer-Guide.md`](docs/07-development/Developer-Guide.md) | Setup, development workflows, Git branching strategy, code standards, and conventions |
+| **Governance** | [`BRANCH_PROTECTION.md`](docs/BRANCH_PROTECTION.md) | Formal branch protection rules, required CI gates, PR review policies, and audit retention |
+| **Checklist** | [`RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md) | Pre-flight and post-deployment checklist for database migrations, smoke tests, and releases |
+| **Changelog** | [`CHANGELOG.md`](CHANGELOG.md) | Release history, bug fixes, feature additions, and SemVer version tracking |
+
+### 🏛️ Architecture Decision Records (ADRs)
+
+Key architectural choices and trade-offs are documented following the MADR standard:
+
+| Record | Architectural Decision | Key Rationale & Scope | Status |
+| :--- | :--- | :--- | :---: |
+| [ADR-001](docs/06-decisions/ADR-001-Use-Nextjs-App-Router.md) | **Adopt Next.js App Router** | React 19 Server Components, nested layouts, and streaming SSR performance | `Accepted` |
+| [ADR-002](docs/06-decisions/ADR-002-Use-PostgreSQL.md) | **Adopt PostgreSQL 17** | Strict ACID transactional guarantees, JSONB extensibility, and enterprise reliability | `Accepted` |
+| [ADR-003](docs/06-decisions/ADR-003-Use-Prisma.md) | **Adopt Prisma ORM 6** | End-to-end TypeScript safety, deterministic migrations, and automated schema generation | `Accepted` |
+| [ADR-004](docs/06-decisions/ADR-004-Use-JWT-Authentication.md) | **Adopt JWT + HttpOnly Cookies** | Stateless access tokens with secure refresh token rotation stored in HttpOnly cookies | `Accepted` |
+| [ADR-005](docs/06-decisions/ADR-005-Use-Modular-Monolith.md) | **Adopt Modular Monolith Architecture** | High domain cohesion, loose coupling, bounded contexts, and simplified operations | `Accepted` |
+| [ADR-006](docs/06-decisions/ADR-006-Use-Feature-Based-Frontend.md) | **Feature-Based Frontend Architecture** | Co-located components, hooks, schemas, and guards isolated per business domain | `Accepted` |
+| [ADR-007](docs/06-decisions/ADR-007-Use-Layered-Backend.md) | **Layered Architecture (`Controller → Service → Repository`)** | Strict inversion of control, high testability, Prisma isolation, and single responsibility | `Accepted` |
+| [ADR-008](docs/06-decisions/ADR-008-Adopt-REST-API.md) | **Adopt REST API Design with OpenAPI 3.0** | Predictable HTTP verbs, RFC 7807 error formats, and interactive Swagger documentation | `Accepted` |
+| [ADR-009](docs/06-decisions/ADR-009-Adopt-Docker.md) | **Adopt Docker & Multi-Stage Builds** | Zero-drift local environments, production containerization, and isolated integration tests | `Accepted` |
+| [ADR-010](docs/06-decisions/ADR-010-Adopt-GitHub-Actions-CI.md) | **Adopt GitHub Actions CI Automation** | Multi-job matrix validation: lint, format, typecheck, unit/integration tests, and build | `Accepted` |
 
 ---
 
@@ -240,7 +325,7 @@ SprintHub includes full **OpenAPI 3.0** documentation served natively by the bac
 
 ## Testing Suite
 
-SprintHub maintains a strict automated testing suite ensuring zero regressions across all critical business flows (**115 tests passing**):
+SprintHub maintains a strict automated testing suite ensuring zero regressions across all critical business flows (**119 tests passing**):
 
 ```bash
 # Run all unit tests across API and Web
@@ -338,16 +423,13 @@ SprintHub implements a defense-in-depth posture:
 
 ---
 
-## Technical Documentation
+## Git Workflow & Branch Preservation
 
-Detailed architecture specifications and design records are located in the [`docs/`](file:///c:/Users/NICOLAS/Documents/GitHub/sprinthub/docs) directory:
+SprintHub follows a disciplined GitFlow model (`main` ➔ `develop` ➔ feature/fix/refactor/docs branches) with strict branch protection rules, required PR approvals, and automated CI verification pipelines.
 
-- [Project Blueprint](file:///c:/Users/NICOLAS/Documents/GitHub/sprinthub/docs/01-blueprint/Blueprint.md)
-- [Product Requirements Document (PRD)](file:///c:/Users/NICOLAS/Documents/GitHub/sprinthub/docs/02-requirements/PRD.md)
-- [Software Architecture Document (SAD)](file:///c:/Users/NICOLAS/Documents/GitHub/sprinthub/docs/03-architecture/SAD.md)
-- [Detailed Design Specification (DDS)](file:///c:/Users/NICOLAS/Documents/GitHub/sprinthub/docs/04-design/DDS.md)
-- [Architecture Decision Records (ADRs)](file:///c:/Users/NICOLAS/Documents/GitHub/sprinthub/docs/06-decisions)
-- [Developer Guide (DG)](file:///c:/Users/NICOLAS/Documents/GitHub/sprinthub/docs/07-development/Developer-Guide.md)
+> [!NOTE]
+> **Showcase & Audit Notice for Recruiters and Technical Reviewers:**
+> All feature, fix, refactor, chore, and documentation branches in this repository are intentionally preserved and not deleted after merging. This repository serves as an open technical showcase allowing recruiters, hiring managers, and peer reviewers to inspect the authentic development timeline, commit granularity, branch conventions, and pull request workflows applied throughout the project lifecycle.
 
 ---
 
