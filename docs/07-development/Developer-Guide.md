@@ -368,7 +368,11 @@ All new branch names should follow these conventions:
 - Keep names short and descriptive.
 - Each branch should address a single objective.
 - Avoid unnecessary abbreviations.
-- Delete branches after they have been merged when they are no longer required.
+- Delete branches after they have been merged when they are no longer required (standard practice).
+
+> [!NOTE]
+> **Showcase Repository Exception:**
+> In this repository, merged working branches (`feature/*`, `fix/*`, `refactor/*`, `chore/*`, `docs/*`) are deliberately preserved so that recruiters, hiring teams, and peer reviewers can audit the real branch history, atomic commits, and pull request implementations.
 
 Supported branch types are:
 

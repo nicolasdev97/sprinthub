@@ -40,6 +40,7 @@
 - [Environment Variables](#environment-variables)
 - [Scripts & Command Matrix](#scripts--command-matrix)
 - [Security & Hardening](#security--hardening)
+- [Git Workflow & Branch Preservation](#git-workflow--branch-preservation)
 - [Technical Documentation](#technical-documentation)
 - [License](#license)
 
@@ -335,6 +336,16 @@ SprintHub implements a defense-in-depth posture:
 * **Contextual RBAC:** Middleware validates workspace/project memberships and roles before request processing, eliminating IDOR vulnerabilities.
 * **Input Sanitization:** Recursive request body sanitization stripping null bytes, script tags, and normalized email formats.
 * **Cookie Security:** Refresh tokens stored exclusively in `HttpOnly`, `Secure`, `SameSite=Lax` cookies.
+
+---
+
+## Git Workflow & Branch Preservation
+
+SprintHub follows a disciplined GitFlow model (`main` ➔ `develop` ➔ feature/fix/refactor/docs branches) with strict branch protection rules, required PR approvals, and automated CI verification pipelines.
+
+> [!NOTE]
+> **Showcase & Audit Notice for Recruiters and Technical Reviewers:**
+> All feature, fix, refactor, chore, and documentation branches in this repository are intentionally preserved and not deleted after merging. This repository serves as an open technical showcase allowing recruiters, hiring managers, and peer reviewers to inspect the authentic development timeline, commit granularity, branch conventions, and pull request workflows applied throughout the project lifecycle.
 
 ---
 
