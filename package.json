@@ -1,6 +1,6 @@
 {
   "name": "sprinthub",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A modern full-stack project management platform inspired by Jira, Trello, and ClickUp.",
   "private": true,
   "workspaces": [

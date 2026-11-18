@@ -19,6 +19,7 @@
   <img src="https://img.shields.io/badge/Prisma-6.x-2D3748?style=flat&logo=prisma&logoColor=white" alt="Prisma ORM" />
   <img src="https://img.shields.io/badge/OpenAPI-3.0%20%2F%20Swagger-85EA2D?style=flat&logo=swagger&logoColor=black" alt="OpenAPI 3.0" />
   <img src="https://img.shields.io/badge/Tests-119%20Passing-brightgreen?style=flat&logo=vitest&logoColor=white" alt="119 Tests Passing" />
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/Release-v1.0.1-blue?style=flat&logo=github" alt="Release v1.0.1" /></a>
   <img src="https://img.shields.io/badge/License-MIT-blue?style=flat" alt="MIT License" />
 </p>
 
@@ -181,6 +182,7 @@ SprintHub is engineered with rigorous software engineering and architecture stan
 | **Developer Guide** | [`Developer-Guide.md`](docs/07-development/Developer-Guide.md) | Setup, development workflows, Git branching strategy, code standards, and conventions |
 | **Governance** | [`BRANCH_PROTECTION.md`](docs/BRANCH_PROTECTION.md) | Formal branch protection rules, required CI gates, PR review policies, and audit retention |
 | **Checklist** | [`RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md) | Pre-flight and post-deployment checklist for database migrations, smoke tests, and releases |
+| **Changelog** | [`CHANGELOG.md`](CHANGELOG.md) | Release history, bug fixes, feature additions, and SemVer version tracking |
 
 ### 🏛️ Architecture Decision Records (ADRs)
 
