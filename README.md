@@ -18,7 +18,7 @@
   <img src="https://img.shields.io/badge/PostgreSQL-17-4169E1?style=flat&logo=postgresql&logoColor=white" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/Prisma-6.x-2D3748?style=flat&logo=prisma&logoColor=white" alt="Prisma ORM" />
   <img src="https://img.shields.io/badge/OpenAPI-3.0%20%2F%20Swagger-85EA2D?style=flat&logo=swagger&logoColor=black" alt="OpenAPI 3.0" />
-  <img src="https://img.shields.io/badge/Tests-115%20Passing-brightgreen?style=flat&logo=vitest&logoColor=white" alt="115 Tests Passing" />
+  <img src="https://img.shields.io/badge/Tests-119%20Passing-brightgreen?style=flat&logo=vitest&logoColor=white" alt="119 Tests Passing" />
   <img src="https://img.shields.io/badge/License-MIT-blue?style=flat" alt="MIT License" />
 </p>
 
@@ -240,7 +240,7 @@ SprintHub includes full **OpenAPI 3.0** documentation served natively by the bac
 
 ## Testing Suite
 
-SprintHub maintains a strict automated testing suite ensuring zero regressions across all critical business flows (**115 tests passing**):
+SprintHub maintains a strict automated testing suite ensuring zero regressions across all critical business flows (**119 tests passing**):
 
 ```bash
 # Run all unit tests across API and Web
