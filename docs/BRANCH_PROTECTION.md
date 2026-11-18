@@ -69,3 +69,14 @@ En GitHub (**Settings → Branches → Add branch protection rule**):
 - Para `develop` hacia `main`: **Create a Merge Commit** (preserva el historial de integración de la versión completa).
 - Los títulos de PR y commits deben seguir estrictamente la convención:
   `<type>(<scope>): <short description in lowercase>`
+
+---
+
+## 5. Política de Conservación de Ramas para Auditoría y Showcase
+
+En este repositorio, todas las ramas de trabajo (`feature/*`, `fix/*`, `refactor/*`, `chore/*`, `docs/*`) se conservan deliberadamente y **no se eliminan** tras su integración.
+
+Esta decisión responde a propósitos de auditoría técnica y portafolio:
+- Permite a reclutadores, líderes técnicos y evaluadores inspeccionar la progresión real del código y los Pull Requests.
+- Facilita la trazabilidad histórica de cada decisión de arquitectura y refactorización implementada.
+- Evidencia el cumplimiento práctico y sostenido de la estrategia de ramificación definida en el proyecto.
