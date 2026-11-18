@@ -22,10 +22,55 @@
   <img src="https://img.shields.io/badge/License-MIT-blue?style=flat" alt="MIT License" />
 </p>
 
+<p align="center">
+  <a href="https://sprinthub-omega.vercel.app" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/🚀_Live_Demo-sprinthub--omega.vercel.app-0070F3?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
+  </a>
+</p>
+
+> [!TIP]
+> ### 🌐 Live Production Demo & Instant Access
+> **Deployed Application:** [https://sprinthub-omega.vercel.app](https://sprinthub-omega.vercel.app)  
+> Preloaded with sample workspaces, projects, task boards, and member roles for instant evaluation without local setup:
+> 
+> | Evaluator Role | Test Email | Password | Pre-seeded Environment |
+> | :--- | :--- | :--- | :--- |
+> | **Workspace Owner (Admin)** | `admin@sprinthub.dev` | `Password123!` | SprintHub Engineering (Full admin & role management) |
+> | **Workspace Member (Dev)** | `dev@sprinthub.dev` | `Password123!` | SprintHub Engineering (Task execution & progression) |
+
+### 📐 System Architecture Overview
+
+```mermaid
+flowchart LR
+    subgraph Client["Frontend · Next.js 15 (React 19)"]
+        UI["Interactive Kanban & Views"]
+        AuthGuard["RBAC Guards & Session"]
+        SSEListener["SSE Real-time Listener"]
+    end
+
+    subgraph API["Backend API · Express 5 & TypeScript"]
+        Security["Defensive Middleware<br/>(Helmet · CORS · RateLimit)"]
+        RBAC["Contextual RBAC Middleware"]
+        Modules["Domain Modules<br/>(Auth · Workspaces · Tasks)"]
+        SSE["SSE Event Broadcaster"]
+    end
+
+    subgraph Data["Persistence Layer"]
+        Prisma["Prisma ORM 6"]
+        PostgreSQL[("PostgreSQL 17 Database")]
+    end
+
+    UI --> Security
+    Security --> RBAC --> Modules --> Prisma --> PostgreSQL
+    Modules -.->|Real-time Events| SSE -.-> SSEListener
+```
+
 ---
 
 ## Table of Contents
 
+- [Live Demo & Instant Access](#-live-production-demo--instant-access)
+- [System Architecture Overview](#-system-architecture-overview)
 - [Overview](#overview)
 - [Key Features](#key-features)
 - [Monorepo Architecture](#monorepo-architecture)
