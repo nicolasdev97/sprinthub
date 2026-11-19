@@ -162,7 +162,7 @@ export function AssigneeFilterSelect({
             type="button"
             aria-label="Filter by assigned user"
             className={cn(
-              'flex h-9 w-full appearance-none items-center justify-between gap-2 rounded-lg border border-input bg-background px-3 py-1 text-sm text-foreground shadow-2xs transition-[color,box-shadow] outline-none hover:bg-muted/30 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 cursor-pointer dark:bg-input/30',
+              'flex h-9 w-full min-w-0 appearance-none items-center justify-between gap-2 rounded-lg border border-input bg-background px-3 py-1 text-sm text-foreground shadow-2xs transition-[color,box-shadow] outline-none hover:bg-muted/30 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 cursor-pointer dark:bg-input/30',
               className
             )}
           />

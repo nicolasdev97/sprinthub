@@ -642,7 +642,7 @@ export function CreateTaskDialog({
                     control={form.control}
                     name="assigneeId"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="min-w-0">
                         <FormLabel>Assignee</FormLabel>
                         <FormControl>
                           <AssigneeSearchSelect
@@ -661,7 +661,7 @@ export function CreateTaskDialog({
                     control={form.control}
                     name="dueDate"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="min-w-0">
                         <FormLabel>Due Date</FormLabel>
                         <FormControl>
                           <DateInput disabled={isSubmitting} {...field} />
