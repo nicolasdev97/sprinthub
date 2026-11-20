@@ -358,7 +358,10 @@ export function CreateWorkspaceDialog({
                     >
                       <div className="flex items-center gap-2 overflow-hidden min-w-0">
                         <span className="truncate font-medium text-foreground">{member.email}</span>
-                        <Badge variant="secondary" className="shrink-0 text-[10px] uppercase font-semibold">
+                        <Badge
+                          variant="secondary"
+                          className="shrink-0 text-[10px] uppercase font-semibold"
+                        >
                           {member.role}
                         </Badge>
                       </div>
