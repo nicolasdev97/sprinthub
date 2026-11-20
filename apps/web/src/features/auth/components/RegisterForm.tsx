@@ -140,7 +140,7 @@ export function RegisterForm() {
                 control={form.control}
                 name="firstName"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="min-w-0">
                     <FormLabel>First name</FormLabel>
                     <FormControl>
                       <Input
@@ -159,7 +159,7 @@ export function RegisterForm() {
                 control={form.control}
                 name="lastName"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="min-w-0">
                     <FormLabel>Last name</FormLabel>
                     <FormControl>
                       <Input

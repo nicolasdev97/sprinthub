@@ -102,7 +102,7 @@ export function AssigneeSearchSelect({
       : 'Unassigned';
 
   return (
-    <div ref={containerRef} className={cn('relative w-full', className)}>
+    <div ref={containerRef} className={cn('relative w-full min-w-0 max-w-full', className)}>
       <button
         id={id}
         type="button"
@@ -114,12 +114,13 @@ export function AssigneeSearchSelect({
             setIsOpen((prev) => !prev);
           }
         }}
+        title={selectedDisplay}
         className={cn(
-          'flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-input bg-background px-3 py-1 text-left text-sm text-foreground shadow-2xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30',
+          'flex h-9 w-full min-w-0 max-w-full overflow-hidden items-center justify-between gap-2 rounded-lg border border-input bg-background px-3 py-1 text-left text-sm text-foreground shadow-2xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30',
           isOpen && 'border-ring ring-3 ring-ring/50'
         )}
       >
-        <span className="truncate">{selectedDisplay}</span>
+        <span className="block min-w-0 flex-1 truncate text-left">{selectedDisplay}</span>
         <ChevronDown
           aria-hidden="true"
           className={cn(

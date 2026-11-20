@@ -112,7 +112,7 @@ export function TransferOwnershipDialog({
           </p>
         ) : (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="w-full sm:w-72">
+            <div className="w-full sm:w-72 min-w-0">
               <Select
                 value={selectedMemberId}
                 onValueChange={setSelectedMemberId}
