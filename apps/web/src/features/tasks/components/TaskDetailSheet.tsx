@@ -314,7 +314,7 @@ function TaskDetailForm({
             </Select>
           </div>
 
-          <div className="space-y-1.5 sm:col-span-2">
+          <div className="space-y-1.5 sm:col-span-2 min-w-0">
             <div className="flex items-center justify-between">
               <Label htmlFor="detail-task-assignee" className="text-xs text-muted-foreground">
                 <UserIcon className="size-3" />

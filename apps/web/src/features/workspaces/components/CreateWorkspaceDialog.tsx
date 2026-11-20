@@ -321,14 +321,14 @@ export function CreateWorkspaceDialog({
                     }
                   }}
                   disabled={isSubmitting}
-                  className="flex-1"
+                  className="flex-1 min-w-0"
                 />
 
                 <Select
                   value={memberRoleInput}
                   onValueChange={(val) => setMemberRoleInput(val as 'MEMBER' | 'ADMIN')}
                   disabled={isSubmitting}
-                  className="w-full sm:w-32"
+                  className="w-full sm:w-32 shrink-0"
                 >
                   <SelectOption value="MEMBER">Member</SelectOption>
                   <SelectOption value="ADMIN">Admin</SelectOption>
@@ -354,11 +354,14 @@ export function CreateWorkspaceDialog({
                   {pendingMembers.map((member, index) => (
                     <div
                       key={member.email}
-                      className="flex items-center justify-between rounded-md bg-card px-3 py-1.5 text-xs border border-border/60 shadow-xs"
+                      className="flex items-center justify-between gap-2 rounded-md bg-card px-3 py-1.5 text-xs border border-border/60 shadow-xs"
                     >
-                      <div className="flex items-center gap-2 overflow-hidden">
+                      <div className="flex items-center gap-2 overflow-hidden min-w-0">
                         <span className="truncate font-medium text-foreground">{member.email}</span>
-                        <Badge variant="secondary" className="text-[10px] uppercase font-semibold">
+                        <Badge
+                          variant="secondary"
+                          className="shrink-0 text-[10px] uppercase font-semibold"
+                        >
                           {member.role}
                         </Badge>
                       </div>
@@ -366,7 +369,7 @@ export function CreateWorkspaceDialog({
                         type="button"
                         onClick={() => handleRemoveMember(index)}
                         disabled={isSubmitting}
-                        className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                        className="shrink-0 text-muted-foreground hover:text-foreground transition-colors p-1"
                         aria-label={`Remove ${member.email}`}
                       >
                         <X className="size-3.5" />

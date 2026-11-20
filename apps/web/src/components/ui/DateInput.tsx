@@ -111,7 +111,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
     };
 
     return (
-      <div className={cn('relative flex items-center', className)}>
+      <div className={cn('relative flex w-full min-w-0 max-w-full items-center', className)}>
         <input
           ref={ref}
           id={id}

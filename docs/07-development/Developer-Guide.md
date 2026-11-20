@@ -157,6 +157,21 @@ Both applications start concurrently:
 
 After completing either workflow, your local development environment is ready.
 
+### 4. Seed Database & RBAC Test Accounts
+
+To populate your local environment with sample workspaces, projects, Kanban boards, and pre-seeded team members for manual evaluation:
+
+```bash
+npm run prisma:seed
+```
+
+The deterministic seed script provisions the following evaluation accounts:
+
+| Role | Email | Password | Permissions & Testing Scope |
+| :--- | :--- | :--- | :--- |
+| **Workspace Owner (Admin)** | `admin@sprinthub.dev` | `Password123!` | SprintHub Engineering (Full admin, member management, project settings) |
+| **Workspace Member (Dev)** | `dev@sprinthub.dev` | `Password123!` | SprintHub Engineering (Task execution, personal dashboard, active workload) |
+
 ---
 
 # 4. Repository Structure
