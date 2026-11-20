@@ -25,7 +25,7 @@ function Select({
   };
 
   return (
-    <div className={cn('relative inline-flex w-full items-center', className)}>
+    <div className={cn('relative inline-flex w-full min-w-0 max-w-full items-center', className)}>
       {Icon && (
         <Icon
           aria-hidden="true"
@@ -36,7 +36,7 @@ function Select({
         data-slot="select"
         onChange={handleChange}
         className={cn(
-          'flex h-9 w-full appearance-none rounded-lg border border-input bg-background py-1 text-sm text-foreground shadow-2xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:bg-input/30',
+          'flex h-9 w-full min-w-0 max-w-full truncate appearance-none rounded-lg border border-input bg-background py-1 text-sm text-foreground shadow-2xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:bg-input/30',
           Icon ? 'pl-8 pr-7' : 'px-3 pr-8'
         )}
         {...props}
